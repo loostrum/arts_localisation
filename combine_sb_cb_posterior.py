@@ -78,8 +78,8 @@ if __name__ == '__main__':
 
     if params['drift']:
         # read hour angles, convert to J2000 RA,Dec
-        CB_best_center = util.ha_to_ra(params['ha_best_cb']*u.deg, params['dec_best_cb']*u.deg, tarr)
-        CB00_center = util.ha_to_ra(params['ha_cb00']*u.deg, params['dec_cb00']*u.deg, tarr)
+        CB_best_center = ha_to_ra(params['ha_best_cb']*u.deg, params['dec_best_cb']*u.deg, tarr)
+        CB00_center = ha_to_ra(params['ha_cb00']*u.deg, params['dec_cb00']*u.deg, tarr)
     else:
         # read RA, Dec
         CB_best_center = SkyCoord(params['ra_best_cb'], params['dec_best_cb'], units=u.deg, frame='icrs')
@@ -99,7 +99,6 @@ if __name__ == '__main__':
     WSRT = EarthLocation(lat=WSRT_LAT, lon=WSRT_LON, height=WSRT_ALT)
     altaz_frame = AltAz(obstime=tarr, location=WSRT)
     CB_best_altaz = CB_best_center.transform_to(altaz_frame)
-    print(CB_best_altaz)
     # Convert SB offset coordinates to Alt,Az
     alt_sb = phi_sb + CB_best_altaz.alt
     # shift in Az is towards east; can be higher or lower Az; determine sign

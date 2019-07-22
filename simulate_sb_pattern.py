@@ -15,13 +15,13 @@ from constants import DISH
 
 class SBPattern(object):
 
-    def __init__(self, sbs=None, load=False, fname=None, hour_angle=0*u.deg, memmap_file=None):
+    def __init__(self, sbs=None, load=False, fname=None, theta_proj=0*u.deg, memmap_file=None):
         """
         Generate Synthesized Beam pattern
         :param sbs: array of SBs to generate [Default: all]
         :param load: load beam pattern from disk instead of generating
         :param fname: file containing beam pattern
-        :param hour_angle: hour angle used when generating TAB pattern
+        :param theta_proj: projection angle used when generating TAB pattern
         :param memmap: flag to use memmaps for beam models
         :param memmap_file: file to use for memmap
         """
@@ -58,7 +58,7 @@ class SBPattern(object):
 
         # Generate beam pattern if load=False
         if not load:
-            bf = BeamFormer(freqs=freqs, ntab=ntab, theta_proj=hour_angle, dish_pos=dish_pos)
+            bf = BeamFormer(freqs=freqs, ntab=ntab, theta_proj=theta_proj, dish_pos=dish_pos)
             cb = CompoundBeam(freqs, dtheta, dphi)
             sb_gen = SBGenerator.from_science_case(4)
 
@@ -106,7 +106,7 @@ class SBPattern(object):
         self.npoint_theta = npoint_theta
         self.npoint_phi = npoint_phi
         self.nsb = nsb
-        self.hour_angle = hour_angle
+        self.theta_proj = theta_proj
 
         self.mid_theta = int(npoint_theta/2.)
         self.mid_phi = int(npoint_phi/2.)
@@ -121,8 +121,8 @@ class SBPattern(object):
         Save on-sky SB and TAB maps
         :param prefix: file name prefix
         """
-        fname_tab = "{}_ha={:.6f}".format("models/tied-array_beam_pattern_single_cb", self.hour_angle)
-        fname_sb = "{}_ha={:.6f}".format("models/synthesized_beam_pattern_single_cb", self.hour_angle)
+        fname_tab = "{}_PA{:.6f}".format("models/tied-array_beam_pattern_single_cb", self.theta_proj)
+        fname_sb = "{}_PA{:.6f}".format("models/synthesized_beam_pattern_single_cb", self.theta_proj)
         np.save(fname_tab, self.beam_pattern_tab)
         np.save(fname_sb, self.beam_pattern_sb_sky)
 
@@ -190,15 +190,24 @@ class SBPattern(object):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--hour_angle', required=True, type=float, help="Hour angle in degrees")
+    parser.add_argument('--ha', required=True, type=float, help="Hour angle in degrees")
+    parser.add_argument('--dec', required=True, type=float, help="Declination in degrees")
     parser.add_argument('--memmap_file', type=str, help="If present, use this file for numpy memmap")
     parser.add_argument('--plot', action='store_true', help="Create and show plots")
 
     args = parser.parse_args()
 
-    # convert args to dict and add units
+    # convert HA, Dec to projection angle
+    ha = args.ha * u.deg
+    dec = args.dec * u.deg
+    theta_proj = np.sqrt(np.cos(ha)**2 + (np.sin(ha)*np.sin(dec))**2)
+
+    # convert args to dict and remove unused params
     kwargs = vars(args)
-    kwargs['hour_angle'] *= u.deg
+    del kwargs['ha']
+    del kwargs['dec']
+    #add projection angle
+    kwargs['theta_proj'] = theta_proj
 
     # generate and store full beam pattern
     beam_pattern = SBPattern(**kwargs)

@@ -121,8 +121,8 @@ class SBPattern(object):
         Save on-sky SB and TAB maps
         :param prefix: file name prefix
         """
-        fname_tab = "{}_PA{:.6f}".format("models/tied-array_beam_pattern_single_cb", self.theta_proj)
-        fname_sb = "{}_PA{:.6f}".format("models/synthesized_beam_pattern_single_cb", self.theta_proj)
+        fname_tab = "{}_PA{:.6f}".format("models/tied-array_beam_pattern_single_cb", self.theta_proj.to(u.deg).value)
+        fname_sb = "{}_PA{:.6f}".format("models/synthesized_beam_pattern_single_cb", self.theta_proj.to(u.deg).value)
         np.save(fname_tab, self.beam_pattern_tab)
         np.save(fname_sb, self.beam_pattern_sb_sky)
 

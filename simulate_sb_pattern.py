@@ -134,7 +134,7 @@ class SBPattern(object):
         kwargs = {'vmin': .05}
 
         if self.beam_pattern_tab is not None:
-            fig, axes = plt.subplots(ncols=2, figsize=(12.8, 6), sharex=True, sharey=True)
+            fig, axes = plt.subplots(ncols=2, figsize=(12.8, 6), sharex=True)
             axes = axes.flatten()
 
             # TAB00 at one freq
@@ -200,16 +200,20 @@ if __name__ == '__main__':
     # convert HA, Dec to projection angle
     ha = args.ha * u.deg
     dec = args.dec * u.deg
-    theta_proj = np.sqrt(np.cos(ha)**2 + (np.sin(ha)*np.sin(dec))**2)
+    theta_proj = np.arccos(np.sqrt(np.cos(ha)**2 + (np.sin(ha)*np.sin(dec))**2)).to(u.deg)
 
     # convert args to dict and remove unused params
-    kwargs = vars(args)
+    kwargs = vars(args).copy()
     del kwargs['ha']
     del kwargs['dec']
+    del kwargs['plot']
     #add projection angle
     kwargs['theta_proj'] = theta_proj
 
     # generate and store full beam pattern
     beam_pattern = SBPattern(**kwargs)
     beam_pattern.save()
+
     # plot
+    if args.plot:
+        beam_pattern.plot(show=True)

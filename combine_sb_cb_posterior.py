@@ -100,6 +100,8 @@ if __name__ == '__main__':
     altaz_frame = AltAz(obstime=tarr, location=WSRT)
     CB_best_altaz = CB_best_center.transform_to(altaz_frame)
     # Convert SB offset coordinates to Alt,Az
+    # altitude shift could be either positive or negative, but
+    # the beam pattern is symmetrical so it does not matter
     alt_sb = phi_sb + CB_best_altaz.alt
     # shift in Az is towards east; can be higher or lower Az; determine sign
     if (CB_best_altaz.az > 270*u.deg) or (CB_best_altaz.az < 90*u.deg):

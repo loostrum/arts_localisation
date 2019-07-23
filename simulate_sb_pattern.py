@@ -50,7 +50,7 @@ class SBPattern(object):
             self.beam_pattern_tab = None
             self.beam_pattern_tab_1d = None
             # overwrite lengths
-            nsb, nfreq, npoint_theta, npoint_phi = self.beam_pattern_sb_sky.shape
+            nsb, npoint_theta, npoint_phi = self.beam_pattern_sb_sky.shape
 
         dtheta = np.linspace(-max_dist, max_dist, npoint_theta) * u.arcmin
         dphi = np.linspace(-max_dist, max_dist, npoint_phi) * u.arcmin
@@ -211,8 +211,10 @@ if __name__ == '__main__':
     kwargs['theta_proj'] = theta_proj
 
     # generate and store full beam pattern
-    beam_pattern = SBPattern(**kwargs)
-    beam_pattern.save()
+    #beam_pattern = SBPattern(**kwargs)
+    #beam_pattern.save()
+    # or load a beam pattern from disk
+    beam_pattern = SBPattern(load=True, fname='models/synthesized_beam_pattern_single_cb_PA10.600506.npy')
 
     # plot
     if args.plot:

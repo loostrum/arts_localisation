@@ -53,6 +53,10 @@ if __name__ == '__main__':
 
     # non detection beams
     sb_non_det = np.array([sb for sb in range(nsb) if not sb in sb_det])
+    if len(sb_non_det) > 0:
+        have_nondet = True
+    else:
+        have_nondet = False
 
     # init log likelihood 
     log_l = np.zeros((ntheta, nphi))
@@ -64,16 +68,19 @@ if __name__ == '__main__':
     print("Done")
 
     # Non detections
-    print("Adding non-detections")
-    # Add non detections as prior
-    # where positive: S/N is higher than max_snr. Set to zero probability
-    num_bad_sb = np.sum(snr_model[sb_non_det] - args.max_snr > 0, axis=0)
-    mask = num_bad_sb > 0
+    if have_nondet:
+        print("Adding non-detections")
+        # Add non detections as prior
+        # where positive: S/N is higher than max_snr. Set to zero probability
+        num_bad_sb = np.sum(snr_model[sb_non_det] - args.max_snr > 0, axis=0)
+        mask = num_bad_sb > 0
         
-    # prior is flat where S/N < max_snr, 0 where S/N > max_snr
-    log_prior = np.ones((ntheta, nphi)) * np.log(1./args.max_snr)
-    log_prior[mask] = -np.inf
-    print("Done")
+        # prior is flat where S/N < max_snr, 0 where S/N > max_snr
+        log_prior = np.ones((ntheta, nphi)) * np.log(1./args.max_snr)
+        log_prior[mask] = -np.inf
+        print("Done")
+    else:
+        log_prior = 0
 
     # define posterior
     log_posterior = log_l + log_prior
@@ -98,19 +105,20 @@ if __name__ == '__main__':
         X, Y = np.meshgrid(theta, phi)
 
         # Plot number of SBs > max_snr at each position
-        ax = axes[0]
-        img = ax.pcolormesh(X, Y, num_bad_sb.T)
-        fig.colorbar(img, ax=ax)
-        ax.invert_yaxis()
-        ax.set_xlabel(r'$\theta$ [arcmin]')
-        ax.set_ylabel(r'$\phi$ [arcmin]')
-        ax.set_title('Number of non-detection SBs with S/N > {:.1f}'.format(args.max_snr))
-        add_cb(ax)
+        if have_nondet:
+            ax = axes[0]
+            img = ax.pcolormesh(X, Y, num_bad_sb.T)
+            fig.colorbar(img, ax=ax)
+            ax.set_xlabel(r'$\theta$ [arcmin]')
+            ax.set_ylabel(r'$\phi$ [arcmin]')
+            ax.set_title('Number of non-detection SBs with S/N > {:.1f}'.format(args.max_snr))
+            add_cb(ax)
 
         # Plot posterior
         ax = axes[1]
         img = ax.pcolormesh(X, Y, log_posterior.T)
         fig.colorbar(img, ax=ax)
+        ax.invert_yaxis()
         ax.set_xlabel(r'$\theta$ [arcmin]')
         ax.set_ylabel(r'$\phi$ [arcmin]')
         ax.set_title('Log posterior')

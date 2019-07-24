@@ -147,7 +147,7 @@ if __name__ == '__main__':
     Y_total = Y_sb
 
     # save total posterior
-    np.save(args.output_file, posterior_total)
+    np.save(args.output_file, [X_total, Y_total, posterior_total])
 
     # Find best location
     # CB
@@ -188,9 +188,12 @@ if __name__ == '__main__':
         print("Plotting")
         fig, axes = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
         axes = axes.flatten()
-        vmin_cb = -200
-        vmin_sb = -200
-        vmin_tot = -200
+        #vmin_cb = -200
+        #vmin_sb = -200
+        #vmin_tot = -200
+        vmin_cb = -4.6
+        vmin_sb = -4.6
+        vmin_tot = -4.6
 
         # CB posterior
         ax = axes[0]

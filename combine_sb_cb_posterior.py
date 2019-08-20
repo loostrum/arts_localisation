@@ -16,6 +16,31 @@ from astropy.time import Time, TimeDelta
 from constants import WSRT_LAT, WSRT_LON, WSRT_ALT
 
 
+def ra_to_ha(ra, dec, t):
+    """
+    Convert J2000 RA, Dec to WSRT HA, Dec
+    :param ra: right ascension with unit
+    :param dec: declination with unit
+    :param t: UT time (string or astropy.time.Time)
+    :return: SkyCoord object of apparent HA, Dec coordinates
+    """
+
+    # Convert time to Time object if given as string
+    if isinstance(t, str):
+        t = Time(t)
+
+    # Apparent LST at WSRT at this time
+    lst = t.sidereal_time('apparent', WSRT_LON)
+    # Equinox of date (because hour angle uses apparent coordinates)
+    coord_system = FK5(equinox='J{}'.format(t.decimalyear))
+    # convert coordinates to apparent
+    coord_apparent = SkyCoord(ra, dec, frame='icrs').transform_to(coord_system)
+    # HA = LST - apparent RA
+    ha = lst - coord_apparent.ra
+    # return SkyCoord of (Ha, Dec)
+    return SkyCoord(ha, dec, frame=coord_system)
+
+
 def ha_to_ra(ha, dec, t):
     """
     Convert WSRT HA, Dec to J2000 RA, Dec

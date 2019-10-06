@@ -81,13 +81,18 @@ if __name__ == '__main__':
 
     # load posteriors
     print("Loading models")
-    posterior_cb = np.load(args.posterior_cb)
-    posterior_sb = np.load(args.posterior_sb)
+    theta_cb, phi_cb, posterior_cb = np.load(args.posterior_cb, allow_pickle=True)
+    theta_sb, phi_sb, posterior_sb = np.load(args.posterior_sb, allow_pickle=True)
     print("Done")
 
     # define coordinates
     ntheta_cb, nphi_cb = posterior_cb.shape
     ntheta_sb, nphi_sb = posterior_sb.shape
+
+    #theta_cb *= u.deg
+    #phi_cb *= u.deg
+    #theta_sb *= u.deg
+    #phi_sb *= u.deg
 
     theta_cb = np.linspace(-130, 130, ntheta_cb) * u.arcmin
     phi_cb = np.linspace(-100, 100, nphi_cb) * u.arcmin

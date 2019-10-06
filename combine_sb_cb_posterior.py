@@ -14,54 +14,7 @@ from astropy.coordinates import SkyCoord, EarthLocation, AltAz, FK5
 from astropy.time import Time, TimeDelta
 
 from constants import WSRT_LAT, WSRT_LON, WSRT_ALT
-
-
-def ra_to_ha(ra, dec, t):
-    """
-    Convert J2000 RA, Dec to WSRT HA, Dec
-    :param ra: right ascension with unit
-    :param dec: declination with unit
-    :param t: UT time (string or astropy.time.Time)
-    :return: SkyCoord object of apparent HA, Dec coordinates
-    """
-
-    # Convert time to Time object if given as string
-    if isinstance(t, str):
-        t = Time(t)
-
-    # Apparent LST at WSRT at this time
-    lst = t.sidereal_time('apparent', WSRT_LON)
-    # Equinox of date (because hour angle uses apparent coordinates)
-    coord_system = FK5(equinox='J{}'.format(t.decimalyear))
-    # convert coordinates to apparent
-    coord_apparent = SkyCoord(ra, dec, frame='icrs').transform_to(coord_system)
-    # HA = LST - apparent RA
-    ha = lst - coord_apparent.ra
-    # return SkyCoord of (Ha, Dec)
-    return SkyCoord(ha, dec, frame=coord_system)
-
-
-def ha_to_ra(ha, dec, t):
-    """
-    Convert WSRT HA, Dec to J2000 RA, Dec
-    :param ha: hour angle with unit
-    :param dec: declination with unit
-    :param t: UT time (string or astropy.time.Time)
-    :return: SkyCoord object of J2000 coordinates
-    """
-
-    # Convert time to Time object if given as string
-    if isinstance(t, str):
-        t = Time(t)
-
-    # Apparent LST at WSRT at this time
-    lst = t.sidereal_time('apparent', WSRT_LON)
-    # Equinox of date (because hour angle uses apparent coordinates)
-    coord_system = FK5(equinox='J{}'.format(t.decimalyear))
-    # apparent RA = LST - HA
-    ra_apparent = lst - ha
-    coord_apparent = SkyCoord(ra_apparent, dec, frame=coord_system)
-    return coord_apparent.transform_to('icrs')
+from convert import ha_to_ra
 
 
 if __name__ == '__main__':
@@ -76,6 +29,10 @@ if __name__ == '__main__':
                         help="Output file for total posterior (default: %(default)s)")
     parser.add_argument('--plot', action='store_true',
                         help="Create and show plots")
+    parser.add_argument('--ra_real', type=float, default=None,
+                        help="RA of known source to add to figure")
+    parser.add_argument('--dec_real', type=float, default=None,
+                        help="Dec of known source to add to figure")
 
     args = parser.parse_args()
 
@@ -93,6 +50,10 @@ if __name__ == '__main__':
     #phi_cb *= u.deg
     #theta_sb *= u.deg
     #phi_sb *= u.deg
+<<<<<<< Updated upstream
+=======
+    #print(theta_cb)
+>>>>>>> Stashed changes
 
     theta_cb = np.linspace(-130, 130, ntheta_cb) * u.arcmin
     phi_cb = np.linspace(-100, 100, nphi_cb) * u.arcmin
@@ -112,8 +73,8 @@ if __name__ == '__main__':
         CB00_center = ha_to_ra(params['ha_cb00']*u.deg, params['dec_cb00']*u.deg, tarr)
     else:
         # read RA, Dec
-        CB_best_center = SkyCoord(params['ra_best_cb'], params['dec_best_cb'], units=u.deg, frame='icrs')
-        CB00_center = SkyCoord(params['ra_cb00'], params['dec_cb00'], units=u.deg, frame='icrs')
+        CB_best_center = SkyCoord(params['ra_best_cb'], params['dec_best_cb'], unit=u.deg, frame='icrs')
+        CB00_center = SkyCoord(params['ra_cb00'], params['dec_cb00'], unit=u.deg, frame='icrs')
 
     # Get center of CB00 in J2000 RA,Dec
     print("Generating CB coordinates")
@@ -229,6 +190,10 @@ if __name__ == '__main__':
         ax = axes[0]
         img = ax.pcolormesh(X_cb, Y_cb, posterior_cb.T, vmin=vmin_cb)
         ax.scatter(best_pos_cb.ra, best_pos_cb.dec, c='r', s=10)
+        if args.ra_real:
+            ax.axvline(args.ra_real, c='r')
+        if args.dec_real:
+            ax.axhline(args.dec_real, c='r')
         fig.colorbar(img, ax=ax)
         ax.set_ylabel('Dec [deg]')
         ax.set_title('CB')
@@ -237,6 +202,10 @@ if __name__ == '__main__':
         ax = axes[1]
         img = ax.pcolormesh(X_sb, Y_sb, posterior_sb.T, vmin=vmin_sb)
         ax.scatter(best_pos_sb.ra, best_pos_sb.dec, c='r', s=10)
+        if args.ra_real:
+            ax.axvline(args.ra_real, c='r')
+        if args.dec_real:
+            ax.axhline(args.dec_real, c='r')
         fig.colorbar(img, ax=ax)
         ax.set_title('SB')
 
@@ -244,6 +213,10 @@ if __name__ == '__main__':
         ax = axes[2]
         img = ax.pcolormesh(X_sb, Y_sb, posterior_cb_interp.T, vmin=vmin_cb)
         ax.scatter(best_pos_cb_interp.ra, best_pos_cb_interp.dec, c='r', s=10)
+        if args.ra_real:
+            ax.axvline(args.ra_real, c='r')
+        if args.dec_real:
+            ax.axhline(args.dec_real, c='r')
         fig.colorbar(img, ax=ax)
         ax.set_xlabel('RA [deg]')
         ax.set_ylabel('Dec [deg]')
@@ -254,6 +227,10 @@ if __name__ == '__main__':
         img = ax.pcolormesh(X_total, Y_total, posterior_total.T, vmin=vmin_tot)
         if have_best_pos:
             ax.scatter(best_pos_total.ra, best_pos_total.dec, c='r', s=10)
+        if args.ra_real:
+            ax.axvline(args.ra_real, c='r')
+        if args.dec_real:
+            ax.axhline(args.dec_real, c='r')
         fig.colorbar(img, ax=ax)
         ax.set_xlabel('RA [deg]')
         ax.set_title('CB + SB')

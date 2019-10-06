@@ -5,8 +5,9 @@
 
 import numpy as np
 import astropy.units as u
+from scipy.interpolate import griddata
 
-from constants import CB_HPBW, REF_FREQ, DISH_SIZE
+from constants import CB_HPBW, REF_FREQ, DISH_SIZE, CB_MODEL_FILE
 
 
 class CompoundBeam(object):
@@ -33,15 +34,23 @@ class CompoundBeam(object):
         self.phi = phi
         self.freqs = freqs
 
-    def beam_pattern(self, mode):
+        # load beam measurements
+        self.beams_measured = np.genfromtxt(CB_MODEL_FILE, delimiter=',', names=True)
+        print(self.beams_measured.shape)
+        
+
+    def beam_pattern(self, mode, cb=None):
         """
         Return beam pattern for given mode
-        :param mode: gauss, airy
+        :param mode: gauss, airy, real
+        :param cb: beam number (real beam)
         :return: beam pattern
         """
 
         if mode == 'gauss':
             return self.__gaussian()
+        elif mode == 'real':
+            return self.__real(cb)
         elif mode == 'airy':
             raise NotImplementedError("Airy disk not yet implemented")
         else:
@@ -62,5 +71,28 @@ class CompoundBeam(object):
         for i, sigma in enumerate(sigmas):
             arg = -.5 * (self.theta[..., None]**2 + self.phi**2) / sigma**2
             output_grid[i] = np.exp(arg) / 2
+
+        return output_grid
+
+    def __real(self, cb):
+        """
+        Measured beam pattern
+        :param cb: beam number
+        :return: beam pattern
+        """
+        beam = self.beams_measured[cb].reshape(40, 40)
+        ref_freq = 1399.662250 * u.MHz
+
+        dx = 0.027777777777778 * 60   # arcmin at ref freq
+
+        output_grid = np.zeros((self.freqs.shape[0], self.theta.shape[0], self.phi.shape[0]))
+        X_out, Y_out = np.meshgrid(self.theta, self.phi)
+        # interpolate onto output grid 
+        scalings = ref_freq / self.freqs
+        for i, scaling in enumerate(scalings):
+            theta_in = np.arange(-20, 20) * dx * scaling * u.arcmin
+            phi_in = np.arange(-20, 20) * dx * scaling * u.arcmin
+            X_in, Y_in = np.meshgrid(theta_in, phi_in)
+            output_grid[i] = griddata((X_in.flatten(), Y_in.flatten()), beam, (X_out, Y_out))
 
         return output_grid

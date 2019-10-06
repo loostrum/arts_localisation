@@ -62,14 +62,14 @@ if __name__ == '__main__':
     log_l = np.zeros((ntheta, nphi))
 
     # Detections: model - measured, then square and sum over SBs
-    print("Adding detections")
+    print("Adding {} detections".format(len(sb_det)))
     # take care that the np sum is -log(L)
     log_l -= np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis])**2, axis=0)
     print("Done")
 
     # Non detections
     if have_nondet:
-        print("Adding non-detections")
+        print("Adding {} non-detections".format(len(sb_non_det)))
         # Add non detections as prior
         # where positive: S/N is higher than max_snr. Set to zero probability
         num_bad_sb = np.sum(snr_model[sb_non_det] - args.max_snr > 0, axis=0)
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     log_posterior = log_l + log_prior
 
     # ensure max is 0
-    log_posterior -= np.amax(log_posterior)
+    log_posterior -= np.nanmax(log_posterior)
 
     # Save the posterior
     X, Y = np.meshgrid(theta, phi)

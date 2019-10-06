@@ -58,8 +58,16 @@ if __name__ == '__main__':
     snr_det = data['snr'].astype(float)
 
     best_ind = np.argmax(snr_det)
-    best_cb = cb_det[best_ind]
-    best_snr = snr_det[best_ind]
+    try:
+        len(cb_det)
+        best_cb = cb_det[best_ind]
+        best_snr = snr_det[best_ind]
+        ndet = len(cb_det)
+    except TypeError:
+        # just one CB
+        best_cb = cb_det
+        best_snr = snr_det
+        ndet = 1
 
     print("Loading model")
     cb_model = np.load(args.model)
@@ -86,7 +94,7 @@ if __name__ == '__main__':
     # split into detection + non detection
 
     # Detections: model - measured, then square and sum over CBs
-    print("Adding {} detections".format(len(cb_det)))
+    print("Adding {} detections".format(ndet))
     # take care that the np sum is -log(L)
     log_l = -np.sum((snr_model[cb_det] - snr_det[..., np.newaxis, np.newaxis])**2, axis=0)
     print("Done")

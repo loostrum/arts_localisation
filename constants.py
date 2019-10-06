@@ -19,3 +19,5 @@ DISH = {'a8': DISH_A8, 'a10': DISH_A10, 'maxi-short': DISH_MAXISHORT}
 WSRT_LAT = 52.915184*u.deg
 WSRT_LON = 6.60387*u.deg
 WSRT_ALT = 16*u.m
+
+CB_MODEL_FILE = 'beam_models_190607.csv'

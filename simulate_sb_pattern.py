@@ -11,6 +11,7 @@ from darc.sb_generator import SBGenerator
 from beamformer import BeamFormer
 from compound_beam import CompoundBeam
 from constants import DISH
+import convert
 
 
 class SBPattern(object):
@@ -200,7 +201,7 @@ if __name__ == '__main__':
     # convert HA, Dec to projection angle
     ha = args.ha * u.deg
     dec = args.dec * u.deg
-    theta_proj = np.arccos(np.sqrt(np.cos(ha)**2 + (np.sin(ha)*np.sin(dec))**2)).to(u.deg)
+    theta_proj = convert.ha_to_proj(ha, dec)
 
     # convert args to dict and remove unused params
     kwargs = vars(args).copy()

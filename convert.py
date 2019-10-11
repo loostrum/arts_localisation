@@ -13,12 +13,13 @@ from astropy.time import Time, TimeDelta
 from constants import WSRT_LON, WSRT_LAT
 
 
-def ra_to_ha(ra, dec, t):
+def ra_to_ha(ra, dec, t, lon=WSRT_LON):
     """ 
     Convert J2000 RA, Dec to WSRT HA, Dec
     :param ra: right ascension with unit
     :param dec: declination with unit
     :param t: UT time (string or astropy.time.Time)
+    :param lon: Longitude with unit (default: WSRT)
     :return: SkyCoord object of apparent HA, Dec coordinates
     """
 
@@ -37,12 +38,13 @@ def ra_to_ha(ra, dec, t):
     # return SkyCoord of (Ha, Dec)
     return SkyCoord(ha, dec, frame=coord_system)
 
-def ha_to_ra(ha, dec, t):
+def ha_to_ra(ha, dec, t, lon=WSRT_LON):
     """
-    Convert WSRT HA, Dec to J2000 RA, Dec
+    Convert HA, Dec to J2000 RA, Dec
     :param ha: hour angle with unit
     :param dec: declination with unit
     :param t: UT time (string or astropy.time.Time)
+    :param lon: Longitude with unit (default: WSRT)
     :return: SkyCoord object of J2000 coordinates
     """
 
@@ -51,7 +53,7 @@ def ha_to_ra(ha, dec, t):
         t = Time(t)
 
     # Apparent LST at WSRT at this time
-    lst = t.sidereal_time('apparent', WSRT_LON)
+    lst = t.sidereal_time('apparent', lon)
     # Equinox of date (because hour angle uses apparent coordinates)
     coord_system = FK5(equinox='J{}'.format(t.decimalyear))
     # apparent RA = LST - HA
@@ -60,14 +62,15 @@ def ha_to_ra(ha, dec, t):
     return coord_apparent.transform_to('icrs')
 
 
-def ha_to_proj(ha, dec):
+def ha_to_proj(ha, dec, lat=WSRT_LAT):
     """
-    Convert WSRT HA, Dec to parallactic angle 
+    Convert HA, Dec to parallactic angle 
     This is the SB rotation w.r.t. the RA-Dec frame
     :param ha: hour angle with unit
     :param dec: declination with unit
+    :param lat: Latitude with unit (default: WSRT)
     """
-    theta_proj = np.arctan(np.cos(WSRT_LAT)*np.sin(ha) / 
-                    (np.sin(WSRT_LAT)*np.cos(dec) - 
-                    np.cos(WSRT_LAT)*np.sin(dec)*np.cos(ha))).to(u.deg)
+    theta_proj = np.arctan(np.cos(lat)*np.sin(ha) / 
+                    (np.sin(lat)*np.cos(dec) - 
+                    np.cos(lat)*np.sin(dec)*np.cos(ha))).to(u.deg)
     return theta_proj.to(u.deg)

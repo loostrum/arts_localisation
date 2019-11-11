@@ -16,6 +16,10 @@ from astropy.time import Time, TimeDelta
 from constants import WSRT_LAT, WSRT_LON, WSRT_ALT
 from convert import ha_to_ra
 
+# because IERS is down
+from astropy.utils.iers import conf
+conf.auto_max_age = None
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -50,10 +54,7 @@ if __name__ == '__main__':
     #phi_cb *= u.deg
     #theta_sb *= u.deg
     #phi_sb *= u.deg
-<<<<<<< Updated upstream
-=======
     #print(theta_cb)
->>>>>>> Stashed changes
 
     theta_cb = np.linspace(-130, 130, ntheta_cb) * u.arcmin
     phi_cb = np.linspace(-100, 100, nphi_cb) * u.arcmin

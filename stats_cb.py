@@ -41,7 +41,7 @@ if __name__ == '__main__':
                         help="Output file for posterior (default: %(default)s)")
     parser.add_argument('--model', type=str, default='models/all_cb.npy',
                         help="Path to CB model (default: %(default)s)")
-    parser.add_argument('--max_snr', type=float, default=5.,
+    parser.add_argument('--max_snr', type=float, default=8.,
                         help="Max S/N in non-detection beams (default: %(default)s)")
     # Option to exclude CBs disabled until implemented in rest of the code
     # parser.add_argument('--exclude_cb', nargs='*',
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     # scale CB sensitivity to highest S/N detection
     snr_model = cb_model * best_snr / cb_model[best_cb]
     del cb_model
-    ncb, ntheta, nphi = snr_model.shape
+    ncb, nphi, ntheta = snr_model.shape
     print("Done")
 
     # theta = RA
@@ -108,7 +108,7 @@ if __name__ == '__main__':
         mask = num_bad_cb > 0
 
         # prior is flat where S/N < max_snr, 0 where S/N > max_snr
-        log_prior = np.ones((ntheta, nphi)) * np.log(1./args.max_snr)
+        log_prior = np.ones((nphi, ntheta)) * np.log(1./args.max_snr)
         log_prior[mask] = -np.inf
     else:
         log_prior = 0
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     np.save(args.output_file, [X, Y, log_posterior])
 
     # Get the best position
-    best_theta_ind, best_phi_ind = np.unravel_index(np.nanargmax(log_posterior, axis=None), log_posterior.shape)
+    best_phi_ind, best_theta_ind = np.unravel_index(np.nanargmax(log_posterior, axis=None), log_posterior.shape)
     best_theta = theta[best_theta_ind]
     best_phi = phi[best_phi_ind]
     print("Best position: theta={:.6f}', phi={:.6f}'".format(best_theta, best_phi))
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         # Plot number of CBs > max_snr at each position
         if have_nondet:
             ax = axes[0]
-            img = ax.pcolormesh(X, Y, num_bad_cb.T)
+            img = ax.pcolormesh(X, Y, num_bad_cb)
             ax.scatter(best_theta, best_phi, s=10, c='cyan')
             fig.colorbar(img, ax=ax)
             ax.set_aspect('equal')
@@ -149,7 +149,7 @@ if __name__ == '__main__':
 
         # Plot posterior
         ax = axes[1]
-        img = ax.pcolormesh(X, Y, log_posterior.T, vmin=-10)
+        img = ax.pcolormesh(X, Y, log_posterior, vmin=-10)
         ax.scatter(best_theta, best_phi, s=10, c='cyan')
         fig.colorbar(img, ax=ax)
         ax.invert_yaxis()

@@ -8,7 +8,8 @@ from compound_beam import CompoundBeam
 
 
 if __name__ == '__main__':
-    output_file = 'models/all_cb.npy'
+    mode = 'real'
+    output_file = 'models/all_cb_{}.npy'.format(mode)
 
     # load CB offsets (decimal degrees in RA, Dec)
     cb_offsets = np.loadtxt('square_39p1.cb_offsets', usecols=[1, 2], delimiter=',')
@@ -27,7 +28,7 @@ if __name__ == '__main__':
     theta = np.arange(-130, 130+step, step) * u.arcmin
     phi = np.arange(-100, 100+step, step) * u.arcmin
 
-    cb_sens = np.zeros((ncb, len(theta), len(phi)))
+    cb_sens = np.zeros((ncb, len(phi), len(theta)))
 
     # Add the beams to the grid
     for cb in tqdm.tqdm(range(ncb)):
@@ -35,7 +36,7 @@ if __name__ == '__main__':
         # calculate CB integrated over frequencies
         freqs = np.linspace(1220, 1520, 2) * u.MHz
         beam = CompoundBeam(freqs, theta-dra, phi-ddec)
-        cb_sens[cb] = beam.beam_pattern('gauss').sum(axis=0)
+        cb_sens[cb] = beam.beam_pattern(mode, cb=cb).sum(axis=0)
 
     # store grid
     np.save(output_file, cb_sens)

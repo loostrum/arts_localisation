@@ -170,14 +170,14 @@ if __name__ == '__main__':
         real_pos = SkyCoord(args.ra_real, args.dec_real, unit='deg')
         # SB
         dist = real_pos.separation(best_pos_sb)
-        print("Distance between SB and real posiiton: {}".format(dist)
+        print("Distance between SB and real position: {}".format(dist.to(u.arcmin)))
         # CB
         dist = real_pos.separation(best_pos_cb)
-        print("Distance between CB and real posiiton: {}".format(dist)
+        print("Distance between CB and real position: {}".format(dist.to(u.arcmin)))
         # Total
         if have_best_pos:
             dist = real_pos.separation(best_pos_total)
-            print("Distance between total and real posiiton: {}".format(dist)
+            print("Distance between total and real position: {}".format(dist.to(u.arcmin)))
     
 
     if args.plot:

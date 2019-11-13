@@ -16,10 +16,6 @@ from astropy.time import Time, TimeDelta
 from constants import WSRT_LAT, WSRT_LON, WSRT_ALT
 from convert import ha_to_ra
 
-# because IERS is down
-from astropy.utils.iers import conf
-conf.auto_max_age = None
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -42,19 +38,13 @@ if __name__ == '__main__':
 
     # load posteriors
     print("Loading models")
-    theta_cb, phi_cb, posterior_cb = np.load(args.posterior_cb, allow_pickle=True)
-    theta_sb, phi_sb, posterior_sb = np.load(args.posterior_sb, allow_pickle=True)
+    posterior_cb = np.load(args.posterior_cb, allow_pickle=True)
+    posterior_sb = np.load(args.posterior_sb, allow_pickle=True)
     print("Done")
 
     # define coordinates
-    ntheta_cb, nphi_cb = posterior_cb.shape
-    ntheta_sb, nphi_sb = posterior_sb.shape
-
-    #theta_cb *= u.deg
-    #phi_cb *= u.deg
-    #theta_sb *= u.deg
-    #phi_sb *= u.deg
-    #print(theta_cb)
+    nphi_cb, ntheta_cb = posterior_cb.shape
+    nphi_sb, ntheta_sb = posterior_sb.shape
 
     theta_cb = np.linspace(-130, 130, ntheta_cb) * u.arcmin
     phi_cb = np.linspace(-100, 100, nphi_cb) * u.arcmin
@@ -93,13 +83,13 @@ if __name__ == '__main__':
     CB_best_altaz = CB_best_center.transform_to(altaz_frame)
     # Convert SB offset coordinates to Alt,Az
     # altitude shift could be either positive or negative, but
-    # the beam pattern is symmetrical so it does not matter
+    # the SB pattern is symmetrical along alt so it does not matter
     alt_sb = phi_sb + CB_best_altaz.alt
     # shift in Az is towards east; can be higher or lower Az; determine sign
     if (CB_best_altaz.az > 270*u.deg) or (CB_best_altaz.az < 90*u.deg):
-        sgn = -1
-    else:
         sgn = 1
+    else:
+        sgn = -1
     az_sb = CB_best_altaz.az + sgn * (theta_sb / np.cos(np.mean(alt_sb)))
     # create SkyCoord object in AltAz frame and convert to radec
     all_az, all_alt = np.meshgrid(az_sb, alt_sb)
@@ -116,7 +106,7 @@ if __name__ == '__main__':
     ra_cb = ra_cb[m_x]
     dec_cb = dec_cb[m_y]
 
-    posterior_cb = posterior_cb[m_x][:, m_y]
+    posterior_cb = posterior_cb[m_y][:, m_x]
 
     X_cb, Y_cb = np.meshgrid(ra_cb, dec_cb)
 
@@ -127,8 +117,8 @@ if __name__ == '__main__':
 
     points = (X_cb.flatten(), Y_cb.flatten())
     targets = (X_sb, Y_sb)
-    posterior_cb_interp = griddata(points, posterior_cb.T.flatten(), 
-                                   targets, method='linear', rescale=True).T
+    posterior_cb_interp = griddata(points, posterior_cb.flatten(), 
+                                   targets, method='linear', rescale=True)
     print("Done")
 
     print("Computing total posterior")
@@ -143,21 +133,21 @@ if __name__ == '__main__':
 
     # Find best location
     # CB
-    best_ra_ind, best_dec_ind = np.unravel_index(np.nanargmax(posterior_cb, axis=None), posterior_cb.shape)
+    best_dec_ind, best_ra_ind = np.unravel_index(np.nanargmax(posterior_cb, axis=None), posterior_cb.shape)
     best_ra = X_cb[best_dec_ind, best_ra_ind]
     best_dec = Y_cb[best_dec_ind, best_ra_ind]
     best_pos_cb = SkyCoord(best_ra, best_dec, unit=u.deg)
     print("Best position (CB): {}".format(best_pos_cb.to_string('hmsdms')))
 
     # CB interp
-    best_ra_ind, best_dec_ind = np.unravel_index(np.nanargmax(posterior_cb_interp, axis=None), posterior_cb_interp.shape)
+    best_dec_ind, best_ra_ind = np.unravel_index(np.nanargmax(posterior_cb_interp, axis=None), posterior_cb_interp.shape)
     best_ra = X_total[best_dec_ind, best_ra_ind]
     best_dec = Y_total[best_dec_ind, best_ra_ind]
     best_pos_cb_interp = SkyCoord(best_ra, best_dec, unit=u.deg)
     print("Best position (CB interpolated): {}".format(best_pos_cb_interp.to_string('hmsdms')))
 
     # SB
-    best_ra_ind, best_dec_ind = np.unravel_index(np.nanargmax(posterior_sb, axis=None), posterior_sb.shape)
+    best_dec_ind, best_ra_ind = np.unravel_index(np.nanargmax(posterior_sb, axis=None), posterior_sb.shape)
     best_ra = X_sb[best_dec_ind, best_ra_ind]
     best_dec = Y_sb[best_dec_ind, best_ra_ind]
     best_pos_sb = SkyCoord(best_ra, best_dec, unit=u.deg)
@@ -166,7 +156,7 @@ if __name__ == '__main__':
     # total
     have_best_pos = True
     try:
-        best_ra_ind, best_dec_ind = np.unravel_index(np.nanargmax(posterior_total, axis=None), posterior_total.shape)
+        best_dec_ind, best_ra_ind = np.unravel_index(np.nanargmax(posterior_total, axis=None), posterior_total.shape)
         best_ra = X_total[best_dec_ind, best_ra_ind]
         best_dec = Y_total[best_dec_ind, best_ra_ind]
         best_pos_total = SkyCoord(best_ra, best_dec, unit=u.deg)
@@ -195,16 +185,13 @@ if __name__ == '__main__':
         print("Plotting")
         fig, axes = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
         axes = axes.flatten()
-        #vmin_cb = -200
-        #vmin_sb = -200
-        #vmin_tot = -200
         vmin_cb = -4.6
         vmin_sb = -4.6
         vmin_tot = -4.6
 
         # CB posterior
         ax = axes[0]
-        img = ax.pcolormesh(X_cb, Y_cb, posterior_cb.T, vmin=vmin_cb)
+        img = ax.pcolormesh(X_cb, Y_cb, posterior_cb, vmin=vmin_cb)
         ax.scatter(best_pos_cb.ra, best_pos_cb.dec, c='r', s=10)
         if args.ra_real:
             ax.axvline(args.ra_real, c='r')
@@ -216,7 +203,7 @@ if __name__ == '__main__':
 
         # SB posterior
         ax = axes[1]
-        img = ax.pcolormesh(X_sb, Y_sb, posterior_sb.T, vmin=vmin_sb)
+        img = ax.pcolormesh(X_sb, Y_sb, posterior_sb, vmin=vmin_sb)
         ax.scatter(best_pos_sb.ra, best_pos_sb.dec, c='r', s=10)
         if args.ra_real:
             ax.axvline(args.ra_real, c='r')
@@ -227,7 +214,7 @@ if __name__ == '__main__':
 
         # CB posterior interpolated
         ax = axes[2]
-        img = ax.pcolormesh(X_sb, Y_sb, posterior_cb_interp.T, vmin=vmin_cb)
+        img = ax.pcolormesh(X_sb, Y_sb, posterior_cb_interp, vmin=vmin_cb)
         ax.scatter(best_pos_cb_interp.ra, best_pos_cb_interp.dec, c='r', s=10)
         if args.ra_real:
             ax.axvline(args.ra_real, c='r')
@@ -240,7 +227,7 @@ if __name__ == '__main__':
 
         # Sum of posteriors
         ax = axes[3]
-        img = ax.pcolormesh(X_total, Y_total, posterior_total.T, vmin=vmin_tot)
+        img = ax.pcolormesh(X_total, Y_total, posterior_total, vmin=vmin_tot)
         if have_best_pos:
             ax.scatter(best_pos_total.ra, best_pos_total.dec, c='r', s=10)
         if args.ra_real:

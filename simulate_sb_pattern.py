@@ -66,7 +66,7 @@ class SBPattern(object):
         # Generate beam pattern if load=False
         if not load:
             bf = BeamFormer(freqs=freqs, ntab=ntab, theta_proj=theta_proj, dish_pos=dish_pos)
-            cb = CompoundBeam(freqs, dtheta, dphi)
+            cb = CompoundBeam(freqs, dtheta, dphi, rot=parang)
             sb_gen = SBGenerator.from_science_case(4)
 
             # CB pattern

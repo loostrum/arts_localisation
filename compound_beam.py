@@ -29,12 +29,13 @@ def gauss_2d(xy, x_mean, x_sig, y_mean, y_sig, rho):
 
 class CompoundBeam(object):
     
-    def __init__(self, freqs, theta=0*u.deg, phi=0*u.deg):
+    def __init__(self, freqs, theta=0*u.deg, phi=0*u.deg, rot=0*u.deg):
         """
         Generate a compound beam pattern
         :param freqs: observing frequencies
         :param theta: E-W offsets (default: 0)
         :param phi: N-S offsets (default: 0)
+        :param rot: rotation applied to model (parallactic angle, default 0)
         """
 
         if not isinstance(theta, np.ndarray):
@@ -50,6 +51,7 @@ class CompoundBeam(object):
         self.theta = theta
         self.phi = phi
         self.freqs = freqs
+        self.rot = rot
 
         # load beam measurements
         self.beams_measured = np.genfromtxt(CB_MODEL_FILE, delimiter=',', names=True)
@@ -111,6 +113,13 @@ class CompoundBeam(object):
         x = (np.arange(n) - n/2) * dx
         y = (np.arange(n) - n/2) * dy
         X, Y = np.meshgrid(x, y)
+
+        # apply rotation
+        r = np.sqrt(X**2 + Y**2)
+        theta = np.arctan2(Y, X)
+        theta -= self.rot
+        X = r*np.cos(theta)
+        Y = r*np.sin(theta)
 
         # check NaNs
         nans =~np.isfinite(beam)

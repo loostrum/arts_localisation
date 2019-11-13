@@ -84,7 +84,7 @@ class SBPattern(object):
                 # TAB beamformer
                 tab_fringes = bf.beamform(dtheta, dish_pos, tab=tab)
                 # Apply TAB pattern at each phi to primary beam pattern
-                i_tot_2d = primary_beam[..., None] * tab_fringes
+                i_tot_2d = primary_beam * tab_fringes[:, None, :]
                 # store to output grid
                 beam_pattern_tab[tab] = i_tot_2d
                 beam_pattern_tab_1d[tab] = tab_fringes
@@ -99,7 +99,7 @@ class SBPattern(object):
                 # loop over SB map
                 beam = sb_gen.synthesize_beam(beam_pattern_tab_1d, sb)
                 # apply 2D primary beam and store
-                beam_pattern_sb[sb] = primary_beam[..., None] * beam
+                beam_pattern_sb[sb] = primary_beam * beam[:, None, :]
 
             self.beam_pattern_tab = beam_pattern_tab
             self.beam_pattern_tab_1d = beam_pattern_tab_1d
@@ -117,7 +117,7 @@ class SBPattern(object):
         self.nsb = nsb
         self.theta_proj = theta_proj
         self.cb_model = cb_model
-        self.cb = cb
+        self.cbnum = cbnum
 
         self.mid_theta = int(npoint_theta/2.)
         self.mid_phi = int(npoint_phi/2.)
@@ -133,8 +133,8 @@ class SBPattern(object):
         :param prefix: file name prefix
         """
         if self.cb_model == 'real':
-            fname_tab = "models/tied-array_beam_pattern_{}_cb{:02d}_PA{:.6f}".format(self.cb_model, self.cb, self.theta_proj.to(u.deg).value)
-            fname_sb = "models/synthesized_beam_pattern_{}_cb{:02d}_PA{:.6f}".format(self.cb_model, self.cb, self.theta_proj.to(u.deg).value)
+            fname_tab = "models/tied-array_beam_pattern_{}_cb{:02d}_PA{:.6f}".format(self.cb_model, self.cbnum, self.theta_proj.to(u.deg).value)
+            fname_sb = "models/synthesized_beam_pattern_{}_cb{:02d}_PA{:.6f}".format(self.cb_model, self.cbnum, self.theta_proj.to(u.deg).value)
         else:
             fname_tab = "models/tied-array_beam_pattern_{}_cb_PA{:.6f}".format(self.cb_model, self.theta_proj.to(u.deg).value)
             fname_sb = "models/synthesized_beam_pattern_{}_cb_PA{:.6f}".format(self.cb_model, self.theta_proj.to(u.deg).value)

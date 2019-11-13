@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 #
-# Converter tools:
-# RA <-> HA
-# hh:mm:ss <-> deg
-# dd:mm:ss <-> deg
+# Converter tools
+# HA/Dec to Alt/Az taken from:
+# http://star-www.st-and.ac.uk/~fv/webnotes/chapter7.htm
 
 import numpy as np
 import astropy.units as u
@@ -62,7 +61,7 @@ def ha_to_ra(ha, dec, t, lon=WSRT_LON):
     return coord_apparent.transform_to('icrs')
 
 
-def ha_to_proj(ha, dec, lat=WSRT_LAT):
+def ha_to_par(ha, dec, lat=WSRT_LAT):
     """
     Convert HA, Dec to parallactic angle 
     This is the SB rotation w.r.t. the RA-Dec frame
@@ -70,7 +69,24 @@ def ha_to_proj(ha, dec, lat=WSRT_LAT):
     :param dec: declination with unit
     :param lat: Latitude with unit (default: WSRT)
     """
-    theta_proj = np.arctan(np.cos(lat)*np.sin(ha) / 
-                    (np.sin(lat)*np.cos(dec) - 
-                    np.cos(lat)*np.sin(dec)*np.cos(ha))).to(u.deg)
+    theta_par = np.arctan(np.cos(lat)*np.sin(ha) /
+                   (np.sin(lat)*np.cos(dec) -
+                   np.cos(lat)*np.sin(dec)*np.cos(ha))).to(u.deg)
+    return theta_par.to(u.deg)
+
+
+def ha_to_proj(ha, dec, lat=WSRT_LAT):
+    """
+    Convert HA, Dec to projection angle
+    This is the E-W baseline projection angle
+    :param ha: hour angle with unit
+    :param dec: declination with unit
+    :param lat: Latitude with unit (default: WSRT)
+    """
+
+    colat = 90*u.deg - lat
+    alt = np.arcsin(np.sin(dec)*np.sin(colat) + np.cos(dec)*np.cos(colat)*np.cos(ha))
+    az = np.arcsin(-np.sin(ha)*np.cos(dec) / np.cos(alt))
+    # ToDo: verify if this is correct
+    theta_proj = np.arccos(np.sqrt(np.sin(alt)**2 + (np.cos(alt)*np.cos(az))**2))
     return theta_proj.to(u.deg)

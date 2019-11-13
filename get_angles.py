@@ -14,8 +14,8 @@
 import argparse
 import astropy.units as u
 import numpy as np
-
-from convert import ha_to_proj
+ 
+from convert import ha_to_proj, ha_to_par
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -27,4 +27,8 @@ if __name__ == '__main__':
     ha = args.ha * u.deg
     dec = args.dec * u.deg
 
-    print(ha_to_proj(ha, dec))
+    proj = ha_to_proj(ha, dec)
+    parang = ha_to_par(ha, dec)
+
+    print("Projection angle (E-W baseline projection): {:.2f}".format(proj))
+    print("Parallactic angle (SB rotation): {:.2f}".format(parang))

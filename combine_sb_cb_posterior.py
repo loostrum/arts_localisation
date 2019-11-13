@@ -97,9 +97,9 @@ if __name__ == '__main__':
     alt_sb = phi_sb + CB_best_altaz.alt
     # shift in Az is towards east; can be higher or lower Az; determine sign
     if (CB_best_altaz.az > 270*u.deg) or (CB_best_altaz.az < 90*u.deg):
-        sgn = 1
-    else:
         sgn = -1
+    else:
+        sgn = 1
     az_sb = CB_best_altaz.az + sgn * (theta_sb / np.cos(np.mean(alt_sb)))
     # create SkyCoord object in AltAz frame and convert to radec
     all_az, all_alt = np.meshgrid(az_sb, alt_sb)
@@ -174,6 +174,21 @@ if __name__ == '__main__':
     except ValueError as e:
         print("Exception caught while calculating best position:", e)
         have_best_pos = False
+
+    # plot distance between measured and real pos
+    if args.ra_real and args.dec_real:
+        real_pos = SkyCoord(args.ra_real, args.dec_real, unit='deg')
+        # SB
+        dist = real_pos.separation(best_pos_sb)
+        print("Distance between SB and real posiiton: {}".format(dist)
+        # CB
+        dist = real_pos.separation(best_pos_cb)
+        print("Distance between CB and real posiiton: {}".format(dist)
+        # Total
+        if have_best_pos:
+            dist = real_pos.separation(best_pos_total)
+            print("Distance between total and real posiiton: {}".format(dist)
+    
 
     if args.plot:
         # plot posteriors in RA,Dec

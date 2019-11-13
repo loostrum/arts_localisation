@@ -13,7 +13,9 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord, EarthLocation, AltAz, FK5
 from astropy.time import Time, TimeDelta
 
-from constants import WSRT_LAT, WSRT_LON, WSRT_ALT
+from constants import WSRT_LAT, WSRT_LON, WSRT_ALT, \
+                      THETAMAX_CB, PHIMAX_CB, NTHETA_CB, NPHI_CB, \
+                      THETAMAX_SB, PHIMAX_SB, NTHETA_SB, NPHI_SB
 from convert import ha_to_ra
 
 
@@ -43,14 +45,16 @@ if __name__ == '__main__':
     print("Done")
 
     # define coordinates
-    nphi_cb, ntheta_cb = posterior_cb.shape
-    nphi_sb, ntheta_sb = posterior_sb.shape
+    theta_cb = np.linspace(-THETAMAX_CB, THETAMAX_CB, NTHETA_CB) * u.arcmin
+    phi_cb = np.linspace(-PHIMAX_CB, PHIMAX_CB, NPHI_CB) * u.arcmin
+    theta_sb = np.linspace(-THETAMAX_SB, THETAMAX_SB, NTHETA_SB) * u.arcmin
+    phi_sb = np.linspace(-PHIMAX_SB, PHIMAX_SB, NPHI_SB) * u.arcmin
 
-    theta_cb = np.linspace(-130, 130, ntheta_cb) * u.arcmin
-    phi_cb = np.linspace(-100, 100, nphi_cb) * u.arcmin
-
-    theta_sb = np.linspace(-50, 50, ntheta_sb) * u.arcmin
-    phi_sb = np.linspace(-50, 50, nphi_sb) * u.arcmin
+    # check shape
+    assert len(phi_cb) == posterior_cb.shape[0]
+    assert len(theta_cb) == posterior_cb.shape[1]
+    assert len(phi_sb) == posterior_sb.shape[0]
+    assert len(theta_sb) == posterior_sb.shape[1]
 
     # source parameters
     with open(args.input_file, 'r') as f:

@@ -10,7 +10,7 @@ from darc.sb_generator import SBGenerator
 
 from beamformer import BeamFormer
 from compound_beam import CompoundBeam
-from constants import DISH
+from constants import DISH, NTHETA_SB, NPHI_SB, THETAMAX_SB, PHIMAX_SB
 import convert
 
 
@@ -29,9 +29,6 @@ class SBPattern(object):
         :param cbnum: which CB to use for modelling (only relevant if cb_model is 'real')
         :param parang: parallactic angle (Default: 0)
         """
-        max_dist = 50  # arcmin
-        npoint_theta = 10001  # has to be odd to ensure inclusion of 0
-        npoint_phi = 201  # has to be odd to ensure inclusion of 0
         dish_mode = 'a8'
         min_freq = 1220 * u.MHz
         nfreq = 64  # should be multiple of 32
@@ -56,11 +53,9 @@ class SBPattern(object):
             self.beam_pattern_sb_sky = np.load(fname)
             self.beam_pattern_tab = None
             self.beam_pattern_tab_1d = None
-            # overwrite lengths
-            nsb, npoint_theta, npoint_phi = self.beam_pattern_sb_sky.shape
 
-        dtheta = np.linspace(-max_dist, max_dist, npoint_theta) * u.arcmin
-        dphi = np.linspace(-max_dist, max_dist, npoint_phi) * u.arcmin
+        dtheta = np.linspace(-THETAMAX_SB, THETAMAX_SB, NTHETA_SB) * u.arcmin
+        dphi = np.linspace(-PHIMAX_SB, PHIMAX_SB, NPHI_SB) * u.arcmin
         freqs = np.arange(nfreq) * df + min_freq + df / 2  # center of each channel
 
         # Generate beam pattern if load=False
@@ -78,9 +73,9 @@ class SBPattern(object):
 
             print("Generating TABs")
             # get TAB pattern for each tab, freq, theta, phi (image order: phi, then theta)
-            beam_pattern_tab = np.zeros((ntab, nfreq, npoint_phi, npoint_theta))
+            beam_pattern_tab = np.zeros((ntab, nfreq, NPHI_SB, NTHETA_SB))
             # second array for pattern without phi coordinate for faster SB generation
-            beam_pattern_tab_1d = np.zeros((ntab, nfreq, npoint_theta))
+            beam_pattern_tab_1d = np.zeros((ntab, nfreq, NTHETA_SB))
             for tab in tqdm.tqdm(range(ntab)):
                 # TAB beamformer
                 tab_fringes = bf.beamform(dtheta, dish_pos, tab=tab)
@@ -91,7 +86,7 @@ class SBPattern(object):
                 beam_pattern_tab_1d[tab] = tab_fringes
 
             print("Generating requested SBs")
-            shape = (nsb, nfreq, npoint_phi, npoint_theta)
+            shape = (nsb, nfreq, NPHI_SB, NTHETA_SB)
             if memmap_file is not None:
                 beam_pattern_sb = np.memmap(memmap_file+'_full_sb.dat', dtype=float, mode='w+', shape=shape)
             else:
@@ -106,19 +101,15 @@ class SBPattern(object):
             self.beam_pattern_tab_1d = beam_pattern_tab_1d
             # sum SB pattern over frequency
             print("Generating on-sky SB pattern")
-            shape = (nsb, npoint_phi, npoint_theta)
+            shape = (nsb, NPHI_SB, NTHETA_SB)
             if memmap_file is not None:
                 self.beam_pattern_sb_sky = np.memmap(memmap_file+'_sb.dat', dtype=float, mode='w+', shape=shape)
             else:
                 self.beam_pattern_sb_sky = np.zeros(shape)
             self.beam_pattern_sb_sky = beam_pattern_sb.sum(axis=1)
 
-        self.npoint_theta = npoint_theta
-        self.npoint_phi = npoint_phi
-        self.nsb = nsb
-
-        self.mid_theta = int(npoint_theta/2.)
-        self.mid_phi = int(npoint_phi/2.)
+        self.mid_theta = int(NTHETA_SB/2.)
+        self.mid_phi = int(NPHI_SB/2.)
         self.mid_freq = int(nfreq/2.)
 
         self.dtheta = dtheta
@@ -230,6 +221,8 @@ if __name__ == '__main__':
     #add projection angles
     kwargs['theta_proj'] = theta_proj
     kwargs['parang'] = parang
+    print("Using projection angle:", theta_proj)
+    print("Using parallactic angle:", parang)
     # rename cb to cbnum
     # keep user arg cb for simplicity
     kwargs['cbnum'] = kwargs['cb']

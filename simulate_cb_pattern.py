@@ -5,6 +5,7 @@ import numpy as np
 import astropy.units as u
 
 from compound_beam import CompoundBeam
+from constants import THETAMAX_CB, PHIMAX_CB, NTHETA_CB, NPHI_CB
 
 
 if __name__ == '__main__':
@@ -24,9 +25,8 @@ if __name__ == '__main__':
     cb_pos *= u.arcmin
 
     # generate grid of full CB pattern
-    step = .1
-    theta = np.arange(-130, 130+step, step) * u.arcmin
-    phi = np.arange(-100, 100+step, step) * u.arcmin
+    theta = np.linspace(-THETAMAX_CB, THETAMAX_CB, NTHETA_CB) * u.arcmin
+    phi = np.linspace(-PHIMAX_CB, PHIMAX_CB, NPHI_CB) * u.arcmin
 
     cb_sens = np.zeros((ncb, len(phi), len(theta)))
 
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     for cb in tqdm.tqdm(range(ncb)):
         dra, ddec = cb_pos[cb]
         # calculate CB integrated over frequencies
-        freqs = np.linspace(1220, 1520, 2) * u.MHz
+        freqs = np.linspace(1220, 1520, 32) * u.MHz
         beam = CompoundBeam(freqs, theta-dra, phi-ddec)
         cb_sens[cb] = beam.beam_pattern(mode, cb=cb).sum(axis=0)
 

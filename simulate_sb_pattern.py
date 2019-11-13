@@ -17,7 +17,7 @@ import convert
 class SBPattern(object):
 
     def __init__(self, sbs=None, load=False, fname=None, theta_proj=0*u.deg, memmap_file=None,
-                 cb_model='real'):
+                 cb_model='gauss', cb=None):
         """
         Generate Synthesized Beam pattern
         :param sbs: array of SBs to generate [Default: all]
@@ -25,7 +25,8 @@ class SBPattern(object):
         :param fname: file containing beam pattern
         :param theta_proj: projection angle used when generating TAB pattern
         :param memmap_file: file to use for memmap (Default: no memmap)
-        :param cb_model: CB model type to use (defeault: real)
+        :param cb_model: CB model type to use (default: gauss)
+        :param cb: which CB to use for modelling (only relevant if cb_model is 'real')
         """
         max_dist = 50  # arcmin
         npoint_theta = 10001  # has to be odd to ensure inclusion of 0
@@ -39,6 +40,10 @@ class SBPattern(object):
         # fname is required when load is True
         if load and fname is None:
             raise ValueError("fname cannot be None when load=True")
+
+        # cb is required when cb_model is real
+        if cb_model == 'real' and cb is None:
+            raise ValueError("cb cannot be None when cb_model='real'")
 
         if sbs is None:
             sbs = range(nsb)
@@ -65,7 +70,7 @@ class SBPattern(object):
 
             # CB pattern
             print("Generating CB")
-            primary_beam = cb.beam_pattern(cb_model)
+            primary_beam = cb.beam_pattern(cb_model, cb=cb)
 
             print("Generating TABs")
             # get TAB pattern for each tab, freq, theta, phi (image order: phi, then theta)
@@ -109,6 +114,7 @@ class SBPattern(object):
         self.nsb = nsb
         self.theta_proj = theta_proj
         self.cb_model = cb_model
+        self.cb = cb
 
         self.mid_theta = int(npoint_theta/2.)
         self.mid_phi = int(npoint_phi/2.)
@@ -123,8 +129,12 @@ class SBPattern(object):
         Save on-sky SB and TAB maps
         :param prefix: file name prefix
         """
-        fname_tab = "models/tied-array_beam_pattern_{}_cb_PA{:.6f}".format(self.cb_model, self.theta_proj.to(u.deg).value)
-        fname_sb = "models/synthesized_beam_pattern_{}_cb_PA{:.6f}".format(self.cb_model, self.theta_proj.to(u.deg).value)
+        if self.cb_model == 'real':
+            fname_tab = "models/tied-array_beam_pattern_{}_cb{:02d}_PA{:.6f}".format(self.cb_model, self.cb, self.theta_proj.to(u.deg).value)
+            fname_sb = "models/synthesized_beam_pattern_{}_cb{:02d}_PA{:.6f}".format(self.cb_model, self.cb, self.theta_proj.to(u.deg).value)
+        else:
+            fname_tab = "models/tied-array_beam_pattern_{}_cb_PA{:.6f}".format(self.cb_model, self.theta_proj.to(u.deg).value)
+            fname_sb = "models/synthesized_beam_pattern_{}_cb_PA{:.6f}".format(self.cb_model, self.theta_proj.to(u.deg).value)
         np.save(fname_tab, self.beam_pattern_tab)
         np.save(fname_sb, self.beam_pattern_sb_sky)
 
@@ -195,6 +205,8 @@ if __name__ == '__main__':
     parser.add_argument('--ha', required=True, type=float, help="Hour angle in degrees")
     parser.add_argument('--dec', required=True, type=float, help="Declination in degrees")
     parser.add_argument('--cb_model', required=False, type=str, default='real', help="CB model type to use "
+                        "(Default: %(default)s)")
+    parser.add_argument('--cb', required=False, type=int, default=0, help="Which CB to use when using 'real' CB model "
                         "(Default: %(default)s)")
     parser.add_argument('--memmap_file', type=str, help="If present, use this file for numpy memmap")
     parser.add_argument('--plot', action='store_true', help="Create and show plots")

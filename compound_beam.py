@@ -117,7 +117,7 @@ class CompoundBeam(object):
         # apply rotation
         r = np.sqrt(X**2 + Y**2)
         theta = np.arctan2(Y, X)
-        theta -= self.rot
+        theta -= self.rot.to(u.radian).value
         X = r*np.cos(theta)
         Y = r*np.sin(theta)
 

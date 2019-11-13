@@ -17,7 +17,7 @@ import convert
 class SBPattern(object):
 
     def __init__(self, sbs=None, load=False, fname=None, theta_proj=0*u.deg, memmap_file=None,
-                 cb_model='gauss', cb=None):
+                 cb_model='gauss', cbnum=None):
         """
         Generate Synthesized Beam pattern
         :param sbs: array of SBs to generate [Default: all]
@@ -26,7 +26,7 @@ class SBPattern(object):
         :param theta_proj: projection angle used when generating TAB pattern
         :param memmap_file: file to use for memmap (Default: no memmap)
         :param cb_model: CB model type to use (default: gauss)
-        :param cb: which CB to use for modelling (only relevant if cb_model is 'real')
+        :param cbnum: which CB to use for modelling (only relevant if cb_model is 'real')
         """
         max_dist = 50  # arcmin
         npoint_theta = 10001  # has to be odd to ensure inclusion of 0
@@ -42,8 +42,8 @@ class SBPattern(object):
             raise ValueError("fname cannot be None when load=True")
 
         # cb is required when cb_model is real
-        if cb_model == 'real' and cb is None:
-            raise ValueError("cb cannot be None when cb_model='real'")
+        if cb_model == 'real' and cbnum is None:
+            raise ValueError("cbnum cannot be None when cb_model='real'")
 
         if sbs is None:
             sbs = range(nsb)
@@ -69,8 +69,11 @@ class SBPattern(object):
             sb_gen = SBGenerator.from_science_case(4)
 
             # CB pattern
-            print("Generating CB")
-            primary_beam = cb.beam_pattern(cb_model, cb=cb)
+            if cbnum is not None:
+                print("Generating CB{:02d}".format(cbnum))
+            else:
+                print("Generating CB")
+            primary_beam = cb.beam_pattern(cb_model, cb=cbnum)
 
             print("Generating TABs")
             # get TAB pattern for each tab, freq, theta, phi (image order: phi, then theta)
@@ -225,6 +228,10 @@ if __name__ == '__main__':
     del kwargs['plot']
     #add projection angle
     kwargs['theta_proj'] = theta_proj
+    # rename cb to cbnum
+    # keep user arg cb for simplicity
+    kwargs['cbnum'] = kwargs['cb']
+    del kwargs['cb']
 
     # generate and store full beam pattern
     beam_pattern = SBPattern(**kwargs)

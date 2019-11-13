@@ -17,7 +17,7 @@ import convert
 class SBPattern(object):
 
     def __init__(self, sbs=None, load=False, fname=None, theta_proj=0*u.deg, memmap_file=None,
-                 cb_model='gauss', cbnum=None):
+                 cb_model='gauss', cbnum=None, parang=0*u.deg):
         """
         Generate Synthesized Beam pattern
         :param sbs: array of SBs to generate [Default: all]
@@ -27,6 +27,7 @@ class SBPattern(object):
         :param memmap_file: file to use for memmap (Default: no memmap)
         :param cb_model: CB model type to use (default: gauss)
         :param cbnum: which CB to use for modelling (only relevant if cb_model is 'real')
+        :param parang: parallactic angle (Default: 0)
         """
         max_dist = 50  # arcmin
         npoint_theta = 10001  # has to be odd to ensure inclusion of 0
@@ -115,9 +116,6 @@ class SBPattern(object):
         self.npoint_theta = npoint_theta
         self.npoint_phi = npoint_phi
         self.nsb = nsb
-        self.theta_proj = theta_proj
-        self.cb_model = cb_model
-        self.cbnum = cbnum
 
         self.mid_theta = int(npoint_theta/2.)
         self.mid_phi = int(npoint_phi/2.)
@@ -127,17 +125,13 @@ class SBPattern(object):
         self.dphi = dphi
         self.freqs = freqs
 
-    def save(self):
+    def save(self, prefix):
         """
         Save on-sky SB and TAB maps
         :param prefix: file name prefix
         """
-        if self.cb_model == 'real':
-            fname_tab = "models/tied-array_beam_pattern_{}_cb{:02d}_PA{:.6f}".format(self.cb_model, self.cbnum, self.theta_proj.to(u.deg).value)
-            fname_sb = "models/synthesized_beam_pattern_{}_cb{:02d}_PA{:.6f}".format(self.cb_model, self.cbnum, self.theta_proj.to(u.deg).value)
-        else:
-            fname_tab = "models/tied-array_beam_pattern_{}_cb_PA{:.6f}".format(self.cb_model, self.theta_proj.to(u.deg).value)
-            fname_sb = "models/synthesized_beam_pattern_{}_cb_PA{:.6f}".format(self.cb_model, self.theta_proj.to(u.deg).value)
+        fname_tab = "models/tied-array_beam_pattern_{}".format(prefix)
+        fname_sb = "models/synthesized_beam_pattern_{}".format(prefix)
         np.save(fname_tab, self.beam_pattern_tab)
         np.save(fname_sb, self.beam_pattern_sb_sky)
 
@@ -216,18 +210,26 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # convert HA, Dec to projection angle
+    # convert HA, Dec to projection angles
     ha = args.ha * u.deg
     dec = args.dec * u.deg
     theta_proj = convert.ha_to_proj(ha, dec)
+    parang = convert.ha_to_par(ha, dec)
+
+    if args.cb is not None:
+        out_prefix = "{}_cb{:02d}_HA{:.2f}_Dec{:.2f}".format(args.cb_model, args.cb, args.ha, args.dec)
+    else:
+        out_prefix = "{}_cb_HA{:.2f}_Dec{:.2f}".format(args.cb_model, args.ha, args.dec)
+    
 
     # convert args to dict and remove unused params
     kwargs = vars(args).copy()
     del kwargs['ha']
     del kwargs['dec']
     del kwargs['plot']
-    #add projection angle
+    #add projection angles
     kwargs['theta_proj'] = theta_proj
+    kwargs['parang'] = parang
     # rename cb to cbnum
     # keep user arg cb for simplicity
     kwargs['cbnum'] = kwargs['cb']
@@ -235,7 +237,7 @@ if __name__ == '__main__':
 
     # generate and store full beam pattern
     beam_pattern = SBPattern(**kwargs)
-    beam_pattern.save()
+    beam_pattern.save(out_prefix)
     # or load a beam pattern from disk
     #beam_pattern = SBPattern(load=True, fname='models/synthesized_beam_pattern_gauss_cb_PA10.600506.npy')
 

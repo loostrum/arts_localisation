@@ -139,6 +139,7 @@ if __name__ == '__main__':
         if have_nondet:
             ax = axes[0]
             img = ax.pcolormesh(X, Y, num_bad_cb.T)
+            ax.scatter(best_theta, best_phi, s=10, c='cyan')
             fig.colorbar(img, ax=ax)
             ax.set_aspect('equal')
             ax.set_xlabel(r'$\theta$ [arcmin]')
@@ -148,7 +149,8 @@ if __name__ == '__main__':
 
         # Plot posterior
         ax = axes[1]
-        img = ax.pcolormesh(X, Y, log_posterior.T, vmin=-200)
+        img = ax.pcolormesh(X, Y, log_posterior.T, vmin=-10)
+        ax.scatter(best_theta, best_phi, s=10, c='cyan')
         fig.colorbar(img, ax=ax)
         ax.invert_yaxis()
         ax.set_aspect('equal')

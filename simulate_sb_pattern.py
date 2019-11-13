@@ -68,21 +68,21 @@ class SBPattern(object):
             primary_beam = cb.beam_pattern(pb_mode)
 
             print("Generating TABs")
-            # get TAB pattern for each tab, freq, theta, phi
-            beam_pattern_tab = np.zeros((ntab, nfreq, npoint_theta, npoint_phi))
+            # get TAB pattern for each tab, freq, theta, phi (image order: phi, then theta)
+            beam_pattern_tab = np.zeros((ntab, nfreq, npoint_phi, npoint_theta))
             # second array for pattern without phi coordinate for faster SB generation
             beam_pattern_tab_1d = np.zeros((ntab, nfreq, npoint_theta))
             for tab in tqdm.tqdm(range(ntab)):
                 # TAB beamformer
                 tab_fringes = bf.beamform(dtheta, dish_pos, tab=tab)
                 # Apply TAB pattern at each phi to primary beam pattern
-                i_tot_2d = primary_beam * tab_fringes[..., None]
+                i_tot_2d = primary_beam[..., None] * tab_fringes
                 # store to output grid
                 beam_pattern_tab[tab] = i_tot_2d
                 beam_pattern_tab_1d[tab] = tab_fringes
 
             print("Generating requested SBs")
-            shape = (nsb, nfreq, npoint_theta, npoint_phi)
+            shape = (nsb, nfreq, npoint_phi, npoint_theta)
             if memmap_file is not None:
                 beam_pattern_sb = np.memmap(memmap_file+'_full_sb.dat', dtype=float, mode='w+', shape=shape)
             else:
@@ -91,13 +91,13 @@ class SBPattern(object):
                 # loop over SB map
                 beam = sb_gen.synthesize_beam(beam_pattern_tab_1d, sb)
                 # apply 2D primary beam and store
-                beam_pattern_sb[sb] = primary_beam * beam[..., None]
+                beam_pattern_sb[sb] = primary_beam[..., None] * beam
 
             self.beam_pattern_tab = beam_pattern_tab
             self.beam_pattern_tab_1d = beam_pattern_tab_1d
             # sum SB pattern over frequency
             print("Generating on-sky SB pattern")
-            shape = (nsb, npoint_theta, npoint_phi)
+            shape = (nsb, npoint_phi, npoint_theta)
             if memmap_file is not None:
                 self.beam_pattern_sb_sky = np.memmap(memmap_file+'_sb.dat', dtype=float, mode='w+', shape=shape)
             else:
@@ -141,7 +141,7 @@ class SBPattern(object):
             # TAB00 at one freq
             ax = axes[0]
             X, Y = np.meshgrid(self.dtheta, self.dphi)
-            img = ax.pcolormesh(X, Y, self.beam_pattern_tab[tab][self.mid_freq].T, **kwargs)
+            img = ax.pcolormesh(X, Y, self.beam_pattern_tab[tab][self.mid_freq], **kwargs)
             # fig.colorbar(img, ax=ax)
             ax.set_aspect('equal')
             ax.set_xlabel(r'$\theta$ [arcmin]')
@@ -151,7 +151,7 @@ class SBPattern(object):
             # TAB00 theta vs freq
             ax = axes[1]
             X, Y = np.meshgrid(self.dtheta, self.freqs)
-            img = ax.pcolormesh(X, Y, self.beam_pattern_tab[tab][..., self.mid_phi], **kwargs)
+            img = ax.pcolormesh(X, Y, self.beam_pattern_tab[tab][:, self.mid_phi, :], **kwargs)
             # fig.colorbar(img, ax=ax)
             ax.set_xlabel(r'$\theta$ [arcmin]')
             ax.set_ylabel('Frequency [MHz]')
@@ -173,7 +173,7 @@ class SBPattern(object):
             for i, sb in enumerate(sbs):
                 ax = axes[i]
                 X, Y = np.meshgrid(self.dtheta, self.dphi)
-                img = ax.pcolormesh(X, Y, self.beam_pattern_sb_sky[sb].T, **kwargs)
+                img = ax.pcolormesh(X, Y, self.beam_pattern_sb_sky[sb], **kwargs)
                 # fig.colorbar(img, ax=ax)
                 ax.set_aspect('equal')
                 ax.set_xlabel(r'$\theta$ [arcmin]')
@@ -212,10 +212,10 @@ if __name__ == '__main__':
     kwargs['theta_proj'] = theta_proj
 
     # generate and store full beam pattern
-    #beam_pattern = SBPattern(**kwargs)
-    #beam_pattern.save()
+    beam_pattern = SBPattern(**kwargs)
+    beam_pattern.save()
     # or load a beam pattern from disk
-    beam_pattern = SBPattern(load=True, fname='models/synthesized_beam_pattern_single_cb_PA10.600506.npy')
+    #beam_pattern = SBPattern(load=True, fname='models/synthesized_beam_pattern_single_cb_PA10.600506.npy')
 
     # plot
     if args.plot:

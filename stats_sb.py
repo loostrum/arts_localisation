@@ -89,8 +89,7 @@ if __name__ == '__main__':
     log_posterior -= np.nanmax(log_posterior)
 
     # Save the posterior
-    X, Y = np.meshgrid(theta, phi)
-    np.save(args.output_file, [X, Y, log_posterior])
+    np.save(args.output_file, log_posterior)
 
     # Get the best position
     best_theta_ind, best_phi_ind = np.unravel_index(np.nanargmax(log_posterior, axis=None), log_posterior.shape)
@@ -102,6 +101,7 @@ if __name__ == '__main__':
     if args.plot:
         fig, axes = plt.subplots(ncols=2, figsize=(14, 4), sharex=True, sharey=True)
         axes = axes.flatten()
+        X, Y = np.meshgrid(theta, phi)
 
         # Plot number of SBs > max_snr at each position
         if have_nondet:

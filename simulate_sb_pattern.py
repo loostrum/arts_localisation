@@ -16,20 +16,20 @@ import convert
 
 class SBPattern(object):
 
-    def __init__(self, sbs=None, load=False, fname=None, theta_proj=0*u.deg, memmap_file=None):
+    def __init__(self, sbs=None, load=False, fname=None, theta_proj=0*u.deg, memmap_file=None,
+                 cb_model='real'):
         """
         Generate Synthesized Beam pattern
         :param sbs: array of SBs to generate [Default: all]
         :param load: load beam pattern from disk instead of generating
         :param fname: file containing beam pattern
         :param theta_proj: projection angle used when generating TAB pattern
-        :param memmap: flag to use memmaps for beam models
-        :param memmap_file: file to use for memmap
+        :param memmap_file: file to use for memmap (Default: no memmap)
+        :param cb_model: CB model type to use (defeault: real)
         """
         max_dist = 50  # arcmin
         npoint_theta = 10001  # has to be odd to ensure inclusion of 0
         npoint_phi = 201  # has to be odd to ensure inclusion of 0
-        pb_mode = 'gauss'
         dish_mode = 'a8'
         min_freq = 1220 * u.MHz
         nfreq = 64  # should be multiple of 32
@@ -65,7 +65,7 @@ class SBPattern(object):
 
             # CB pattern
             print("Generating CB")
-            primary_beam = cb.beam_pattern(pb_mode)
+            primary_beam = cb.beam_pattern(cb_model)
 
             print("Generating TABs")
             # get TAB pattern for each tab, freq, theta, phi (image order: phi, then theta)
@@ -193,6 +193,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--ha', required=True, type=float, help="Hour angle in degrees")
     parser.add_argument('--dec', required=True, type=float, help="Declination in degrees")
+    parser.add_argument('--cb_model', required=False, type=str, default='real', help="CB model type to use "
+                        "(Default: %(default)s)")
     parser.add_argument('--memmap_file', type=str, help="If present, use this file for numpy memmap")
     parser.add_argument('--plot', action='store_true', help="Create and show plots")
 

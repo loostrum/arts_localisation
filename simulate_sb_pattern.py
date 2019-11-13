@@ -108,6 +108,7 @@ class SBPattern(object):
         self.npoint_phi = npoint_phi
         self.nsb = nsb
         self.theta_proj = theta_proj
+        self.cb_model = cb_model
 
         self.mid_theta = int(npoint_theta/2.)
         self.mid_phi = int(npoint_phi/2.)
@@ -122,8 +123,8 @@ class SBPattern(object):
         Save on-sky SB and TAB maps
         :param prefix: file name prefix
         """
-        fname_tab = "{}_PA{:.6f}".format("models/tied-array_beam_pattern_single_cb", self.theta_proj.to(u.deg).value)
-        fname_sb = "{}_PA{:.6f}".format("models/synthesized_beam_pattern_single_cb", self.theta_proj.to(u.deg).value)
+        fname_tab = "models/tied-array_beam_pattern_{}_cb_PA{:.6f}".format(self.cb_model, self.theta_proj.to(u.deg).value)
+        fname_sb = "models/synthesized_beam_pattern_{}_cb_PA{:.6f}".format(self.cb_model, self.theta_proj.to(u.deg).value)
         np.save(fname_tab, self.beam_pattern_tab)
         np.save(fname_sb, self.beam_pattern_sb_sky)
 
@@ -217,7 +218,7 @@ if __name__ == '__main__':
     beam_pattern = SBPattern(**kwargs)
     beam_pattern.save()
     # or load a beam pattern from disk
-    #beam_pattern = SBPattern(load=True, fname='models/synthesized_beam_pattern_single_cb_PA10.600506.npy')
+    #beam_pattern = SBPattern(load=True, fname='models/synthesized_beam_pattern_gauss_cb_PA10.600506.npy')
 
     # plot
     if args.plot:

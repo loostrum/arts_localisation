@@ -12,7 +12,7 @@ from convert import ra_to_ha
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', required=True, help="Yaml config file")
+    parser.add_argument('file', help="Yaml config file")
 
     args = parser.parse_args()
 

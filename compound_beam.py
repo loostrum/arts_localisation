@@ -155,5 +155,5 @@ class CompoundBeam(object):
             this_popt[3] *= scaling
 
             # calculate response
-            output_grid[i] = gauss_2d(XY, *this_popt).reshape(len(self.phi), len(self.theta))
+            output_grid[i] = gauss_2d(XY, *this_popt).reshape(len(self.phi), len(self.theta)) / 2.
         return output_grid

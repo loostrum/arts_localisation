@@ -8,15 +8,41 @@ import argparse
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
 from scipy.interpolate import griddata
 import astropy.units as u
 from astropy.coordinates import SkyCoord, EarthLocation, AltAz, FK5
 from astropy.time import Time, TimeDelta
 
-from constants import WSRT_LAT, WSRT_LON, WSRT_ALT, \
+from constants import WSRT_LAT, WSRT_LON, WSRT_ALT, CB_HPBW, \
                       THETAMAX_CB, PHIMAX_CB, NTHETA_CB, NPHI_CB, \
                       THETAMAX_SB, PHIMAX_SB, NTHETA_SB, NPHI_SB
 from convert import ha_to_ra
+
+
+def add_cb_pattern(ax, pos_ra=0, pos_dec=0):
+    # Add CB positions
+    cb_offsets = np.loadtxt('square_39p1.cb_offsets', usecols=[1, 2], delimiter=',')
+    ncb = len(cb_offsets)
+    cb_pos = np.zeros((ncb, 2))
+    for cb, (dra, ddec) in enumerate(cb_offsets):
+        dec = pos_dec + ddec
+        ra = pos_ra + dra / np.cos(dec*np.pi/180)
+        cb_pos[cb] = np.array([ra, dec])
+
+    cb_pos *= u.deg
+
+    font = {'family': 'serif',
+            'color': 'black',
+            'weight': 'normal',
+            'alpha': .5,
+            'size': 10}
+    for cb, (ra, dec) in enumerate(cb_pos):
+        patch = Circle((ra.to(u.deg).value, dec.to(u.deg).value), CB_HPBW.to(u.deg).value/2,
+                       ec='k', fc='none', ls='-')
+        ax.add_patch(patch)
+        ax.text(ra.to(u.deg).value, dec.to(u.deg).value, 'CB{:02d}'.format(cb), va='center', ha='center',
+                fontdict=font)
 
 
 if __name__ == '__main__':
@@ -201,6 +227,7 @@ if __name__ == '__main__':
             ax.axvline(args.ra_real, c='r')
         if args.dec_real:
             ax.axhline(args.dec_real, c='r')
+        add_cb_pattern(ax, CB00_center.ra.deg, CB00_center.dec.deg)
         fig.colorbar(img, ax=ax)
         ax.set_ylabel('Dec [deg]')
         ax.set_title('CB')

@@ -145,7 +145,7 @@ def plot_sb_rotation():
              11: [34]}
 
     # SB separation = TAB separation at highest freq
-    lambd = 299792458 * u.meter / u.second / (1550. * u.MHz)
+    lambd = 299792458 * u.meter / u.second / (1500. * u.MHz)
     Bmax = 1296 * u.m
     sb_separation = ((.8 * lambd / Bmax).to(1) * u.radian).to(u.arcmin).value
 

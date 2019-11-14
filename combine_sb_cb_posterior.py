@@ -168,6 +168,7 @@ if __name__ == '__main__':
     best_dec = Y_cb[best_dec_ind, best_ra_ind]
     best_pos_cb = SkyCoord(best_ra, best_dec, unit=u.deg)
     print("Best position (CB): {}".format(best_pos_cb.to_string('hmsdms')))
+    print("Best position (CB): {}".format(best_pos_cb.to_string('decimal')))
 
     # CB interp
     best_dec_ind, best_ra_ind = np.unravel_index(np.nanargmax(posterior_cb_interp, axis=None), posterior_cb_interp.shape)
@@ -175,6 +176,7 @@ if __name__ == '__main__':
     best_dec = Y_total[best_dec_ind, best_ra_ind]
     best_pos_cb_interp = SkyCoord(best_ra, best_dec, unit=u.deg)
     print("Best position (CB interpolated): {}".format(best_pos_cb_interp.to_string('hmsdms')))
+    print("Best position (CB interpolated): {}".format(best_pos_cb_interp.to_string('decimal')))
 
     # SB
     best_dec_ind, best_ra_ind = np.unravel_index(np.nanargmax(posterior_sb, axis=None), posterior_sb.shape)
@@ -182,6 +184,7 @@ if __name__ == '__main__':
     best_dec = Y_sb[best_dec_ind, best_ra_ind]
     best_pos_sb = SkyCoord(best_ra, best_dec, unit=u.deg)
     print("Best position (SB): {}".format(best_pos_sb.to_string('hmsdms')))
+    print("Best position (SB): {}".format(best_pos_sb.to_string('decimal')))
 
     # total
     have_best_pos = True
@@ -191,6 +194,7 @@ if __name__ == '__main__':
         best_dec = Y_total[best_dec_ind, best_ra_ind]
         best_pos_total = SkyCoord(best_ra, best_dec, unit=u.deg)
         print("Best position (total): {}".format(best_pos_total.to_string('hmsdms')))
+        print("Best position (total): {}".format(best_pos_total.to_string('decimal')))
     except ValueError as e:
         print("Exception caught while calculating best position:", e)
         have_best_pos = False
@@ -240,6 +244,7 @@ if __name__ == '__main__':
             ax.axvline(args.ra_real, c='r')
         if args.dec_real:
             ax.axhline(args.dec_real, c='r')
+        add_cb_pattern(ax, CB00_center.ra.deg, CB00_center.dec.deg)
         fig.colorbar(img, ax=ax)
         ax.set_title('SB')
 

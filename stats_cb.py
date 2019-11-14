@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import astropy.units as u
 
-from constants import CB_HPBW
+from constants import CB_HPBW, THETAMAX_CB, PHIMAX_CB, NTHETA_CB, NPHI_CB
 
 
 def add_cb_pattern(ax):
@@ -79,8 +79,10 @@ if __name__ == '__main__':
 
     # theta = RA
     # phi = Dec
-    theta = np.linspace(-130, 130, ntheta)
-    phi = np.linspace(-100, 100, nphi)
+    theta = np.linspace(-THETAMAX_CB, THETAMAX_CB, NTHETA_CB)
+    phi = np.linspace(-PHIMAX_CB, PHIMAX_CB, NPHI_CB)
+    assert nphi == NPHI_CB
+    assert ntheta == NTHETA_CB
 
     # non detection beams
     cb_non_det = np.array([cb for cb in range(ncb) if cb not in cb_det])

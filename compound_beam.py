@@ -37,12 +37,11 @@ class CompoundBeam(object):
         :param phi: N-S offsets (default: 0)
         :param rot: rotation applied to model (parallactic angle, default 0)
         """
-
-        if not isinstance(theta, np.ndarray):
+        if not isinstance(theta.value, np.ndarray):
             theta = np.array([theta.value]) * theta.unit
-        if not isinstance(phi, np.ndarray):
+        if not isinstance(phi.value, np.ndarray):
             phi = np.array([phi.value]) * phi.unit
-        if not isinstance(freqs, np.ndarray):
+        if not isinstance(freqs.value, np.ndarray):
             freqs = np.array([freqs.value]) * freqs.unit
 
         # ensure theta and phi use same units

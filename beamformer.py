@@ -13,8 +13,8 @@ class BeamFormer(object):
 
     def __init__(self, dish_pos, theta_proj=0*u.deg, freqs=1500*u.MHz, ntab=12):
         self.theta_proj = theta_proj
-        if not isinstance(freqs, np.ndarray):
-            freqs = np.array(freqs)
+        if not isinstance(freqs.value, np.ndarray):
+            freqs = np.array([freqs])
         self.dish_pos = dish_pos
         self.freqs = freqs
         self.ntab = ntab
@@ -29,11 +29,10 @@ class BeamFormer(object):
                 np.sin(self.theta_proj))
         return dphi.to(1).value
 
-    def beamform(self, dtheta, dish_pos, ref_dish=0, tab=0):
+    def beamform(self, dtheta, ref_dish=0, tab=0):
         """
         Compute total power for given offsets and dish positions
         :param dtheta: E-W offsets
-        :param dish_pos: dish positions
         :param ref_dish: reference dish
         :param tab: TAB index
         :return:
@@ -41,7 +40,7 @@ class BeamFormer(object):
         # initalize output E field
         e_tot = np.zeros((self.freqs.shape[0], dtheta.shape[0]), dtype=complex)
 
-        baselines = dish_pos - dish_pos[ref_dish]
+        baselines = self.dish_pos - self.dish_pos[ref_dish]
         for i, baseline in enumerate(baselines):
             # calculate tab phase offset
             tab_dphi = float(i) * tab/self.ntab

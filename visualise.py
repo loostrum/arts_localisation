@@ -128,8 +128,7 @@ def plot_sb_rotation():
     ncb = len(cb_offsets)
     cb_pos = np.zeros((ncb, 2))
     for cb, (dra, ddec) in enumerate(cb_offsets):
-        dha = -dra
-        cb_pos[cb] = np.array([dha*60, ddec*60])  # store in arcmin
+        cb_pos[cb] = np.array([dra*60, ddec*60])  # store in arcmin
 
     # CB width
     freq = 1370*u.MHz
@@ -180,22 +179,19 @@ def plot_sb_rotation():
     # plot in function
     def do_plot(parang=0*u.deg):
         # plot CBs
-        for cb, (ha, dec) in enumerate(cb_pos):
-            patch = Circle((ha, dec), cb_radius,
+        for cb, (ra, dec) in enumerate(cb_pos):
+            patch = Circle((ra, dec), cb_radius,
                            ec='k', fc='none', ls='-', alpha=.5)
             ax.add_patch(patch)
-            ax.text(ha, dec, 'CB{:02d}'.format(cb), va='center', ha='center',
+            ax.text(ra, dec, 'CB{:02d}'.format(cb), va='center', ha='center',
                     fontdict=font)
 
         # plot SBs
         for cb in beams.keys():
             cb_dra, cb_ddec = cb_offsets[cb] * 60  # to arcmin
-            cb_dha = -cb_dra
             for sb in beams[cb]:
-                sb_offset = (sb - 35) * sb_separation
                 # SB increases towards higher RA
-                # convert to HA offset
-                sb_offset *= -1
+                sb_offset = (sb - 35) * sb_separation
 
                 # draw line from (x, -y) to (x, y)
                 # but the apply rotation by parallactic angle
@@ -208,14 +204,15 @@ def plot_sb_rotation():
                 theta_end = np.arctan2(-dy, sb_offset)
 
                 # apply parallactic angle rotation
-                theta_start += parang.to(u.radian).value
-                theta_end += parang.to(u.radian).value
+                # works positive in HA space, but negative in RA space
+                theta_start -= parang.to(u.radian).value
+                theta_end -= parang.to(u.radian).value
 
                 # start and end in cartesian coordinates
                 # shift to correct CB
-                xstart = cb_radius * np.cos(theta_start) + cb_dha
+                xstart = cb_radius * np.cos(theta_start) + cb_dra
                 ystart = cb_radius * np.sin(theta_start) + cb_ddec
-                xend = cb_radius * np.cos(theta_end) + cb_dha
+                xend = cb_radius * np.cos(theta_end) + cb_dra
                 yend = cb_radius * np.sin(theta_end) + cb_ddec
 
                 # plot
@@ -226,7 +223,7 @@ def plot_sb_rotation():
         # set limits
         ax.set_xlim(-130, 130)
         ax.set_ylim(-100, 100)
-        ax.set_xlabel('HA offset (arcmin)')
+        ax.set_xlabel('RA offset (arcmin)')
         ax.set_ylabel('Dec offset (arcmin)')
 
     # plot once

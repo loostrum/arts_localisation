@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import astropy.units as u
 
-from constants import CB_HPBW
+from constants import CB_HPBW, THETAMAX_SB, PHIMAX_SB, NTHETA_SB, NPHI_SB
 
 
 def add_cb(ax):
@@ -46,10 +46,12 @@ if __name__ == '__main__':
     del sb_model
     print("Done")
 
-    nsb, ntheta, nphi = snr_model.shape
+    theta = np.linspace(-THETAMAX_SB, THETAMAX_SB, NTHETA_SB)
+    phi = np.linspace(-PHIMAX_SB, PHIMAX_SB, NPHI_SB)
 
-    theta = np.linspace(-50, 50, ntheta)
-    phi = np.linspace(-50, 50, nphi)
+    nsb, nphi, ntheta = snr_model.shape
+    assert nphi == NPHI_SB
+    assert ntheta == NTHETA_SB
 
     # non detection beams
     sb_non_det = np.array([sb for sb in range(nsb) if not sb in sb_det])
@@ -59,7 +61,7 @@ if __name__ == '__main__':
         have_nondet = False
 
     # init log likelihood 
-    log_l = np.zeros((ntheta, nphi))
+    log_l = np.zeros((nphi, ntheta))
 
     # Detections: model - measured, then square and sum over SBs
     print("Adding {} detections".format(len(sb_det)))
@@ -76,7 +78,7 @@ if __name__ == '__main__':
         mask = num_bad_sb > 0
         
         # prior is flat where S/N < max_snr, 0 where S/N > max_snr
-        log_prior = np.ones((ntheta, nphi)) * np.log(1./args.max_snr)
+        log_prior = np.ones((nphi, ntheta)) * np.log(1./args.max_snr)
         log_prior[mask] = -np.inf
         print("Done")
     else:
@@ -92,7 +94,7 @@ if __name__ == '__main__':
     np.save(args.output_file, log_posterior)
 
     # Get the best position
-    best_theta_ind, best_phi_ind = np.unravel_index(np.nanargmax(log_posterior, axis=None), log_posterior.shape)
+    best_phi_ind, best_theta_ind = np.unravel_index(np.nanargmax(log_posterior, axis=None), log_posterior.shape)
     best_theta = theta[best_theta_ind]
     best_phi = phi[best_phi_ind]
     print("Best position: theta={:.6f}', phi={:.6f}'".format(best_theta, best_phi))
@@ -115,7 +117,7 @@ if __name__ == '__main__':
 
         # Plot posterior
         ax = axes[1]
-        img = ax.pcolormesh(X, Y, log_posterior)
+        img = ax.pcolormesh(X, Y, log_posterior, vmin=-4.6)
         fig.colorbar(img, ax=ax)
         ax.invert_yaxis()
         ax.set_xlabel(r'$\theta$ [arcmin]')

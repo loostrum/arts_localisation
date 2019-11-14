@@ -31,5 +31,13 @@ if __name__ == '__main__':
         CB_best_center = ra_to_ha(params['ra_best_cb']*u.deg, params['dec_best_cb']*u.deg, tarr)
         CB00_center = ra_to_ha(params['ra_cb00']*u.deg, params['dec_cb00']*u.deg, tarr)
 
-    print("Best CB apparent HA, Dec: ({:.5f}, {:.5f})".format(CB_best_center.ra, CB_best_center.dec))
-    print("CB00 apparent HA, Dec: ({:.5f}, {:.5f})".format(CB00_center.ra, CB00_center.dec))
+    ha_best = CB_best_center.ra
+    if ha_best > 180*u.deg:
+        ha_best -= 360*u.deg
+
+    ha00 = CB00_center.ra
+    if ha00 > 180*u.deg:
+        ha00 -= 360*u.deg
+
+    print("Best CB apparent HA, Dec: ({:.5f}, {:.5f})".format(ha_best, CB_best_center.dec))
+    print("CB00 apparent HA, Dec: ({:.5f}, {:.5f})".format(ha00, CB00_center.dec))

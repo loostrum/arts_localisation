@@ -106,7 +106,7 @@ if __name__ == '__main__':
         # Plot number of SBs > max_snr at each position
         if have_nondet:
             ax = axes[0]
-            img = ax.pcolormesh(X, Y, num_bad_sb.T)
+            img = ax.pcolormesh(X, Y, num_bad_sb)
             fig.colorbar(img, ax=ax)
             ax.set_xlabel(r'$\theta$ [arcmin]')
             ax.set_ylabel(r'$\phi$ [arcmin]')
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
         # Plot posterior
         ax = axes[1]
-        img = ax.pcolormesh(X, Y, log_posterior.T)
+        img = ax.pcolormesh(X, Y, log_posterior)
         fig.colorbar(img, ax=ax)
         ax.invert_yaxis()
         ax.set_xlabel(r'$\theta$ [arcmin]')

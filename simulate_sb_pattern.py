@@ -78,7 +78,7 @@ class SBPattern(object):
             beam_pattern_tab_1d = np.zeros((ntab, nfreq, NTHETA_SB))
             for tab in tqdm.tqdm(range(ntab)):
                 # TAB beamformer
-                tab_fringes = bf.beamform(dtheta, dish_pos, tab=tab)
+                tab_fringes = bf.beamform(dtheta, tab=tab)
                 # Apply TAB pattern at each phi to primary beam pattern
                 i_tot_2d = primary_beam * tab_fringes[:, None, :]
                 # store to output grid

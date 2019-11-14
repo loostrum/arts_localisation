@@ -6,7 +6,7 @@ import numpy as np
 import astropy.units as u
 
 
-#CB_HPBW = 28.0835088*u.arcmin  # calculated from CB offsets file, assumed to be at 1420 MHz
+#CB_HPBW = 28.0835088*u.arcmin # calculated from CB offsets file
 CB_HPBW = 35.066*u.arcmin  # fit CB00 Oct 1 2019  @ 1420 MHz
 REF_FREQ = 1420*u.MHz
 DISH_SIZE = 25 * u.m

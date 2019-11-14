@@ -88,7 +88,7 @@ class CompoundBeam(object):
         # calculate response at each sigma
         for i, sigma in enumerate(sigmas):
             arg = -.5 * (self.theta**2 + self.phi[..., None]**2) / sigma**2
-            output_grid[i] = np.exp(arg) / 2
+            output_grid[i] = np.exp(arg)
 
         return output_grid
 
@@ -155,5 +155,5 @@ class CompoundBeam(object):
             this_popt[3] *= scaling
 
             # calculate response
-            output_grid[i] = gauss_2d(XY, *this_popt).reshape(len(self.phi), len(self.theta)) / 2.
+            output_grid[i] = gauss_2d(XY, *this_popt).reshape(len(self.phi), len(self.theta))
         return output_grid

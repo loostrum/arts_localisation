@@ -36,7 +36,10 @@ if __name__ == '__main__':
         # calculate CB integrated over frequencies
         freqs = np.linspace(1220, 1520, 32) * u.MHz
         beam = CompoundBeam(freqs, theta-dra, phi-ddec)
-        cb_sens[cb] = beam.beam_pattern(mode, cb=cb).sum(axis=0)
+        # create and normalise cb
+        pattern = beam.beam_pattern(mode, cb=cb).mean(axis=0)
+        pattern /= pattern.max()
+        cb_sens[cb] = pattern
 
     # store grid
     np.save(output_file, cb_sens)

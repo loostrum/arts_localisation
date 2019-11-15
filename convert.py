@@ -84,9 +84,30 @@ def ha_to_proj(ha, dec, lat=WSRT_LAT):
     :param lat: Latitude with unit (default: WSRT)
     """
 
-    colat = 90*u.deg - lat
-    alt = np.arcsin(np.sin(dec)*np.sin(colat) + np.cos(dec)*np.cos(colat)*np.cos(ha))
-    az = np.arcsin(-np.sin(ha)*np.cos(dec) / np.cos(alt))
+    alt, az = hadec_to_altaz(ha, dec, lat)
     # ToDo: verify if this is correct
     theta_proj = np.arccos(np.sqrt(np.sin(alt)**2 + (np.cos(alt)*np.cos(az))**2))
     return theta_proj.to(u.deg)
+
+
+def hadec_to_altaz(ha, dec, lat=WSRT_LAT):
+    """
+    Convert HA, Dec to Alt, Az
+    :param ha: hour angle with unit
+    :param dec: declination with unit
+    :param lat: Latitude with unit (default: WSRT)
+    """
+    
+    colat = 90*u.deg - lat
+    alt = np.arcsin(np.sin(dec)*np.sin(colat) + np.cos(dec)*np.cos(colat)*np.cos(ha))
+    az = np.arcsin(-np.sin(ha)*np.cos(dec) / np.cos(alt))
+    # if Dec > latitude, we are pointing north
+    # else south: add 180 and flip pattern
+    if dec < lat:
+        az = 180*u.deg - az
+    # numpy arcsin returns value in range [-180, 180] deg
+    # ensure az is in [0, 360]
+    if az < 0*u.deg:
+        az += 360*u.deg
+    
+    return alt.to(u.deg), az.to(u.deg)

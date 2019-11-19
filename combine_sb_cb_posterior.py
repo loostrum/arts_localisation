@@ -42,7 +42,7 @@ def add_cb_pattern(ax, pos_ra=0, pos_dec=0):
                        ec='k', fc='none', ls='-')
         ax.add_patch(patch)
         ax.text(ra.to(u.deg).value, dec.to(u.deg).value, 'CB{:02d}'.format(cb), va='center', ha='center',
-                fontdict=font)
+                fontdict=font, clip_on=True)
 
 
 if __name__ == '__main__':

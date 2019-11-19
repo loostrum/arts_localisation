@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 import astropy.units as u
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle
+from astropy.visualization.wcsaxes import SphericalCircle
 from matplotlib.widgets import Slider
 
 from constants import WSRT_LAT, DISH, CB_HPBW, REF_FREQ
@@ -128,28 +128,36 @@ def plot_sb_rotation():
     ncb = len(cb_offsets)
     cb_pos = np.zeros((ncb, 2))
     for cb, (dra, ddec) in enumerate(cb_offsets):
-        cb_pos[cb] = np.array([dra*60, ddec*60])  # store in arcmin
+        cb_pos[cb] = np.array([dra, ddec])
+    cb_pos *= u.deg
 
     # CB width
     freq = 1370*u.MHz
-    cb_radius = (CB_HPBW * freq/REF_FREQ / 2).to(u.arcmin).value
+    cb_radius = (CB_HPBW * freq/REF_FREQ / 2)
+
+    # LST to convert HA <-> RA
+    lst = 180*u.deg 
 
     # Which SBs to plot in which cBs
     # SB for given CB
-    beams = {0: [0, 35, 70],
-             33: [0, 35, 70],
-             39: [0, 35, 70],
-             4: [63],
-             5: [12],
-             11: [34]}
+    beams = {0: [0, 35, 70]}
+             #33: [0, 35, 70],
+             #39: [0, 35, 70],
+             #4: [63],
+             #5: [12],
+             #11: [34]}
 
     # SB separation = TAB separation at highest freq
     lambd = 299792458 * u.meter / u.second / (1500. * u.MHz)
     Bmax = 1296 * u.m
-    sb_separation = ((.8 * lambd / Bmax).to(1) * u.radian).to(u.arcmin).value
+    sb_separation = ((.8 * lambd / Bmax).to(1) * u.radian).to(u.arcmin)
 
     # plot
-    fig, ax = plt.subplots(figsize=(16, 9))
+    fig, axes = plt.subplots(figsize=(16, 9), ncols=2)
+    # RA Dec axis
+    ax = axes[0]
+    # Alt Az axis
+    ax2 = axes[1]
     font = {'family': 'serif',
             'color': 'black',
             'weight': 'normal',
@@ -158,6 +166,7 @@ def plot_sb_rotation():
     # make room for sliders
     plt.subplots_adjust(bottom=.25)
     ax.set_aspect('equal')
+    ax2.set_aspect('equal')
 
     # slider settings
     ha_init = 0
@@ -177,15 +186,44 @@ def plot_sb_rotation():
     slider_dec = Slider(ax_dec, 'Dec (deg)', dec_min, dec_max, valinit=dec_init, valstep=dec_step)
 
     # plot in function
-    def do_plot(parang=0*u.deg):
+    def do_plot(ha0=0*u.deg, dec0=0*u.deg, parang=0*u.deg):
+        # store coordinates of CB00
+        ra0 = lst - ha0
+        alt0, az0 = convert.hadec_to_altaz(ha0, dec0)
         # plot CBs
-        for cb, (ra, dec) in enumerate(cb_pos):
-            patch = Circle((ra, dec), cb_radius,
-                           ec='k', fc='none', ls='-', alpha=.5)
-            ax.add_patch(patch)
-            ax.text(ra, dec, 'CB{:02d}'.format(cb), va='center', ha='center',
-                    fontdict=font)
+        for cb, (dra, ddec) in enumerate(cb_pos):
+            # RADec
+            # pointing of this CB
+            dec = dec0 + ddec
+            dra = dra/np.cos(dec)
+            ra = ra0 + dra
 
+            _ra = ra.to(u.deg).value
+            _dec = dec.to(u.deg).value
+
+            # plot
+            patch = SphericalCircle((ra, dec), cb_radius,
+                                     ec='k', fc='none', ls='-', alpha=.5)
+            ax.add_patch(patch)
+            ax.text(_ra, _dec, 'CB{:02d}'.format(cb), va='center', ha='center',
+                    fontdict=font, clip_on=True)
+
+            ## AltAz
+            ha = lst - ra
+            alt, az = convert.hadec_to_altaz(ha, dec)
+            dalt = alt - alt0
+            daz = az - az0
+
+            _alt = alt.to(u.deg).value
+            _az = az.to(u.deg).value
+
+            # plot 
+            patch = SphericalCircle((az, alt), cb_radius,
+                                     ec='k', fc='none', ls='-', alpha=.5)
+            ax2.add_patch(patch)
+            ax2.text(_az, _alt, 'CB{:02d}'.format(cb), va='center', ha='center',
+                    fontdict=font, clip_on=True)
+            
         # plot SBs
         for cb in beams.keys():
             cb_dra, cb_ddec = cb_offsets[cb] * 60  # to arcmin
@@ -195,36 +233,101 @@ def plot_sb_rotation():
 
                 # draw line from (x, -y) to (x, y)
                 # but the apply rotation by parallactic angle
-                # define x and y
+                # in altaz:
+                # x = +/-sb_offset, depening on azimuth:
+                # higher SB = higher RA = East = either lower or higher Az
+                if az0 > 270*u.deg or az0 < 90*u.deg:
+                    # increase Az towards higher SB
+                    sgn = 1
+                else:
+                    sgn = -1
+        
+                # y = +/- length of line a sb_offset from center of CB
+                dy = np.sqrt(cb_radius ** 2 - sb_offset ** 2)
+                # alt start and end point
+                alts = alt0 + dy
+                alte = alt0 - dy
+                # az start and end point
+                azs = az0 + sgn * sb_offset / np.cos(alts)
+                aze = az0 + sgn * sb_offset / np.cos(alte)
 
-                dy = np.sqrt(cb_radius ** 2 - sb_offset ** 2)  # half length of line
+                # convert to HA, Dec 
+                has, decs = convert.altaz_to_hadec(alts, azs)
+                hae, dece = convert.altaz_to_hadec(alte, aze)
+                # convert HA to RA
+                ras = lst - has
+                rae = lst - hae
+
+                # plot in RADec
+                x = [ras.to(u.deg).value, rae.to(u.deg).value]
+                y = [decs.to(u.deg).value, dece.to(u.deg).value]
+
+                ax.plot(x, y, c='b')
+                # add text above lines
+                ax.text(np.mean(x), np.mean(y),  "SB{:02d}".format(sb),  va='center', ha='center')
+
+                # plot in AltAz
+                x = [azs.to(u.deg).value, aze.to(u.deg).value]
+                y = [alts.to(u.deg).value, alte.to(u.deg).value]
+
+                ax2.plot(x, y, c='b')
+                # add text above lines
+                ax2.text(np.mean(x), np.mean(y),  "SB{:02d}".format(sb),  va='center', ha='center')
 
                 # polar
-                theta_start = np.arctan2(dy, sb_offset)
-                theta_end = np.arctan2(-dy, sb_offset)
+                #theta_start = np.arctan2(dy, sb_offset)
+                #theta_end = np.arctan2(-dy, sb_offset)
 
-                # apply parallactic angle rotation
-                # works positive in HA space, but negative in RA space
-                theta_start -= parang.to(u.radian).value
-                theta_end -= parang.to(u.radian).value
+                ## apply parallactic angle rotation
+                ## works positive in HA space, but negative in RA space
+                #theta_start -= parang.to(u.radian).value
+                #theta_end -= parang.to(u.radian).value
 
-                # start and end in cartesian coordinates
-                # shift to correct CB
-                xstart = cb_radius * np.cos(theta_start) + cb_dra
-                ystart = cb_radius * np.sin(theta_start) + cb_ddec
-                xend = cb_radius * np.cos(theta_end) + cb_dra
-                yend = cb_radius * np.sin(theta_end) + cb_ddec
+                ## start and end in cartesian coordinates
+                ## shift to correct CB and position
+                #xstart = cb_radius * np.cos(theta_start) + cb_dra
+                #ystart = cb_radius * np.sin(theta_start) + cb_ddec
+                #xend = cb_radius * np.cos(theta_end) + cb_dra
+                #yend = cb_radius * np.sin(theta_end) + cb_ddec
 
-                # plot
-                ax.plot((xstart, xend), (ystart, yend), c='b')
-                # add text above lines
-                ax.text(np.mean([xstart, xend]), np.mean([ystart, yend]),  "SB{:02d}".format(sb),  va='center', ha='center')
+                ## plot RA Dec
+                #ax.plot((xstart, xend), (ystart, yend), c='b')
+                ## add text above lines
+                #ax.text(np.mean([xstart, xend]), np.mean([ystart, yend]),  "SB{:02d}".format(sb),  va='center', ha='center')
+
+                #continue
+                ## plot Alt Az
+                #ystart, xstart = convert.hadec_to_altaz(ha0-xstart*u.arcmin, dec0+ystart*u.arcmin)
+                #yend, xend = convert.hadec_to_altaz(ha0-xend*u.arcmin, dec0+yend*u.arcmin)
+                ## subtract center and remove cosine correction
+                ##xstart = (xstart - az0).to(u.arcmin).value
+                ##xend = (xend - az0).to(u.arcmin).value
+                ##ystart = (ystart - alt0).to(u.arcmin).value
+                ##yend = (yend - alt0).to(u.arcmin).value
+                #xstart = xstart.to(u.arcmin).value
+                #xend = xend.to(u.arcmin).value
+                #ystart = ystart.to(u.arcmin).value
+                #yend = yend.to(u.arcmin).value
+            
+
+                
 
         # set limits
-        ax.set_xlim(-130, 130)
-        ax.set_ylim(-100, 100)
-        ax.set_xlabel('RA offset (arcmin)')
-        ax.set_ylabel('Dec offset (arcmin)')
+        x = ra0.to(u.deg).value
+        y = dec0.to(u.deg).value
+        ax.set_xlim(x-130/60., x+130/60.)
+        ax.set_ylim(y-100/60., y+100/60.)
+        ax.set_xlabel('RA (deg)')
+        ax.set_ylabel('Dec (deg)')
+        ax.set_title('RA - Dec')
+
+        x = az0.to(u.deg).value
+        y = alt0.to(u.deg).value
+        ax2.set_xlim(x-130/60., x+130/60.)
+        ax2.set_ylim(y-100/60., y+100/60.)
+        ax2.set_xlabel('Az (deg)')
+        ax2.set_ylabel('Alt (deg)')
+        ax2.set_title('Alt - Az')
 
     # plot once
     do_plot()
@@ -235,12 +338,14 @@ def plot_sb_rotation():
         dec = slider_dec.val * u.deg
         parang = convert.ha_to_par(ha, dec)
         ax.cla()
-        do_plot(parang)
+        ax2.cla()
+        do_plot(ha, dec, parang)
 
     # attach sliders to update function
     slider_ha.on_changed(update)
     slider_dec.on_changed(update)
 
+    fig.suptitle('Apertif beam pattern for LST = {} hr'.format(lst.to(u.deg).value / 15.))
     plt.show()
 
 

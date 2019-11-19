@@ -105,9 +105,26 @@ def hadec_to_altaz(ha, dec, lat=WSRT_LAT):
     # else south: add 180 and flip pattern
     if dec < lat:
         az = 180*u.deg - az
-    # numpy arcsin returns value in range [-180, 180] deg
-    # ensure az is in [0, 360]
+    ## numpy arcsin returns value in range [-180, 180] deg
+    ## ensure az is in [0, 360]
     if az < 0*u.deg:
         az += 360*u.deg
+    if az > 360*u.deg:
+        az -= 360*u.deg
     
     return alt.to(u.deg), az.to(u.deg)
+
+
+def altaz_to_hadec(alt, az, lat=WSRT_LAT):
+    """
+    Convert Alt, Az to HA, Dec
+    :param alt: altitude with unit
+    :param az: azimuth with unit
+    :param lat: Latitude with unit (default: WSRT)
+    """
+
+    colat = 90*u.deg - lat
+    dec = np.arcsin(np.sin(alt)*np.sin(colat) + np.cos(alt)*np.cos(colat)*np.cos(az))
+    ha = np.arcsin(-np.sin(az)*np.cos(alt) / np.cos(dec))
+
+    return ha, dec

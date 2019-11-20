@@ -8,19 +8,19 @@ import argparse
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle
+from astropy.visualization.wcsaxes import SphericalCircle
 from scipy.interpolate import griddata
 import astropy.units as u
 from astropy.coordinates import SkyCoord, EarthLocation, AltAz, FK5
 from astropy.time import Time, TimeDelta
 
-from constants import WSRT_LAT, WSRT_LON, WSRT_ALT, CB_HPBW, \
+from constants import WSRT_LAT, WSRT_LON, WSRT_ALT, CB_HPBW, REF_FREQ, \
                       THETAMAX_CB, PHIMAX_CB, NTHETA_CB, NPHI_CB, \
                       THETAMAX_SB, PHIMAX_SB, NTHETA_SB, NPHI_SB
 from convert import ha_to_ra
 
 
-def add_cb_pattern(ax, pos_ra=0, pos_dec=0):
+def add_cb_pattern(ax, pos_ra=0, pos_dec=0, freq=1370*u.MHz):
     # Add CB positions
     cb_offsets = np.loadtxt('square_39p1.cb_offsets', usecols=[1, 2], delimiter=',')
     ncb = len(cb_offsets)
@@ -31,6 +31,7 @@ def add_cb_pattern(ax, pos_ra=0, pos_dec=0):
         cb_pos[cb] = np.array([ra, dec])
 
     cb_pos *= u.deg
+    cb_radius = CB_HPBW * REF_FREQ/freq / 2
 
     font = {'family': 'serif',
             'color': 'black',
@@ -38,8 +39,8 @@ def add_cb_pattern(ax, pos_ra=0, pos_dec=0):
             'alpha': .5,
             'size': 10}
     for cb, (ra, dec) in enumerate(cb_pos):
-        patch = Circle((ra.to(u.deg).value, dec.to(u.deg).value), CB_HPBW.to(u.deg).value/2,
-                       ec='k', fc='none', ls='-')
+        patch = SphericalCircle((ra, dec), cb_radius,
+                                ec='k', fc='none', ls='-')
         ax.add_patch(patch)
         ax.text(ra.to(u.deg).value, dec.to(u.deg).value, 'CB{:02d}'.format(cb), va='center', ha='center',
                 fontdict=font, clip_on=True)

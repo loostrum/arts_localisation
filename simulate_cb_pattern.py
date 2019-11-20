@@ -50,7 +50,7 @@ if __name__ == '__main__':
         freqs = np.linspace(args.fmin, args.fmax, args.nfreq) * u.MHz
         beam = CompoundBeam(freqs, theta-dra, phi-ddec)
         # create and normalise cb
-        pattern = beam.beam_pattern(mode, cb=cb).mean(axis=0)
+        pattern = beam.beam_pattern(args.mode, cb=cb).mean(axis=0)
         pattern /= pattern.max()
         cb_sens[cb] = pattern
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import argparse
+
 import tqdm
 import numpy as np
 import astropy.units as u
@@ -9,8 +11,19 @@ from constants import THETAMAX_CB, PHIMAX_CB, NTHETA_CB, NPHI_CB
 
 
 if __name__ == '__main__':
-    mode = 'real'
-    output_file = 'models/all_cb_{}.npy'.format(mode)
+    modes = ['real', 'gauss']
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--mode', choices=modes, help="CB model type")
+    parser.add_argument('--fmin', type=float, default=1220,
+                        help="Minimum frequency in MHz (default: %(default)s)")
+    parser.add_argument('--fmax', type=float, default=1520,
+                        help="Maximum frequency in MHz (default: %(default)s)")
+    parser.add_argument('--nfreq', type=int, default=32,
+                        help="Number of frequency channels (default: %(default)s)")
+
+    args = parser.parse_args()
+    
+    output_file = 'models/all_cb_{}.npy'.format(args.mode)
 
     # load CB offsets (decimal degrees in RA, Dec)
     cb_offsets = np.loadtxt('square_39p1.cb_offsets', usecols=[1, 2], delimiter=',')
@@ -34,7 +47,7 @@ if __name__ == '__main__':
     for cb in tqdm.tqdm(range(ncb)):
         dra, ddec = cb_pos[cb]
         # calculate CB integrated over frequencies
-        freqs = np.linspace(1220, 1520, 32) * u.MHz
+        freqs = np.linspace(args.fmin, args.fmax, args.nfreq) * u.MHz
         beam = CompoundBeam(freqs, theta-dra, phi-ddec)
         # create and normalise cb
         pattern = beam.beam_pattern(mode, cb=cb).mean(axis=0)

@@ -37,6 +37,7 @@ def ra_to_ha(ra, dec, t, lon=WSRT_LON):
     # return SkyCoord of (Ha, Dec)
     return SkyCoord(ha, dec, frame=coord_system)
 
+
 def ha_to_ra(ha, dec, t, lon=WSRT_LON):
     """
     Convert HA, Dec to J2000 RA, Dec
@@ -103,14 +104,14 @@ def hadec_to_altaz(ha, dec, lat=WSRT_LAT):
     az = np.arcsin(-np.sin(ha)*np.cos(dec) / np.cos(alt))
     # if Dec > latitude, we are pointing north
     # else south: add 180 and flip pattern
-    if dec < lat:
-        az = 180*u.deg - az
-    ## numpy arcsin returns value in range [-180, 180] deg
-    ## ensure az is in [0, 360]
-    if az < 0*u.deg:
-        az += 360*u.deg
-    if az > 360*u.deg:
-        az -= 360*u.deg
+    m = dec < lat
+    az[m] = 180*u.deg - az[m]
+    # numpy arcsin returns value in range [-180, 180] deg
+    # ensure az is in [0, 360]
+    m = az < 0*u.deg
+    az[m] += 360*u.deg
+    m = az > 360*u.deg
+    az[m] -= 360 * u.deg
     
     return alt.to(u.deg), az.to(u.deg)
 
@@ -128,3 +129,48 @@ def altaz_to_hadec(alt, az, lat=WSRT_LAT):
     ha = np.arcsin(-np.sin(az)*np.cos(alt) / np.cos(dec))
 
     return ha, dec
+
+
+def offset_to_radec(ra0, dec0, theta, phi):
+    # equations from
+    # https://github.com/LSSTDESC/Coord/blob/master/coord/celestial.py
+    # project: sky to plane
+    # deproject: plane to sky
+    # and reference therein:
+    # http://mathworld.wolfram.com/GnomonicProjection.html
+
+    # reimplementation of celestial.CelestialCoord.deproject
+    # sky_coord = center.deproject(u, v)
+
+    # u,v are plane offset coordinates, here defined in RA Dec (but in HA Dec in celestial.py)
+    # use uu to avoid issues with astropy unit
+    uu = theta.to(u.radian).value
+    vv = phi.to(u.radian).value
+
+    # r = sqrt(u**2 + v**2)
+    # c = arctan(r)
+    # we only need sin(c) and cos(c), which are a function of r**2 only
+    # define r**2
+    rsq = uu**2 + vv**2
+    cosc = 1./np.sqrt(1 + rsq)
+    # sinc = r * cos(c), but we only need sinc / r
+    sinc_over_r = cosc
+
+    # equations to get ra, dec from reference ra0, dec0 and radec offset u,v :
+    # sin(dec) = cos(c) sin(dec0) + v (sin(c)/r) cos(dec0)
+    # tan(ra-ra0) = u (sin(c)/r) / (cos(dec0) cos(c) - v sin(dec0) (sin(c)/r))
+
+    # sin dec
+    sindec0 = np.sin(dec0)
+    cosdec0 = np.cos(dec0)
+    sindec = cosc * sindec0 + vv * sinc_over_r * cosdec0
+    # tan delta RA, split in numerator and denominator so we can use arctan2 to get the right quadrant
+    tandra_num = uu * sinc_over_r
+    tandra_denom = cosdec0 * cosc - vv * sindec0 * sinc_over_r
+
+    # dec
+    dec = np.arcsin(sindec)
+    # ra
+    ra = ra0 + np.arctan2(tandra_num, tandra_denom)
+
+    return ra.to(u.deg), dec.to(u.deg)

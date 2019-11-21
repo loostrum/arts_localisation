@@ -42,19 +42,20 @@ if __name__ == '__main__':
     print("Loading model")
     sb_model = np.load(args.model)
     # scale SB sensitivity to highest S/N detection
-    snr_model = sb_model * best_snr / sb_model[best_sb]
-    del sb_model
+    #snr_model = sb_model * best_snr / sb_model[best_sb]
+    #del sb_model
     print("Done")
 
     theta = np.linspace(-THETAMAX_SB, THETAMAX_SB, NTHETA_SB)
     phi = np.linspace(-PHIMAX_SB, PHIMAX_SB, NPHI_SB)
 
-    nsb, nphi, ntheta = snr_model.shape
+    # nsb, nphi, ntheta = snr_model.shape
+    nsb, nphi, ntheta = sb_model.shape
     assert nphi == NPHI_SB
     assert ntheta == NTHETA_SB
 
     # non detection beams
-    sb_non_det = np.array([sb for sb in range(nsb) if not sb in sb_det])
+    sb_non_det = np.array([sb for sb in range(nsb) if sb not in sb_det])
     if len(sb_non_det) > 0:
         have_nondet = True
     else:
@@ -63,29 +64,37 @@ if __name__ == '__main__':
     # init log likelihood 
     log_l = np.zeros((nphi, ntheta))
 
-    # Detections: model - measured, then square and sum over SBs
-    print("Adding {} detections".format(len(sb_det)))
-    # take care that the np sum is -log(L)
-    log_l -= np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis])**2, axis=0)
-    print("Done")
+    for ind, ref_sb in enumerate(sb_det):
+        ref_snr = snr_det[ind]
+        print("SB{:02d} SNR {}".format(ref_sb, ref_snr))
+        # model of S/N relative to this beam
+        snr_model = sb_model * ref_snr / sb_model[ref_sb]
+        log_l -= np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2 / snr_model[sb_det], axis=0)
 
-    # Non detections
-    if have_nondet:
-        print("Adding {} non-detections".format(len(sb_non_det)))
-        # Add non detections as prior
-        # where positive: S/N is higher than max_snr. Set to zero probability
-        num_bad_sb = np.sum(snr_model[sb_non_det] - args.max_snr > 0, axis=0)
-        mask = num_bad_sb > 0
-        
-        # prior is flat where S/N < max_snr, 0 where S/N > max_snr
-        log_prior = np.ones((nphi, ntheta)) * np.log(1./args.max_snr)
-        log_prior[mask] = -np.inf
-        print("Done")
-    else:
-        log_prior = 0
+    # # Detections: model - measured, then square and sum over SBs
+    # print("Adding {} detections".format(len(sb_det)))
+    # # take care that the np sum is -log(L)
+    # log_l -= np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis])**2, axis=0)
+    # print("Done")
+
+    # # Non detections
+    # if have_nondet:
+    #     print("Adding {} non-detections".format(len(sb_non_det)))
+    #     # Add non detections as prior
+    #     # where positive: S/N is higher than max_snr. Set to zero probability
+    #     num_bad_sb = np.sum(snr_model[sb_non_det] - args.max_snr > 0, axis=0)
+    #     mask = num_bad_sb > 0
+    #
+    #     # prior is flat where S/N < max_snr, 0 where S/N > max_snr
+    #     log_prior = np.ones((nphi, ntheta)) * np.log(1./args.max_snr)
+    #     log_prior[mask] = -np.inf
+    #     print("Done")
+    # else:
+    #     log_prior = 0
+    have_nondet = False
 
     # define posterior
-    log_posterior = log_l + log_prior
+    log_posterior = log_l #+ log_prior
 
     # ensure max is 0
     log_posterior -= np.nanmax(log_posterior)

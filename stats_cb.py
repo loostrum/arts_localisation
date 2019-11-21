@@ -6,6 +6,7 @@ import numpy as np
 import yaml
 import matplotlib.pyplot as plt
 from astropy.visualization.wcsaxes import SphericalCircle
+from matplotlib.patches import Circle
 import astropy.units as u
 
 import convert
@@ -31,12 +32,14 @@ def add_cb_pattern(ax, ra_00=None, dec_00=None):
     for cb, (dra, ddec) in enumerate(cb_pos):
         if ra_00 is not None and dec_00 is not None:
             ra, dec = convert.offset_to_radec(ra_00, dec_00, dra, ddec)
+            patch = SphericalCircle((ra, dec), CB_HPBW / 2,
+                                    ec='k', fc='none', ls='-')
         else:
             dec = ddec
             ra = dra
+            patch = Circle((ra.value, dec.value), CB_HPBW.to(ra.unit).value / 2,
+                           ec='k', fc='none', ls='-')
 
-        patch = SphericalCircle((ra, dec), CB_HPBW/2,
-                       ec='k', fc='none', ls='-')
         ax.add_patch(patch)
         ax.text(ra.value, dec.value, 'CB{:02d}'.format(cb), va='center', ha='center',
                 fontdict=font)
@@ -115,9 +118,10 @@ if __name__ == '__main__':
     # verified that it does not matter to which CB the model is scaled
     # scaling the CB model to be an S/N model, or scaling the S/N to the max S/N
     # yields the same best position, but a _different_ posterior
-    snr_model = cb_model * best_snr / cb_model[best_cb]
-    del cb_model
-    ncb, nphi, ntheta = snr_model.shape
+    # snr_model = cb_model * best_snr / cb_model[best_cb]
+    # del cb_model
+    # ncb, nphi, ntheta = snr_model.shape
+    ncb, nphi, ntheta = cb_model.shape
     print("Done")
 
     # theta = RA
@@ -141,25 +145,35 @@ if __name__ == '__main__':
     # Detections: model - measured, then square and sum over CBs
     print("Adding {} detections".format(ndet))
     # take care that the np sum is -log(L)
-    log_l = -np.sum((snr_model[cb_det] - snr_det[..., np.newaxis, np.newaxis])**2, axis=0)
+    # init log l
+    log_l = np.zeros((nphi, ntheta))
+    # loop over each detection CB as reference
+    for ind, ref_cb in enumerate(cb_det):
+        ref_snr = snr_det[ind]
+        print("CB{:02d} SNR {}".format(ref_cb, ref_snr))
+        # model of S/N relative to this beam
+        snr_model = cb_model * ref_snr / cb_model[ref_cb]
+        log_l -= np.sum((snr_model[cb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2 / snr_model[cb_det], axis=0)
+
     print("Done")
 
     # Non detections: add as prior
-    if have_nondet:
-        print("Adding {} non-detections".format(len(cb_non_det)))
-
-        # where S/N is higher than max_snr: Set to zero probability
-        num_bad_cb = np.sum(snr_model[cb_non_det] - args.max_snr > 0, axis=0)
-        mask = num_bad_cb > 0
-
-        # prior is flat where S/N < max_snr, 0 where S/N > max_snr
-        log_prior = np.ones((nphi, ntheta)) * np.log(1./args.max_snr)
-        log_prior[mask] = -np.inf
-    else:
-        log_prior = 0
+    # if have_nondet:
+    #     print("Adding {} non-detections".format(len(cb_non_det)))
+    #
+    #     # where S/N is higher than max_snr: Set to zero probability
+    #     num_bad_cb = np.sum(snr_model[cb_non_det] - args.max_snr > 0, axis=0)
+    #     mask = num_bad_cb > 0
+    #
+    #     # prior is flat where S/N < max_snr, 0 where S/N > max_snr
+    #     log_prior = np.ones((nphi, ntheta)) * np.log(1./args.max_snr)
+    #     log_prior[mask] = -np.inf
+    # else:
+    #     log_prior = 0
+    have_nondet = False
 
     # define posterior
-    log_posterior = log_l + log_prior
+    log_posterior = log_l #+ log_prior
     print("Done")
 
     # ensure max is 0

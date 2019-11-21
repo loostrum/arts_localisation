@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import yaml
 import astropy.units as u
 from astropy.time import Time, TimeDelta
-from astropy.coordinates import SkyCoord
+from astropy.coordinates import SkyCoord, AltAz
 from scipy.optimize import bisect
 
 import convert
@@ -48,6 +48,7 @@ if __name__ == '__main__':
     # source position
     ra_src = conf['ra_src'] * u.deg
     dec_src = conf['dec_src'] * u.deg
+    radec_src = SkyCoord(ra_src, dec_src)
 
     t = Time(conf['tstart'], format='isot', scale='utc') + TimeDelta(conf['t_in_obs'], format='sec')
 
@@ -69,6 +70,7 @@ if __name__ == '__main__':
     print("CB HA, Dec: {}".format(hadec.to_string('hmsdms')))
     print()
     print("CB Az, Alt: {} {}".format(az, alt))
+    print()
 
     # generate coordinate grid
     theta = np.linspace(-THETAMAX_SB, THETAMAX_SB, NTHETA_SB) * u.arcmin
@@ -87,7 +89,7 @@ if __name__ == '__main__':
     if az > 270*u.deg or az < 90*u.deg:
         du = -du
 
-    # convert to RA, Dec
+    # convert to Az, Alt
     X, Y = convert.offset_to_radec(az, alt, du, dv)
 
     # load posterior
@@ -109,9 +111,29 @@ if __name__ == '__main__':
     # remove zeros
     probability[probability == 0] = np.nan
 
-    best_du = (theta * post_theta).sum() * dtheta
-    best_dv = (phi * post_phi).sum() * dphi
-    best_theta, best_phi = convert.offset_to_radec(az, alt, -best_du, best_dv)
+    # get best position
+    best_du = theta[post_theta.argmax()]
+    best_dv = phi[post_phi.argmax()]
+    best_az, best_alt = convert.offset_to_radec(az, alt, best_du, best_dv)
+    # convert to HA Dec
+    ha_best, dec_best = convert.altaz_to_hadec(best_alt, best_az)
+    # and finally to RA Dec
+    radec_best = convert.ha_to_ra(ha_best, dec_best, t)
+
+    # distance between best and real position
+    sep = radec_src.separation(radec_best).to(u.arcmin)
+    # estimates for now
+    ddec = radec_src.dec - radec_best.dec
+    dra = (radec_src.ra - radec_best.ra) * np.cos(radec_src.dec)
+    print("Separation between real and estimated RA Dec: {}".format(sep))
+    print("dRA: {}".format(dra.to(u.arcmin)))
+    print("dDec: {}".format(ddec.to(u.arcmin)))
+    print()
+
+    dalt = alt_src - best_alt
+    daz = (az_src - best_az) * np.cos(alt_src)
+    print("dAZ: {}".format(daz.to(u.arcsec)))
+    print("dAlt: {}".format(dalt.to(u.arcmin)))
 
     thresh68 = bisect(offset, 0., post.max(), args=(post, 0.68, dtheta, dphi))
     thresh95 = bisect(offset, 0., post.max(), args=(post, 0.95, dtheta, dphi))
@@ -124,10 +146,11 @@ if __name__ == '__main__':
     img = ax.pcolormesh(X, Y, probability, cmap='viridis', vmin=0, vmax=np.nanmax(probability))
     fig.colorbar(img, ax=ax)
     # contours
-    ax.contour(X, Y, post, [thresh99, thresh95, thresh68], linewidths=1, colors='g')
+    # ax.contour(X, Y, post, [thresh99, thresh95, thresh68], linewidths=1, colors='g')
     # best position
     ax.plot(az.to(u.deg).value, alt.to(u.deg).value, c='k', marker='x', ls='', ms=10, label='CB center')
     ax.plot(az_src.to(u.deg).value, alt_src.to(u.deg).value, c='cyan', marker='+', ls='', ms=10, label='Source position')
+    ax.plot(best_az.to(u.deg).value, best_alt.to(u.deg).value, c='r', marker='.', ls='', ms=10, label='Best position')
 
     # real position
     # ax.axhline(dec_src.to(u.deg).value, c='r')
@@ -140,21 +163,18 @@ if __name__ == '__main__':
     # Convert alt az to ha dec
     # first argument is alt = Y
     XX, YY = convert.altaz_to_hadec(Y, X)
-    best_x, best_y = convert.altaz_to_hadec(best_phi, best_theta)
     # convert ha dec to ra dec
     XY = convert.ha_to_ra(XX, YY, t)
     XX = XY.ra
     YY = XY.dec
-    best_xy = convert.ha_to_ra(best_x, best_y, t)
-    best_x = best_xy.ra
-    best_y = best_xy.dec
 
     ax = axes[1]
     img = ax.pcolormesh(XX, YY, probability, cmap='viridis', vmin=0, vmax=np.nanmax(probability))
     fig.colorbar(img, ax=ax)
-    ax.contour(XX, YY, post, [thresh99, thresh95, thresh68], linewidths=1, colors='g')
+    # ax.contour(XX, YY, post, [thresh99, thresh95, thresh68], linewidths=1, colors='g')
     ax.plot(ra_cb.to(u.deg).value, dec_cb.to(u.deg).value, c='k', marker='x', ls='', ms=10, label='CB center')
     ax.plot(ra_src.to(u.deg).value, dec_src.to(u.deg).value, c='cyan', marker='+', ls='', ms=10, label='Source position')
+    ax.plot(radec_best.ra.deg, radec_best.dec.deg, c='r', marker='.', ls='', ms=10, label='Best position')
     ax.set_xlabel('RA (deg)')
     ax.set_ylabel('Dec (deg)')
     ax.legend()

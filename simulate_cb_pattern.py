@@ -14,9 +14,9 @@ if __name__ == '__main__':
     modes = ['real', 'gauss']
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices=modes, help="CB model type")
-    parser.add_argument('--fmin', type=float, default=1220,
+    parser.add_argument('--fmin', type=int, default=1220,
                         help="Minimum frequency in MHz (default: %(default)s)")
-    parser.add_argument('--fmax', type=float, default=1520,
+    parser.add_argument('--fmax', type=int, default=1520,
                         help="Maximum frequency in MHz (default: %(default)s)")
     parser.add_argument('--nfreq', type=int, default=32,
                         help="Number of frequency channels (default: %(default)s)")

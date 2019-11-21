@@ -17,7 +17,8 @@ import convert
 class SBPattern(object):
 
     def __init__(self, sbs=None, load=False, fname=None, theta_proj=0*u.deg, memmap_file=None,
-                 cb_model='gauss', cbnum=None, parang=0*u.deg):
+                 cb_model='gauss', cbnum=None, parang=0*u.deg,
+                 fmin=1220*u.MHz, fmax=1520*u.MHz, nfreq=64):
         """
         Generate Synthesized Beam pattern
         :param sbs: array of SBs to generate [Default: all]
@@ -28,12 +29,15 @@ class SBPattern(object):
         :param cb_model: CB model type to use (default: gauss)
         :param cbnum: which CB to use for modelling (only relevant if cb_model is 'real')
         :param parang: parallactic angle (Default: 0)
+        :param fmin: minimum frequency (Default 1220 MHz)
+        :param fmax: maximum frequency (Default: 1520 MHz)
+        :param nfreq: number of frequency channels, should be multiple of nsub=32 (default:64)
         """
         dish_mode = 'a8'
-        min_freq = 1220 * u.MHz
-        nfreq = 64  # should be multiple of 32
         ntab = 12
         nsb = 71
+        min_freq = 1220*u.MHz
+        df = 300.*u.MHz / nfreq
 
         # fname is required when load is True
         if load and fname is None:
@@ -46,7 +50,6 @@ class SBPattern(object):
         if sbs is None:
             sbs = range(nsb)
 
-        df = 300.*u.MHz / nfreq
         dish_pos = DISH[dish_mode]
 
         if load:
@@ -57,6 +60,7 @@ class SBPattern(object):
         dtheta = np.linspace(-THETAMAX_SB, THETAMAX_SB, NTHETA_SB) * u.arcmin
         dphi = np.linspace(-PHIMAX_SB, PHIMAX_SB, NPHI_SB) * u.arcmin
         freqs = np.arange(nfreq) * df + min_freq + df / 2  # center of each channel
+        mask = np.logical_or(freqs > fmax, freqs < fmin)
 
         # Generate beam pattern if load=False
         if not load:
@@ -79,6 +83,8 @@ class SBPattern(object):
             for tab in tqdm.tqdm(range(ntab)):
                 # TAB beamformer
                 tab_fringes = bf.beamform(dtheta, tab=tab)
+                # zero out bad freqs
+                tab_fringes[mask] = 0
                 # Apply TAB pattern at each phi to primary beam pattern
                 i_tot_2d = primary_beam * tab_fringes[:, None, :]
                 # store to output grid
@@ -121,6 +127,7 @@ class SBPattern(object):
         Save on-sky SB and TAB maps
         :param prefix: file name prefix
         """
+
         fname_tab = "models/tied-array_beam_pattern_{}".format(prefix)
         fname_sb = "models/synthesized_beam_pattern_{}".format(prefix)
         np.save(fname_tab, self.beam_pattern_tab)
@@ -196,6 +203,12 @@ if __name__ == '__main__':
                         "(Default: %(default)s)")
     parser.add_argument('--cb', required=False, type=int, default=0, help="Which CB to use when using 'real' CB model "
                         "(Default: %(default)s)")
+    parser.add_argument('--fmin', type=int, default=1220,
+                        help="Minimum frequency in MHz (default: %(default)s)")
+    parser.add_argument('--fmax', type=int, default=1520,
+                        help="Maximum frequency in MHz (default: %(default)s)")
+    parser.add_argument('--nfreq', type=int, default=64,
+                        help="Number of frequency channels (default: %(default)s)")
     parser.add_argument('--memmap_file', type=str, help="If present, use this file for numpy memmap")
     parser.add_argument('--plot', action='store_true', help="Create and show plots")
 
@@ -208,9 +221,9 @@ if __name__ == '__main__':
     parang = convert.ha_to_par(ha, dec)
 
     if args.cb is not None:
-        out_prefix = "{}_cb{:02d}_HA{:.2f}_Dec{:.2f}".format(args.cb_model, args.cb, args.ha, args.dec)
+        out_prefix = "{}_cb{:02d}_HA{:.2f}_Dec{:.2f}_{}-{}".format(args.cb_model, args.cb, args.ha, args.dec, args.fmin, args.fmax)
     else:
-        out_prefix = "{}_cb_HA{:.2f}_Dec{:.2f}".format(args.cb_model, args.ha, args.dec)
+        out_prefix = "{}_cb_HA{:.2f}_Dec{:.2f}_{}-{}".format(args.cb_model, args.ha, args.dec, args.fmin, args.fmax)
     
 
     # convert args to dict and remove unused params
@@ -227,6 +240,9 @@ if __name__ == '__main__':
     # keep user arg cb for simplicity
     kwargs['cbnum'] = kwargs['cb']
     del kwargs['cb']
+    # add units to frequencies
+    kwargs['fmin'] *= u.MHz
+    kwargs['fmax'] *= u.MHz
 
     # generate and store full beam pattern
     beam_pattern = SBPattern(**kwargs)

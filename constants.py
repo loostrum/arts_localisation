@@ -4,6 +4,7 @@
 
 import numpy as np
 import astropy.units as u
+from astropy.coordinates import EarthLocation
 
 
 #CB_HPBW = 28.0835088*u.arcmin # calculated from CB offsets file
@@ -17,9 +18,10 @@ DISH_MAXISHORT = np.concatenate([np.arange(8) * 144, np.array([36, 90, 1332, 140
 
 DISH = {'a8': DISH_A8, 'a10': DISH_A10, 'maxi-short': DISH_MAXISHORT}
 
-WSRT_LAT = 52.915184*u.deg
-WSRT_LON = 6.60387*u.deg
+WSRT_LAT = 52.915184*u.deg  # = 52:54:54.66
+WSRT_LON = 6.60387*u.deg  # = 06:36:13.93
 WSRT_ALT = 16*u.m
+WSRT_LOC = EarthLocation.from_geodetic(WSRT_LON, WSRT_LAT, WSRT_ALT)
 
 CB_MODEL_FILE = 'beam_models_190607.csv'
 

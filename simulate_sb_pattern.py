@@ -18,7 +18,7 @@ class SBPattern(object):
 
     def __init__(self, sbs=None, load=False, fname=None, theta_proj=0*u.deg, memmap_file=None,
                  cb_model='gauss', cbnum=None, parang=0*u.deg,
-                 fmin=1220*u.MHz, fmax=1520*u.MHz, nfreq=64):
+                 fmin=1220*u.MHz, fmax=1520*u.MHz, nfreq=64, dtheta=None, dphi=None):
         """
         Generate Synthesized Beam pattern
         :param sbs: array of SBs to generate [Default: all]
@@ -32,6 +32,8 @@ class SBPattern(object):
         :param fmin: minimum frequency (Default 1220 MHz)
         :param fmax: maximum frequency (Default: 1520 MHz)
         :param nfreq: number of frequency channels, should be multiple of nsub=32 (default:64)
+        :param dtheta: array of horizontal offset coords (default: values from definitions)
+        :param dphi: array of horizontal offset coords (default: values from definitions)
         """
         dish_mode = 'a8'
         ntab = 12
@@ -57,8 +59,10 @@ class SBPattern(object):
             self.beam_pattern_tab = None
             self.beam_pattern_tab_1d = None
 
-        dtheta = np.linspace(-THETAMAX_SB, THETAMAX_SB, NTHETA_SB) * u.arcmin
-        dphi = np.linspace(-PHIMAX_SB, PHIMAX_SB, NPHI_SB) * u.arcmin
+        if dtheta is None:
+            dtheta = np.linspace(-THETAMAX_SB, THETAMAX_SB, NTHETA_SB) * u.arcmin
+        if dphi is None:
+            dphi = np.linspace(-PHIMAX_SB, PHIMAX_SB, NPHI_SB) * u.arcmin
         freqs = np.arange(nfreq) * df + min_freq + df / 2  # center of each channel
         mask = np.logical_or(freqs > fmax, freqs < fmin)
 

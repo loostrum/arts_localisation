@@ -31,7 +31,7 @@ def add_cb_pattern(ax, ra_00=None, dec_00=None):
             'size': 10} 
     for cb, (dra, ddec) in enumerate(cb_pos):
         if ra_00 is not None and dec_00 is not None:
-            ra, dec = convert.offset_to_radec(ra_00, dec_00, dra, ddec)
+            ra, dec = convert.offset_to_coord(ra_00, dec_00, dra, ddec)
             patch = SphericalCircle((ra, dec), CB_HPBW / 2,
                                     ec='k', fc='none', ls='-')
         else:
@@ -195,7 +195,7 @@ if __name__ == '__main__':
         # dec = dec_00.to(u.deg).value + phi/60.
         # ra = ra_00.to(u.deg).value + theta/60. / np.cos(dec_00)
         tt, pp = np.meshgrid(theta, phi)
-        ra, dec = convert.offset_to_radec(ra_00, dec_00, tt*u.arcmin, pp*u.arcmin)
+        ra, dec = convert.offset_to_coord(ra_00, dec_00, tt*u.arcmin, pp*u.arcmin)
         # print best position in radec
         best_x = ra[best_phi_ind][best_theta_ind]
         best_y = dec[best_phi_ind][best_theta_ind]

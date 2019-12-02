@@ -5,12 +5,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import astropy.units as u
+from scipy import stats
 
-from constants import CB_HPBW, THETAMAX_SB, PHIMAX_SB, NTHETA_SB, NPHI_SB
+from constants import REF_FREQ, CB_HPBW, THETAMAX_SB, PHIMAX_SB, NTHETA_SB, NPHI_SB
 
 
-def add_cb(ax):
-    patch = Circle((0, 0), CB_HPBW.to(u.arcmin).value/2,
+def add_cb(ax, freq=1370.*u.MHz):
+    patch = Circle((0, 0), REF_FREQ/freq * CB_HPBW.to(u.arcmin).value/2,
                 ec='k', fc='none', ls='-')
     ax.add_patch(patch)
     
@@ -19,11 +20,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_file', type=str, required=True,
                         help="Input file with S/N per SB")
-    parser.add_argument('--output_file', type=str, default='output/log_posterior_sb',
+    parser.add_argument('--output_file', type=str, default='output/chisq_sb',
                         help="Output file for posterior (default: %(default)s)")
     parser.add_argument('--model', type=str, default='models/synthesized_beam_pattern_single_cb_ha=0.000000.npy',
                         help="Path to SB model (default: %(default)s)")
-    parser.add_argument('--max_snr', type=float, default=8.,
+    parser.add_argument('--max_snr', type=float, default=10.,
                         help="Max S/N in non-detection beams (default: %(default)s)")
     parser.add_argument('--plot', action='store_true',
                         help="Create and show plots")
@@ -35,6 +36,11 @@ if __name__ == '__main__':
     sb_det = data['sb'].astype(int)
     snr_det = data['snr'].astype(float)
 
+    try:
+        len(snr_det)
+    except TypeError:
+        sb_det = np.array([sb_det])
+        snr_det = np.array([snr_det])
     best_ind = np.argmax(snr_det)
     best_sb = sb_det[best_ind]
     best_snr = snr_det[best_ind]
@@ -42,8 +48,6 @@ if __name__ == '__main__':
     print("Loading model")
     sb_model = np.load(args.model)
     # scale SB sensitivity to highest S/N detection
-    #snr_model = sb_model * best_snr / sb_model[best_sb]
-    #del sb_model
     print("Done")
 
     theta = np.linspace(-THETAMAX_SB, THETAMAX_SB, NTHETA_SB)
@@ -62,48 +66,50 @@ if __name__ == '__main__':
         have_nondet = False
 
     # init log likelihood 
-    log_l = np.zeros((nphi, ntheta))
+    chisq = np.zeros((nphi, ntheta))
 
     for ind, ref_sb in enumerate(sb_det):
         ref_snr = snr_det[ind]
+        # only one REF SB for now
+        if not np.allclose(ref_snr, snr_det.max()):
+            continue
+
         print("SB{:02d} SNR {}".format(ref_sb, ref_snr))
         # model of S/N relative to this beam
         snr_model = sb_model * ref_snr / sb_model[ref_sb]
-        log_l -= np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2 / snr_model[sb_det], axis=0)
+        chisq += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2 / snr_model[sb_det], axis=0)
 
-    # # Detections: model - measured, then square and sum over SBs
-    # print("Adding {} detections".format(len(sb_det)))
-    # # take care that the np sum is -log(L)
-    # log_l -= np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis])**2, axis=0)
-    # print("Done")
+        # # non detections
+        if have_nondet:
+            print("Adding non detections")
+            # non detections are only relevant where the expected S/N is above the threshold
+            # find which non detection beams have a snr above the threshold
+            # get model of only non detection beams
+            snr_model_nondet = snr_model[sb_non_det]
+            # find which beams have a S/N above the threshold
+            sb_mask = snr_model_nondet > args.max_snr
+            # store how many are bad
+            num_bad_sb = sb_mask.sum(axis=0)
+            # use max_snr as "measured" value, so badness is how much the model
+            # S/N is above the threshold
+            chisq += np.sum((snr_model_nondet[sb_mask] - args.max_snr) ** 2 / args.max_snr, axis=0)
 
-    # # Non detections
-    # if have_nondet:
-    #     print("Adding {} non-detections".format(len(sb_non_det)))
-    #     # Add non detections as prior
-    #     # where positive: S/N is higher than max_snr. Set to zero probability
-    #     num_bad_sb = np.sum(snr_model[sb_non_det] - args.max_snr > 0, axis=0)
-    #     mask = num_bad_sb > 0
-    #
-    #     # prior is flat where S/N < max_snr, 0 where S/N > max_snr
-    #     log_prior = np.ones((nphi, ntheta)) * np.log(1./args.max_snr)
-    #     log_prior[mask] = -np.inf
-    #     print("Done")
-    # else:
-    #     log_prior = 0
-    have_nondet = False
+    # convert chisq to delta chisq
+    delta_chisq = chisq - chisq.min()
 
-    # define posterior
-    log_posterior = log_l #+ log_prior
+    # get degrees of freedom = npoint - nparam
+    # one SB is used as reference, so npoint = number of SBs with detection minus one
+    # params = theta, phi
+    dof = len(sb_det) - 3
+    # add non-detection SBs if available
+    if have_nondet:
+        dof += len(sb_non_det)
 
-    # ensure max is 0
-    log_posterior -= np.nanmax(log_posterior)
-
-    # Save the posterior
-    np.save(args.output_file, log_posterior)
+    # save result
+    np.save(args.output_file+'_dof{}'.format(dof), chisq)
 
     # Get the best position
-    best_phi_ind, best_theta_ind = np.unravel_index(np.nanargmax(log_posterior, axis=None), log_posterior.shape)
+    best_phi_ind, best_theta_ind = np.unravel_index(np.argmin(delta_chisq), delta_chisq.shape)
     best_theta = theta[best_theta_ind]
     best_phi = phi[best_phi_ind]
     print("Best position: theta={:.6f}', phi={:.6f}'".format(best_theta, best_phi))
@@ -112,6 +118,9 @@ if __name__ == '__main__':
     if args.plot:
         fig, axes = plt.subplots(ncols=2, figsize=(14, 4), sharex=True, sharey=True)
         axes = axes.flatten()
+
+        print("Creating plot")
+        # fig, ax = plt.subplots(figsize=(8, 8))
         X, Y = np.meshgrid(theta, phi)
 
         # Plot number of SBs > max_snr at each position
@@ -124,14 +133,35 @@ if __name__ == '__main__':
             ax.set_title('Number of non-detection SBs with S/N > {:.1f}'.format(args.max_snr))
             add_cb(ax)
 
-        # Plot posterior
+        # Plot delta chisq
         ax = axes[1]
-        img = ax.pcolormesh(X, Y, log_posterior, vmin=-4.6)
+        # calculate contour values in a readable way
+        contour_values = []
+        for sigma in [1, 2, 3]:
+            # from http://www.reid.ai/2012/09/chi-squared-distribution-table-with.html
+            # convert sigma to confidence interval
+            conf_int = stats.chi2.cdf(sigma ** 2, 1)
+            # convert confidence interval to delta chi2
+            dchisq_value = stats.chi2.ppf(conf_int, dof)
+            contour_values.append(dchisq_value)
+
+        # set vmax to 4 sigma
+        conf_int = stats.chi2.cdf(4**2, 1)
+        vmax = stats.chi2.ppf(conf_int, dof)
+
+        # ax = axes[1]
+        img = ax.pcolormesh(X, Y, delta_chisq, vmax=vmax)
         fig.colorbar(img, ax=ax)
-        ax.invert_yaxis()
+        # add best position
+        ax.plot(best_theta, best_phi, c='r', marker='.', ls='', ms=10,
+                label='Best position')
+        # add contours
+        ax.contour(X, Y, delta_chisq, contour_values, colors=['#FF0000', '#C00000', '#800000'])
+
+        ax.legend()
         ax.set_xlabel(r'$\theta$ [arcmin]')
         ax.set_ylabel(r'$\phi$ [arcmin]')
-        ax.set_title('Log posterior')
+        ax.set_title('$\Delta \chi^2$')
         add_cb(ax)
 
         plt.show()

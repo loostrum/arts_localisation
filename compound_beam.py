@@ -12,6 +12,7 @@ from scipy.optimize import curve_fit
 
 from constants import CB_HPBW, REF_FREQ, DISH_SIZE, CB_MODEL_FILE
 
+
 def gauss_2d(xy, x_mean, x_sig, y_mean, y_sig, rho):
     """
     xy: 2xN array of x, y values
@@ -48,6 +49,16 @@ class CompoundBeam(object):
 
         # ensure theta and phi use same units
         phi = phi.to(theta.unit)
+
+        # check shape
+        self.grid = False
+        ndim_theta = len(theta.shape)
+        ndim_phi = len(phi.shape)
+        assert ndim_theta == ndim_phi
+        if ndim_theta == 2:
+            # shapes have to be exactly equal in this case
+            assert np.array_equal(theta.shape, phi.shape)
+            self.grid = True
 
         self.theta = theta
         self.phi = phi
@@ -86,14 +97,22 @@ class CompoundBeam(object):
         :return: beam pattern
         """
 
-        output_grid = np.zeros((self.freqs.shape[0], self.phi.shape[0], self.theta.shape[0]))
+        if self.grid:
+            # shape of phi and theta are equal in this case
+            output_grid = np.zeros((self.freqs.shape[0], self.phi.shape[0], self.theta.shape[1]))
+        else:
+            # separate 1D phi and theta arrays
+            output_grid = np.zeros((self.freqs.shape[0], self.phi.shape[0], self.theta.shape[0]))
 
         # convert beam width to gaussian sigma at each freq
         sigmas = CB_HPBW * REF_FREQ / self.freqs / (2. * np.sqrt(2 * np.log(2)))
 
         # calculate response at each sigma
         for i, sigma in enumerate(sigmas):
-            arg = -.5 * (self.theta**2 + self.phi[..., None]**2) / sigma**2
+            if self.grid:
+                arg = -.5 * (self.theta**2 + self.phi**2) / sigma**2
+            else:
+                arg = -.5 * (self.theta**2 + self.phi[..., None]**2) / sigma**2
             output_grid[i] = np.exp(arg)
 
         return output_grid
@@ -127,7 +146,7 @@ class CompoundBeam(object):
         Y = r*np.sin(theta)
 
         # check NaNs
-        nans =~np.isfinite(beam)
+        nans = ~np.isfinite(beam)
         nan_frac = np.sum(nans) / float(n)**2
         if nan_frac > thresh:
             print("Warning: NaN frac is {} for CB{:02d}, "

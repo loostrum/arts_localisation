@@ -6,7 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import astropy.units as u
 
-from darc.sb_generator import SBGenerator
+#from darc.sb_generator import SBGenerator
+from sb_generator import SBGenerator
 
 from beamformer import BeamFormer
 from compound_beam import CompoundBeam
@@ -72,6 +73,18 @@ class SBPattern(object):
             NPHI_SB = len(dphi)
             PHIMAX_SB = dphi.max()
 
+        # check shape
+        self.grid = False
+        ndim_theta = len(dtheta.shape)
+        ndim_phi = len(dphi.shape)
+        assert ndim_theta == ndim_phi
+        if ndim_theta == 2:
+            # shapes have to be exactly equal in this case
+            assert np.array_equal(dtheta.shape, dphi.shape)
+            self.grid = True
+            # also fix sizes set earlier
+            NPHI_SB, NTHETA_SB = dtheta.shape
+
         freqs = np.arange(nfreq) * df + min_freq + df / 2  # center of each channel
         mask = np.logical_or(freqs > fmax, freqs < fmin)
 
@@ -91,18 +104,23 @@ class SBPattern(object):
             print("Generating TABs")
             # get TAB pattern for each tab, freq, theta, phi (image order: phi, then theta)
             beam_pattern_tab = np.zeros((ntab, nfreq, NPHI_SB, NTHETA_SB))
-            # second array for pattern without phi coordinate for faster SB generation
-            beam_pattern_tab_1d = np.zeros((ntab, nfreq, NTHETA_SB))
+            if not self.grid:
+                # second array for pattern without phi coordinate for faster SB generation
+                beam_pattern_tab_1d = np.zeros((ntab, nfreq, NTHETA_SB))
             for tab in tqdm.tqdm(range(ntab)):
                 # TAB beamformer
                 tab_fringes = bf.beamform(dtheta, tab=tab)
                 # zero out bad freqs
                 tab_fringes[mask] = 0
                 # Apply TAB pattern at each phi to primary beam pattern
-                i_tot_2d = primary_beam * tab_fringes[:, None, :]
+                if self.grid:
+                    i_tot_2d = primary_beam * tab_fringes
+                else:
+                    i_tot_2d = primary_beam * tab_fringes[:, None, :]
                 # store to output grid
                 beam_pattern_tab[tab] = i_tot_2d
-                beam_pattern_tab_1d[tab] = tab_fringes
+                if not self.grid:
+                    beam_pattern_tab_1d[tab] = tab_fringes
 
             print("Generating requested SBs")
             shape = (nsb, nfreq, NPHI_SB, NTHETA_SB)
@@ -111,13 +129,24 @@ class SBPattern(object):
             else:
                 beam_pattern_sb = np.zeros(shape)
             for sb in tqdm.tqdm(sbs):
-                # loop over SB map
-                beam = sb_gen.synthesize_beam(beam_pattern_tab_1d, sb)
                 # apply 2D primary beam and store
-                beam_pattern_sb[sb] = primary_beam * beam[:, None, :]
+                if self.grid:
+                    # each part is one step in phi
+                    # this is needed until the SB generator supports 3D input (tab, phi, theta)
+                    # for step in range(NPHI_SB):
+                    #     # all TAB, all freq, one phi, all theta
+                    #     data = beam_pattern_tab[:, :, step, :]
+                    #     beam = sb_gen.synthesize_beam(data, sb)
+                    #     beam_pattern_sb[sb][:, step] = primary_beam[:, step] * beam
+                    beam = sb_gen.synthesize_beam(beam_pattern_tab, sb)
+                    beam_pattern_sb[sb] = primary_beam * beam
+                else:
+                    beam = sb_gen.synthesize_beam(beam_pattern_tab_1d, sb)
+                    beam_pattern_sb[sb] = primary_beam * beam[:, None, :]
 
             self.beam_pattern_tab = beam_pattern_tab
-            self.beam_pattern_tab_1d = beam_pattern_tab_1d
+            if not self.grid:
+                self.beam_pattern_tab_1d = beam_pattern_tab_1d
             # sum SB pattern over frequency
             print("Generating on-sky SB pattern")
             shape = (nsb, NPHI_SB, NTHETA_SB)
@@ -159,7 +188,10 @@ class SBPattern(object):
 
             # TAB00 at one freq
             ax = axes[0]
-            X, Y = np.meshgrid(self.dtheta, self.dphi)
+            if self.grid:
+                X, Y = self.dtheta, self.dphi
+            else:
+                X, Y = np.meshgrid(self.dtheta, self.dphi)
             img = ax.pcolormesh(X, Y, self.beam_pattern_tab[tab][self.mid_freq], **kwargs)
             # fig.colorbar(img, ax=ax)
             ax.set_aspect('equal')
@@ -191,7 +223,10 @@ class SBPattern(object):
             # SB on sky
             for i, sb in enumerate(sbs):
                 ax = axes[i]
-                X, Y = np.meshgrid(self.dtheta, self.dphi)
+                if self.grid:
+                    X, Y = self.dtheta, self.dphi
+                else:
+                    X, Y = np.meshgrid(self.dtheta, self.dphi)
                 img = ax.pcolormesh(X, Y, self.beam_pattern_sb_sky[sb], **kwargs)
                 # fig.colorbar(img, ax=ax)
                 ax.set_aspect('equal')

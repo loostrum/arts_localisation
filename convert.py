@@ -12,7 +12,7 @@ from astropy.time import Time
 from constants import WSRT_LON, WSRT_LAT
 
 
-def ra_to_ha(ra, dec, t, lon=WSRT_LON):
+def radec_to_hadec(ra, dec, t, lon=WSRT_LON):
     """ 
     Convert J2000 RA, Dec to apparent HA, Dec
     :param ra: right ascension with unit
@@ -39,7 +39,7 @@ def ra_to_ha(ra, dec, t, lon=WSRT_LON):
     return SkyCoord(ha, dec, frame=coord_system)
 
 
-def ha_to_ra(ha, dec, t, lon=WSRT_LON):
+def hadec_to_radec(ha, dec, t, lon=WSRT_LON):
     """
     Convert apparent HA, Dec to J2000 RA, Dec
     :param ha: hour angle with unit
@@ -63,7 +63,7 @@ def ha_to_ra(ha, dec, t, lon=WSRT_LON):
     return coord_apparent.transform_to('icrs')
 
 
-def ha_to_par(ha, dec, lat=WSRT_LAT):
+def hadec_to_par(ha, dec, lat=WSRT_LAT):
     """
     Convert HA, Dec to parallactic angle 
     This is the SB rotation w.r.t. the RA-Dec frame
@@ -77,7 +77,7 @@ def ha_to_par(ha, dec, lat=WSRT_LAT):
     return theta_par.to(u.deg)
 
 
-def ha_to_proj(ha, dec, lat=WSRT_LAT):
+def hadec_to_proj(ha, dec, lat=WSRT_LAT):
     """
     Convert HA, Dec to projection angle
     This is the E-W baseline projection angle
@@ -87,7 +87,6 @@ def ha_to_proj(ha, dec, lat=WSRT_LAT):
     """
 
     alt, az = hadec_to_altaz(ha, dec, lat)
-    # ToDo: verify if this is correct
     theta_proj = np.arccos(np.sqrt(np.sin(alt)**2 + (np.cos(alt)*np.cos(az))**2))
     return theta_proj.to(u.deg)
 
@@ -134,7 +133,16 @@ def altaz_to_hadec(alt, az, lat=WSRT_LAT):
     return ha.to(u.deg), dec.to(u.deg)
 
 
-def offset_to_radec(ra0, dec0, theta, phi):
+def offset_to_coord(ra0, dec0, theta, phi):
+    """
+    Convert a projected offset (theta, phi) to
+    coordinate with reference (ra0, dec0
+    :param ra0: Reference RA or Az
+    :param dec0: Reference Dec or Alt
+    :param theta: RA or Az offset
+    :param phi: Dec or Alt offset
+    :return: (Ra, Dec) or (Az, Alt) of offset point
+    """
     # equations from
     # https://github.com/LSSTDESC/Coord/blob/master/coord/celestial.py
     # project: sky to plane
@@ -145,7 +153,7 @@ def offset_to_radec(ra0, dec0, theta, phi):
     # reimplementation of celestial.CelestialCoord.deproject
     # sky_coord = center.deproject(u, v)
 
-    # u,v are plane offset coordinates, here defined in RA Dec (but in HA Dec in celestial.py)
+    # u,v are plane offset coordinates
     # use uu to avoid issues with astropy unit
     uu = theta.to(u.radian).value
     vv = phi.to(u.radian).value
@@ -177,3 +185,48 @@ def offset_to_radec(ra0, dec0, theta, phi):
     ra = ra0 + np.arctan2(tandra_num, tandra_denom)
 
     return ra.to(u.deg), dec.to(u.deg)
+
+
+def coord_to_offset(ra0, dec0, ra1, dec1):
+    """
+    Convert point (ra1, dec1) to projected offset
+    from reference (ra0, dec0)
+    :param ra0: Reference RA or Az
+    :param dec0: Reference Dec or Alt
+    :param ra1: Target RA or Az
+    :param dec1: Target Dec or Alt
+    :return: (theta, phi) offset
+              theta is offset in RA or Az
+              phi is offset in Dec or Alt
+    """
+    # convert target radec into offset
+    # reverse of offset_to_radec
+
+    # x = k cos(dec) sin(ra0-ra)  # reversed sin arg, to have +x = +ra
+    # y = k ( cos(dec0) sin(dec) - sin(dec0) cos(dec) cos(ra-ra0) )
+    # k = 1 / cos(c)
+    # cos(c) = sin(dec0) sin(dec) + cos(dec0) cos(dec) cos(ra-ra0)
+
+    # define convenience numbers
+    sinra0 = np.sin(ra0)
+    sinra1 = np.sin(ra1)
+    cosra0 = np.cos(ra0)
+    cosra1 = np.cos(ra1)
+
+    sindec0 = np.sin(dec0)
+    sindec1 = np.sin(dec1)
+    cosdec0 = np.cos(dec0)
+    cosdec1 = np.cos(dec1)
+
+    # cos(dra) = cos(ra-ra0) = cos(ra0) cos(ra) + sin(ra0) sin(ra)
+    # sin(dra) = sin(ra - ra0) = cos(ra0) sin(ra) -  sin(ra0) cos(ra) (reversed as we use +x = +ra)
+    cosdra = cosra0 * cosra1 + sinra0 * sinra1
+    sindra = cosra0 * sinra1 - sinra0 * cosra1
+
+    cosc = sindec0 * sindec1 + cosdec0 * cosdec1 * cosdra
+    k = 1. / cosc
+
+    uu = k * cosdec1 * sindra * u.radian
+    vv = k * (cosdec0 * sindec1 - sindec0 * cosdec1 * cosdra) * u.radian
+
+    return uu.to(u.arcmin), vv.to(u.arcmin)

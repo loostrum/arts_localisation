@@ -7,9 +7,10 @@ import astropy.units as u
 from astropy.coordinates import EarthLocation
 
 
-#CB_HPBW = 28.0835088*u.arcmin # calculated from CB offsets file
-CB_HPBW = 35.066*u.arcmin  # fit CB00 Oct 1 2019  @ 1420 MHz
-REF_FREQ = 1420*u.MHz
+CB_HPBW = 28.0835088*u.arcmin # calculated from CB offsets file
+REF_FREQ = 1770*u.MHz  # for then it matches the measured width at 1420
+# CB_HPBW = 35.066*u.arcmin  # fit CB00 Oct 1 2019  @ 1420 MHz
+# REF_FREQ = 1420*u.MHz
 DISH_SIZE = 25 * u.m
 
 DISH_A8 = np.arange(8) * 144*u.m

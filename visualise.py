@@ -23,8 +23,8 @@ def plot_hadec():
 
     X, Y = np.meshgrid(ha, dec)
     
-    parang = convert.ha_to_par(X, Y)
-    proj = convert.ha_to_proj(X, Y)
+    parang = convert.hadec_to_par(X, Y)
+    proj = convert.hadec_to_proj(X, Y)
 
     fig, axes = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(12, 8))
 
@@ -100,7 +100,7 @@ def plot_tab_pattern():
         ha = slider_ha.val
         dec = slider_dec.val
         # create new tab
-        bf.theta_proj = convert.ha_to_proj(ha*u.deg, dec*u.deg)
+        bf.theta_proj = convert.hadec_to_proj(ha*u.deg, dec*u.deg)
         tab = bf.beamform(theta) * primary_beam
 
         pcm.set_array(tab[:-1,:-1].ravel())
@@ -133,19 +133,19 @@ def plot_sb_rotation():
 
     # CB width
     freq = 1370*u.MHz
-    cb_radius = (CB_HPBW * freq/REF_FREQ / 2)
+    cb_radius = (CB_HPBW * REF_FREQ/freq/2)
 
     # LST to convert HA <-> RA
     lst = 180*u.deg 
 
     # Which SBs to plot in which cBs
     # SB for given CB
-    beams = {0: [0, 35, 70]}
+    beams = {0: [0, 35, 70],
              #33: [0, 35, 70],
              #39: [0, 35, 70],
-             #4: [63],
-             #5: [12],
-             #11: [34]}
+             4: [63],
+             5: [12],
+             11: [34]}
 
     # SB separation = TAB separation at highest freq
     lambd = 299792458 * u.meter / u.second / (1500. * u.MHz)
@@ -194,9 +194,11 @@ def plot_sb_rotation():
         for cb, (dra, ddec) in enumerate(cb_pos):
             # RADec
             # pointing of this CB
-            dec = dec0 + ddec
-            dra = dra/np.cos(dec)
-            ra = ra0 + dra
+            #dec = dec0 + ddec
+            #dra = dra/np.cos(dec)
+            #ra = ra0 + dra
+
+            ra, dec = convert.offset_to_coord(ra0, dec0, dra, ddec)
 
             _ra = ra.to(u.deg).value
             _dec = dec.to(u.deg).value
@@ -234,22 +236,29 @@ def plot_sb_rotation():
                 # draw line from (x, -y) to (x, y)
                 # but the apply rotation by parallactic angle
                 # in altaz:
-                # x = +/-sb_offset, depening on azimuth:
+                # x = +/-sb_offset, depending on azimuth:
                 # higher SB = higher RA = East = either lower or higher Az
+                # assume we are pointing above NCP if North
                 if az0 > 270*u.deg or az0 < 90*u.deg:
-                    # increase Az towards higher SB
                     sgn = 1
                 else:
                     sgn = -1
-        
+
+                # alt az of this cb
+
+                #cb_shift_az
+                #cb_shift_alt
+                cb_shift_az = 0
+                cb_shift_alt = 0
+
                 # y = +/- length of line a sb_offset from center of CB
                 dy = np.sqrt(cb_radius ** 2 - sb_offset ** 2)
                 # alt start and end point
-                alts = alt0 + dy
-                alte = alt0 - dy
+                alts = alt0 + dy + cb_shift_alt
+                alte = alt0 - dy + cb_shift_alt
                 # az start and end point
-                azs = az0 + sgn * sb_offset / np.cos(alts)
-                aze = az0 + sgn * sb_offset / np.cos(alte)
+                azs = az0 + sgn * sb_offset / np.cos(alts) + cb_shift_az
+                aze = az0 + sgn * sb_offset / np.cos(alte) + cb_shift_az
 
                 # convert to HA, Dec 
                 has, decs = convert.altaz_to_hadec(alts, azs)
@@ -336,7 +345,7 @@ def plot_sb_rotation():
     def update(val):
         ha = slider_ha.val * u.deg
         dec = slider_dec.val * u.deg
-        parang = convert.ha_to_par(ha, dec)
+        parang = convert.hadec_to_par(ha, dec)
         ax.cla()
         ax2.cla()
         do_plot(ha, dec, parang)

@@ -17,7 +17,7 @@ from astropy.time import Time, TimeDelta
 from constants import WSRT_LAT, WSRT_LON, WSRT_ALT, CB_HPBW, REF_FREQ, \
                       THETAMAX_CB, PHIMAX_CB, NTHETA_CB, NPHI_CB, \
                       THETAMAX_SB, PHIMAX_SB, NTHETA_SB, NPHI_SB
-from convert import ha_to_ra
+from convert import hadec_to_radec
 
 
 def add_cb_pattern(ax, pos_ra=0, pos_dec=0, freq=1370*u.MHz):
@@ -91,8 +91,8 @@ if __name__ == '__main__':
 
     if params['drift']:
         # read hour angles, convert to J2000 RA,Dec
-        CB_best_center = ha_to_ra(params['ha_best_cb']*u.deg, params['dec_best_cb']*u.deg, tarr)
-        CB00_center = ha_to_ra(params['ha_cb00']*u.deg, params['dec_cb00']*u.deg, tarr)
+        CB_best_center = hadec_to_radec(params['ha_best_cb']*u.deg, params['dec_best_cb']*u.deg, tarr)
+        CB00_center = hadec_to_radec(params['ha_cb00']*u.deg, params['dec_cb00']*u.deg, tarr)
     else:
         # read RA, Dec
         CB_best_center = SkyCoord(params['ra_best_cb'], params['dec_best_cb'], unit=u.deg, frame='icrs')

@@ -3,6 +3,7 @@
 # Tool to generate the compound beam pattern
 
 from copy import copy
+import os
 
 import numpy as np
 import astropy.units as u
@@ -26,6 +27,7 @@ def gauss_2d(xy, x_mean, x_sig, y_mean, y_sig, rho):
     c = ((y-y_mean)/y_sig)**2
     d = (2*rho*(x-y_mean)*(x-y_mean) / (x_sig * y_sig))
     return np.exp(a * (b+c-d))
+
 
 class CompoundBeam(object):
     
@@ -53,8 +55,12 @@ class CompoundBeam(object):
         self.rot = rot
 
         # load beam measurements
-        self.beams_measured = np.genfromtxt(CB_MODEL_FILE, delimiter=',', names=True)
-        
+        try:
+            fname = os.path.join(os.path.dirname(os.path.abspath(__file__)), CB_MODEL_FILE)
+            self.beams_measured = np.genfromtxt(fname, delimiter=',', names=True)
+        except OSError as e:
+            print("Failed to load beam measurement file, real beams not available ({})".format(e))
+            self.beams_measured = None
 
     def beam_pattern(self, mode, cb=None):
         """
@@ -105,8 +111,8 @@ class CompoundBeam(object):
         name = 'B{:02d}_{}'.format(cb, ref_freq_str)
         beam = self.beams_measured[name].reshape(n, n)
 
-        dx = 1./36 * 60   # arcmin at ref freq
-        dy = dx
+        dy = 1./36 * 60   # arcmin at ref freq
+        dx = -dy  # horizontal axis of data is ha instead of ra
 
         # fit 2D gaussian
         x = (np.arange(n) - n/2) * dx

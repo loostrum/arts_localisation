@@ -56,7 +56,7 @@ if __name__ == '__main__':
     du, dv = np.meshgrid(theta, phi)
 
     # convert to RA, Dec
-    X, Y = convert.offset_to_radec(ra_00, dec_00, du, dv)
+    X, Y = convert.coord_to_radec(ra_00, dec_00, du, dv)
 
     # load posterior
     post_raw = np.load(args.posterior)
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     best_du = (theta * post_theta).sum() * dtheta
     best_dv = (phi * post_phi).sum() * dphi
-    best_theta, best_phi = convert.offset_to_radec(ra_00, dec_00, best_du, best_dv)
+    best_theta, best_phi = convert.coord_to_radec(ra_00, dec_00, best_du, best_dv)
 
     thresh68 = bisect(offset, 0., post.max(), args=(post, 0.68, dtheta, dphi))
     thresh95 = bisect(offset, 0., post.max(), args=(post, 0.95, dtheta, dphi))

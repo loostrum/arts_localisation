@@ -61,8 +61,17 @@ class SBPattern(object):
 
         if dtheta is None:
             dtheta = np.linspace(-THETAMAX_SB, THETAMAX_SB, NTHETA_SB) * u.arcmin
+        else:
+            # overwrite constants
+            NTHETA_SB = len(dtheta)
+            THETAMAX_SB = dtheta.max()
         if dphi is None:
             dphi = np.linspace(-PHIMAX_SB, PHIMAX_SB, NPHI_SB) * u.arcmin
+        else:
+            # overwrite constants
+            NPHI_SB = len(dphi)
+            PHIMAX_SB = dphi.max()
+
         freqs = np.arange(nfreq) * df + min_freq + df / 2  # center of each channel
         mask = np.logical_or(freqs > fmax, freqs < fmin)
 
@@ -221,8 +230,8 @@ if __name__ == '__main__':
     # convert HA, Dec to projection angles
     ha = args.ha * u.deg
     dec = args.dec * u.deg
-    theta_proj = convert.ha_to_proj(ha, dec)
-    parang = convert.ha_to_par(ha, dec)
+    theta_proj = convert.hadec_to_proj(ha, dec)
+    parang = convert.hadec_to_par(ha, dec)
 
     if args.cb is not None:
         out_prefix = "{}_cb{:02d}_HA{:.2f}_Dec{:.2f}_{}-{}".format(args.cb_model, args.cb, args.ha, args.dec, args.fmin, args.fmax)

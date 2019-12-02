@@ -3,11 +3,11 @@
 import argparse
 
 import yaml
-import numpy as np
 import astropy.units as u
 from astropy.time import Time, TimeDelta
+from astropy.coordinates import SkyCoord
 
-from convert import ra_to_ha
+from convert import radec_to_hadec
 
 
 if __name__ == '__main__':
@@ -28,8 +28,8 @@ if __name__ == '__main__':
         CB00_center = SkyCoord(params['ha_cb00'], params['dec_cb00'], unit=u.deg, frame='icrs')
     else:
         # read RA, Dec, convert to WSRT HA Dec
-        CB_best_center = ra_to_ha(params['ra_best_cb']*u.deg, params['dec_best_cb']*u.deg, tarr)
-        CB00_center = ra_to_ha(params['ra_cb00']*u.deg, params['dec_cb00']*u.deg, tarr)
+        CB_best_center = radec_to_hadec(params['ra_best_cb']*u.deg, params['dec_best_cb']*u.deg, tarr)
+        CB00_center = radec_to_hadec(params['ra_cb00']*u.deg, params['dec_cb00']*u.deg, tarr)
 
     ha_best = CB_best_center.ra
     if ha_best > 180*u.deg:

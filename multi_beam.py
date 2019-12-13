@@ -11,18 +11,22 @@ import yaml
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time, TimeDelta
+from astropy.visualization.wcsaxes import SphericalCircle
 from scipy import stats
 
 import convert
+from constants import CB_HPBW, REF_FREQ
 from simulate_sb_pattern import SBPattern
 
 plt.rcParams['axes.formatter.useoffset'] = False
 
 NSB = 71
 MAXSNR = 8  # should be the same as used when calculating S/N arrays (typically 8)
+FREQ = 1370*u.MHz  # reference frequency for CB radius in plot
 
 
-def make_plot(chi2, X, Y, dof, title, mode='altaz', sigmas=None, sigma_max=4, t_arr=None, loc=None):
+def make_plot(chi2, X, Y, dof, title, mode='altaz', sigmas=None, sigma_max=4,
+              t_arr=None, loc=None, cb_pos=None):
     # convert to delta chi squared so we can estimate confidence intervals
     if sigmas is None:
         sigmas = [3]
@@ -64,7 +68,7 @@ def make_plot(chi2, X, Y, dof, title, mode='altaz', sigmas=None, sigma_max=4, t_
             label='Best position')
     # add source position if available
     if have_source:
-        if mode =='altaz':
+        if mode == 'altaz':
             hadec_src = convert.radec_to_hadec(ra_src, dec_src, t_arr)
             y_src, x_src = convert.hadec_to_altaz(hadec_src.ra, hadec_src.dec)
         else:
@@ -72,6 +76,29 @@ def make_plot(chi2, X, Y, dof, title, mode='altaz', sigmas=None, sigma_max=4, t_
             y_src = dec_src
         ax.plot(x_src.to(u.deg).value, y_src.to(u.deg).value, c='cyan', marker='+', ls='', ms=10,
                 label='Source position')
+    # add CB position and circle if available
+    if cb_pos is not None:
+        if not isinstance(cb_pos, list):
+            cb_pos = [cb_pos]
+        for i, pos in enumerate(cb_pos):
+            if mode == 'altaz':
+                hadec_cb = convert.radec_to_hadec(pos.ra, pos.dec, t_arr)
+                y_cb, x_cb = convert.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)
+            else:
+                x_cb = pos.ra
+                y_cb = pos.dec
+            # add cross at center
+            if i == 0:
+                label = 'CB center'
+            else:
+                label = ''
+            ax.plot(x_cb.to(u.deg).value, y_cb.to(u.deg).value, c='k', marker='x', ls='', ms=10,
+                    label=label)
+            # add CB
+            cb_radius = (CB_HPBW * REF_FREQ/FREQ/2)
+            patch = SphericalCircle((x_cb, y_cb), cb_radius, ec='k', fc='none', ls='-', alpha=.5)
+            ax.add_patch(patch)
+
     # add labels
     if mode == 'altaz':
         ax.set_xlabel('Az (deg)')
@@ -126,6 +153,7 @@ if __name__ == '__main__':
     XX = {}
     YY = {}
     tarr = {}
+    pointings = {}
     nburst = 0
     for burst in conf.keys():
         if burst == 'source':
@@ -139,8 +167,16 @@ if __name__ == '__main__':
         t = Time(data['tstart'], format='isot', scale='utc') + TimeDelta(data['tarr'], format='sec')
         tarr[burst] = t
         # get alt, az of pointing
-        hadec_cb = convert.radec_to_hadec(data['ra']*u.deg, data['dec']*u.deg, t)
+        try:
+            radec_cb = SkyCoord(data['ra']*u.deg, data['dec']*u.deg)
+            hadec_cb = convert.radec_to_hadec(data['ra']*u.deg, data['dec']*u.deg, t)
+        except KeyError:
+            # assume ha was specified instead of ra
+            hadec_cb = SkyCoord(data['ha']*u.deg, data['dec']*u.deg)
+            radec_cb = convert.hadec_to_radec(data['ha']*u.deg, data['dec']*u.deg, t)
         alt_cb, az_cb = convert.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)
+        # save pointing
+        pointings[burst] = radec_cb
 
         # convert localisation coordinate grid to altaz
         hadec_loc = convert.radec_to_hadec(RA, DEC, t)
@@ -206,7 +242,11 @@ if __name__ == '__main__':
         if have_nondet:
             snr_model_nondet = snr_model[sb_non_det]
             sb_mask = snr_model_nondet > MAXSNR
-            chi2[burst] += np.sum((snr_model_nondet[sb_mask] - MAXSNR) ** 2 / MAXSNR, axis=0)
+            chi2[burst] += np.sum((snr_model_nondet[sb_mask] - MAXSNR) ** 2 , axis=0)
+
+        # reference SB has highest S/N: modelled S/N should never be higher than reference
+        #bad = (snr_model[sb_det] > ref_snr).sum(axis=0)
+        #chi2[burst][bad] = np.inf
 
     # degrees of freedom = number of data points minus number of parameters
     # data points = SBs minus one (reference SB)
@@ -232,7 +272,7 @@ if __name__ == '__main__':
     total_area = pix_area * npix_below_max
     print("Found {} pixels below {} sigma".format(npix_below_max, nsigma))
     print("Area of one pixel is {} ".format(pix_area))
-    print("Localisation area is {:.2f}".format(total_area))
+    print("Localisation area is {:.2f} = {:.2f}".format(total_area, total_area.to(u.arcmin**2)))
 
     # find best position
     ind = np.unravel_index(np.argmin(chi2_total), chi2_total.shape)
@@ -250,10 +290,12 @@ if __name__ == '__main__':
             continue
 
         title = "$\Delta \chi^2$ {}".format(burst)
-        make_plot(chi2[burst], XX[burst], YY[burst], dof, title, t_arr=tarr[burst])
+        make_plot(chi2[burst], XX[burst], YY[burst], dof, title, t_arr=tarr[burst],
+                  cb_pos=pointings[burst])
 
     # total
     title = "$\Delta \chi^2$ Total"
-    make_plot(chi2_total, RA, DEC, dof_total, title, mode='radec', loc='lower right')
+    make_plot(chi2_total, RA, DEC, dof_total, title, mode='radec', loc='lower right',
+              cb_pos=list(pointings.values()))
 
     plt.show()

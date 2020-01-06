@@ -51,10 +51,11 @@ def plot_hadec():
     plt.show()
 
 
-def plot_tab_pattern():
+def plot_tab_pattern(tabnum):
     """
     Plot TAB pattern as function of HA, Dec
     Interactive
+    tabnum: which tab to plot
     """
     # init beamformer and compound beam
     theta = np.linspace(-50, 50, 1000) * u.arcmin
@@ -66,7 +67,7 @@ def plot_tab_pattern():
     # get primary beam, remove vertical coordinate 
     primary_beam = cb.beam_pattern('gauss')[:, 0, :]
     # get TAB00 pattern to init plot with
-    tab = bf.beamform(theta) * primary_beam
+    tab = bf.beamform(theta, tab=tabnum) * primary_beam
 
     # create plot
     fig, ax = plt.subplots(figsize=(16, 9))
@@ -101,7 +102,7 @@ def plot_tab_pattern():
         dec = slider_dec.val
         # create new tab
         bf.theta_proj = convert.hadec_to_proj(ha*u.deg, dec*u.deg)
-        tab = bf.beamform(theta) * primary_beam
+        tab = bf.beamform(theta, tab=tabnum) * primary_beam
 
         pcm.set_array(tab[:-1,:-1].ravel())
 
@@ -111,7 +112,7 @@ def plot_tab_pattern():
     
     ax.set_xlim(theta.min().value, theta.max().value)
     ax.set_ylim(freqs.min().value, freqs.max().value)
-    ax.set_title('8-dish tied-array beam for Gaussian compound beam')
+    ax.set_title('8-dish tied-array beam for Gaussian compound beam (TAB{:02d})'.format(tabnum))
     ax.set_xlabel('E-W (arcmin)')
     ax.set_ylabel('Frequency (MHz)')
     plt.show()
@@ -364,11 +365,13 @@ if __name__ == '__main__':
                                                  "and projection angles",
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('plot', type=str, choices=choices, help="Which plot to show")
+    parser.add_argument('--tab', type=int, default=0, help="Which TAB to plot in tab mode " \
+                                                           "Default: (%(default)s)")
     args = parser.parse_args()
 
     if args.plot == 'hadec':
         plot_hadec()
     elif args.plot == 'tab':
-        plot_tab_pattern()
+        plot_tab_pattern(args.tab)
     elif args.plot == 'sb':
         plot_sb_rotation()

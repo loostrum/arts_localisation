@@ -154,7 +154,6 @@ class CompoundBeam(object):
             return self.__gaussian()
 
         # remove nans
-        XY = np.vstack([X.ravel(), Y.ravel()])
         Xshort = X[~nans]
         Yshort = Y[~nans]
         beam_short = beam[~nans]
@@ -171,7 +170,11 @@ class CompoundBeam(object):
         # assume sigma scales with 1/freq
         output_grid = np.zeros((self.freqs.shape[0], self.phi.shape[0], self.theta.shape[0]))
         scalings = ref_freq / self.freqs
-        X, Y = np.meshgrid(self.theta.to(u.arcmin).value, self.phi.to(u.arcmin).value)
+        if self.grid:
+            X = self.theta.to(u.arcmin).value
+            Y = self.phi.to(u.arcmin).value
+        else:
+            X, Y = np.meshgrid(self.theta.to(u.arcmin).value, self.phi.to(u.arcmin).value)
         XY = np.vstack([X.ravel(), Y.ravel()])
         for i, scaling in enumerate(scalings):
             this_popt = copy(popt)

@@ -11,34 +11,31 @@ from sb_generator import SBGenerator
 
 from beamformer import BeamFormer
 from compound_beam import CompoundBeam
-from constants import DISH, NTHETA_SB, NPHI_SB, THETAMAX_SB, PHIMAX_SB
-import convert
+from constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIST, NPOINT
 
 
 class SBPattern(object):
 
-    def __init__(self, sbs=None, load=False, fname=None, theta_proj=0*u.deg, memmap_file=None,
-                 cb_model='gauss', cbnum=None, parang=0*u.deg,
-                 fmin=1220*u.MHz, fmax=1520*u.MHz, nfreq=64, dtheta=None, dphi=None):
+    def __init__(self, ha, dec, dha, ddec, sbs=None, load=False, fname=None, memmap_file=None, cb_model='gauss', cbnum=None,
+                 fmin=1220*u.MHz, fmax=1520*u.MHz, nfreq=64):
         """
         Generate Synthesized Beam pattern
+        :param ha: hour angle of phase center
+        :param dec: declination of phase center
+        :param dha: array of hour angle offset coords
+        :param ddec: array of declination offset coords
         :param sbs: array of SBs to generate [Default: all]
         :param load: load beam pattern from disk instead of generating
         :param fname: file containing beam pattern
-        :param theta_proj: projection angle used when generating TAB pattern
         :param memmap_file: file to use for memmap (Default: no memmap)
         :param cb_model: CB model type to use (default: gauss)
         :param cbnum: which CB to use for modelling (only relevant if cb_model is 'real')
-        :param parang: parallactic angle (Default: 0)
         :param fmin: minimum frequency (Default 1220 MHz)
         :param fmax: maximum frequency (Default: 1520 MHz)
         :param nfreq: number of frequency channels, should be multiple of nsub=32 (default:64)
-        :param dtheta: array of horizontal offset coords (default: values from definitions)
-        :param dphi: array of horizontal offset coords (default: values from definitions)
+
         """
         dish_mode = 'a8'
-        ntab = 12
-        nsb = 71
         min_freq = 1220*u.MHz
         df = 300.*u.MHz / nfreq
 
@@ -51,47 +48,46 @@ class SBPattern(object):
             raise ValueError("cbnum cannot be None when cb_model='real'")
 
         if sbs is None:
-            sbs = range(nsb)
-
-        dish_pos = DISH[dish_mode]
+            sbs = range(NSB)
 
         if load:
-            self.beam_pattern_sb_sky = np.load(fname)
+            self.beam_pattern_sb_int = np.load(fname)
             self.beam_pattern_tab = None
             self.beam_pattern_tab_1d = None
 
-        if dtheta is None:
-            dtheta = np.linspace(-THETAMAX_SB, THETAMAX_SB, NTHETA_SB) * u.arcmin
-        else:
-            # overwrite constants
-            NTHETA_SB = len(dtheta)
-            THETAMAX_SB = dtheta.max()
-        if dphi is None:
-            dphi = np.linspace(-PHIMAX_SB, PHIMAX_SB, NPHI_SB) * u.arcmin
-        else:
-            # overwrite constants
-            NPHI_SB = len(dphi)
-            PHIMAX_SB = dphi.max()
-
         # check shape
-        self.grid = False
-        ndim_theta = len(dtheta.shape)
-        ndim_phi = len(dphi.shape)
-        assert ndim_theta == ndim_phi
-        if ndim_theta == 2:
-            # shapes have to be exactly equal in this case
-            assert np.array_equal(dtheta.shape, dphi.shape)
-            self.grid = True
-            # also fix sizes set earlier
-            NPHI_SB, NTHETA_SB = dtheta.shape
+        ndim_dha = len(dha.shape)
+        ndim_ddec = len(ddec.shape)
+        assert ndim_dha == ndim_ddec
+        if ndim_dha == 2:
+            # already a grid, shapes have to be exactly equal
+            assert np.array_equal(dha.shape, ddec.shape)
+            # store grid
+            dHA = dha
+            dDEC = ddec
+        elif ndim_dha == 1:
+            # create grid
+            dHA, dDEC = np.meshgrid(dha, ddec)
+        else:
+            print("ERROR: Input coordinates should be 1D or 2D arrays")
+            return
+
+        # set coordinates
+        numDEC, numHA = dHA.shape
+        DEC = dec + dDEC
+        HA = ha + dHA / np.cos(DEC)
 
         freqs = np.arange(nfreq) * df + min_freq + df / 2  # center of each channel
         mask = np.logical_or(freqs > fmax, freqs < fmin)
 
         # Generate beam pattern if load=False
         if not load:
-            bf = BeamFormer(freqs=freqs, ntab=ntab, theta_proj=theta_proj, dish_pos=dish_pos)
-            cb = CompoundBeam(freqs, dtheta, dphi, rot=parang)
+            # init beamformer
+            bf = BeamFormer(DISH_ITRF[dish_mode], freqs, ref_pos=ARRAY_ITRF)
+            bf.set_coordinates_and_phases(HA, DEC, ha, dec)
+            # init compound beam
+            cb = CompoundBeam(freqs, dHA, dDEC)
+            # init SB generator
             sb_gen = SBGenerator.from_science_case(4)
 
             # CB pattern
@@ -102,66 +98,54 @@ class SBPattern(object):
             primary_beam = cb.beam_pattern(cb_model, cb=cbnum)
 
             print("Generating TABs")
-            # get TAB pattern for each tab, freq, theta, phi (image order: phi, then theta)
-            beam_pattern_tab = np.zeros((ntab, nfreq, NPHI_SB, NTHETA_SB))
-            if not self.grid:
-                # second array for pattern without phi coordinate for faster SB generation
-                beam_pattern_tab_1d = np.zeros((ntab, nfreq, NTHETA_SB))
-            for tab in tqdm.tqdm(range(ntab)):
-                # TAB beamformer
-                tab_fringes = bf.beamform(dtheta, tab=tab)
+            # get TAB pattern for each tab, freq, ha, dec (image order: dec, then ha)
+            beam_pattern_tab = np.zeros((NTAB, nfreq, numDEC, numHA))
+
+            for tab in tqdm.tqdm(range(NTAB)):
+                # run TAB beamformer
+                tab_fringes = bf.beamform(tab)
                 # zero out bad freqs
                 tab_fringes[mask] = 0
-                # Apply TAB pattern at each phi to primary beam pattern
-                if self.grid:
-                    i_tot_2d = primary_beam * tab_fringes
-                else:
-                    i_tot_2d = primary_beam * tab_fringes[:, None, :]
+                # apply primary beam
+                intensity = tab_fringes * primary_beam
                 # store to output grid
-                beam_pattern_tab[tab] = i_tot_2d
-                if not self.grid:
-                    beam_pattern_tab_1d[tab] = tab_fringes
+                beam_pattern_tab[tab] = intensity
 
             print("Generating requested SBs")
-            shape = (nsb, nfreq, NPHI_SB, NTHETA_SB)
+            shape = (NSB, nfreq, numDEC, numHA)
             if memmap_file is not None:
                 beam_pattern_sb = np.memmap(memmap_file+'_full_sb.dat', dtype=float, mode='w+', shape=shape)
             else:
                 beam_pattern_sb = np.zeros(shape)
             for sb in tqdm.tqdm(sbs):
                 # apply 2D primary beam and store
-                if self.grid:
-                    # each part is one step in phi
-                    # this is needed until the SB generator supports 3D input (tab, phi, theta)
-                    # for step in range(NPHI_SB):
-                    #     # all TAB, all freq, one phi, all theta
-                    #     data = beam_pattern_tab[:, :, step, :]
-                    #     beam = sb_gen.synthesize_beam(data, sb)
-                    #     beam_pattern_sb[sb][:, step] = primary_beam[:, step] * beam
-                    beam = sb_gen.synthesize_beam(beam_pattern_tab, sb)
-                    beam_pattern_sb[sb] = primary_beam * beam
-                else:
-                    beam = sb_gen.synthesize_beam(beam_pattern_tab_1d, sb)
-                    beam_pattern_sb[sb] = primary_beam * beam[:, None, :]
+                # each part is one step in phi
+                # this is needed until the SB generator supports 3D input (tab, phi, theta)
+                # for step in range(NPHI_SB):
+                #     # all TAB, all freq, one phi, all theta
+                #     data = beam_pattern_tab[:, :, step, :]
+                #     beam = sb_gen.synthesize_beam(data, sb)
+                #     beam_pattern_sb[sb][:, step] = primary_beam[:, step] * beam
+                beam = sb_gen.synthesize_beam(beam_pattern_tab, sb)
+                beam_pattern_sb[sb] = primary_beam * beam
 
             self.beam_pattern_tab = beam_pattern_tab
-            if not self.grid:
-                self.beam_pattern_tab_1d = beam_pattern_tab_1d
+
             # sum SB pattern over frequency
-            print("Generating on-sky SB pattern")
-            shape = (nsb, NPHI_SB, NTHETA_SB)
+            print("Integrating SB pattern over frequency")
+            shape = (NSB, numDEC, numHA)
             if memmap_file is not None:
-                self.beam_pattern_sb_sky = np.memmap(memmap_file+'_sb.dat', dtype=float, mode='w+', shape=shape)
+                self.beam_pattern_sb_int = np.memmap(memmap_file+'_sb.dat', dtype=float, mode='w+', shape=shape)
             else:
-                self.beam_pattern_sb_sky = np.zeros(shape)
-            self.beam_pattern_sb_sky = beam_pattern_sb.sum(axis=1)
+                self.beam_pattern_sb_int = np.zeros(shape)
+            self.beam_pattern_sb_int = beam_pattern_sb.sum(axis=1)
 
-        self.mid_theta = int(NTHETA_SB/2.)
-        self.mid_phi = int(NPHI_SB/2.)
-        self.mid_freq = int(nfreq/2.)
+        self.mid_ha = int(numHA/2)
+        self.mid_dec = int(numDEC/2)
+        self.mid_freq = int(nfreq/2)
 
-        self.dtheta = dtheta
-        self.dphi = dphi
+        self.dHA = dHA
+        self.dDEC = dDEC
         self.freqs = freqs
 
     def save(self, prefix):
@@ -173,12 +157,10 @@ class SBPattern(object):
         fname_tab = "models/tied-array_beam_pattern_{}".format(prefix)
         fname_sb = "models/synthesized_beam_pattern_{}".format(prefix)
         np.save(fname_tab, self.beam_pattern_tab)
-        np.save(fname_sb, self.beam_pattern_sb_sky)
+        np.save(fname_sb, self.beam_pattern_sb_int)
 
-    def plot(self, show=True):
+    def plot(self, show=True, tab=0):
         print("Plotting")
-        # TAB00
-        tab = 0
         # kwargs = {'vmin': .05, 'norm': LogNorm()}
         kwargs = {'vmin': .05}
 
@@ -188,25 +170,22 @@ class SBPattern(object):
 
             # TAB00 at one freq
             ax = axes[0]
-            if self.grid:
-                X, Y = self.dtheta, self.dphi
-            else:
-                X, Y = np.meshgrid(self.dtheta, self.dphi)
+            X, Y = self.dHA, self.dDEC
             img = ax.pcolormesh(X, Y, self.beam_pattern_tab[tab][self.mid_freq], **kwargs)
             # fig.colorbar(img, ax=ax)
             ax.set_aspect('equal')
-            ax.set_xlabel(r'$\theta$ [arcmin]')
-            ax.set_ylabel(r'$\phi$ [arcmin]')
+            ax.set_xlabel('dHA [arcmin]')
+            ax.set_ylabel('dDec [arcmin]')
             ax.set_title('On-sky pattern at {}'.format(self.freqs[self.mid_freq]))
 
-            # TAB00 theta vs freq
+            # TAB00 HA vs freq
             ax = axes[1]
-            X, Y = np.meshgrid(self.dtheta, self.freqs)
-            img = ax.pcolormesh(X, Y, self.beam_pattern_tab[tab][:, self.mid_phi, :], **kwargs)
+            X, Y = np.meshgrid(self.dHA[self.mid_dec], self.freqs)
+            img = ax.pcolormesh(X, Y, self.beam_pattern_tab[tab][:, self.mid_dec, :], **kwargs)
             # fig.colorbar(img, ax=ax)
-            ax.set_xlabel(r'$\theta$ [arcmin]')
+            ax.set_xlabel('dHA [arcmin]')
             ax.set_ylabel('Frequency [MHz]')
-            ax.set_title('E-W slice through center of CB')
+            ax.set_title('Constant DEC slice through center of CB')
 
             fig.tight_layout()
             fig.suptitle('TAB{:02d}'.format(tab))
@@ -214,7 +193,7 @@ class SBPattern(object):
             print("TAB data not available - not plotting")
 
         # SB
-        if self.beam_pattern_sb_sky is not None:
+        if self.beam_pattern_sb_int is not None:
             sbs = [0, 35, 70]
             fig, axes = plt.subplots(ncols=len(sbs), figsize=(12.8, 6), sharex=True, sharey=True)
             fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94, wspace=0.05)
@@ -223,15 +202,12 @@ class SBPattern(object):
             # SB on sky
             for i, sb in enumerate(sbs):
                 ax = axes[i]
-                if self.grid:
-                    X, Y = self.dtheta, self.dphi
-                else:
-                    X, Y = np.meshgrid(self.dtheta, self.dphi)
-                img = ax.pcolormesh(X, Y, self.beam_pattern_sb_sky[sb], **kwargs)
+                X, Y = self.dHA, self.dDEC
+                img = ax.pcolormesh(X, Y, self.beam_pattern_sb_int[sb], **kwargs)
                 # fig.colorbar(img, ax=ax)
                 ax.set_aspect('equal')
-                ax.set_xlabel(r'$\theta$ [arcmin]')
-                ax.set_ylabel(r'$\phi$ [arcmin]')
+                ax.set_xlabel('dHA [arcmin]')
+                ax.set_ylabel('dDec [arcmin]')
                 ax.set_title('SB{:02d}'.format(sb))
 
             fig.tight_layout()
@@ -247,7 +223,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--ha', required=True, type=float, help="Hour angle in degrees")
     parser.add_argument('--dec', required=True, type=float, help="Declination in degrees")
-    parser.add_argument('--cb_model', required=False, type=str, default='real', help="CB model type to use "
+    parser.add_argument('--cb_model', required=False, type=str, default='gauss', help="CB model type to use "
                         "(Default: %(default)s)")
     parser.add_argument('--cb', required=False, type=int, default=0, help="Which CB to use when using 'real' CB model "
                         "(Default: %(default)s)")
@@ -262,41 +238,38 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # convert HA, Dec to projection angles
-    ha = args.ha * u.deg
-    dec = args.dec * u.deg
-    theta_proj = convert.hadec_to_proj(ha, dec)
-    parang = convert.hadec_to_par(ha, dec)
+    # create HA, Dec arrays
+    ddec = np.linspace(-MAXDIST, MAXDIST, NPOINT) * u.arcmin
+    dha = (np.linspace(-MAXDIST, MAXDIST, NPOINT) * u.arcmin)
+    dHA, dDEC = np.meshgrid(dha, ddec)
 
     if args.cb is not None:
-        out_prefix = "{}_cb{:02d}_HA{:.2f}_Dec{:.2f}_{}-{}".format(args.cb_model, args.cb, args.ha, args.dec, args.fmin, args.fmax)
+        out_prefix = "{}_cb{:02d}_HA{:.2f}_Dec{:.2f}_{}-{}".format(args.cb_model, args.cb, args.ha, args.dec,
+                                                                   args.fmin, args.fmax)
     else:
         out_prefix = "{}_cb_HA{:.2f}_Dec{:.2f}_{}-{}".format(args.cb_model, args.ha, args.dec, args.fmin, args.fmax)
-    
 
     # convert args to dict and remove unused params
     kwargs = vars(args).copy()
-    del kwargs['ha']
-    del kwargs['dec']
     del kwargs['plot']
-    #add projection angles
-    kwargs['theta_proj'] = theta_proj
-    kwargs['parang'] = parang
-    print("Using projection angle:", theta_proj)
-    print("Using parallactic angle:", parang)
     # rename cb to cbnum
     # keep user arg cb for simplicity
     kwargs['cbnum'] = kwargs['cb']
     del kwargs['cb']
-    # add units to frequencies
+    # add units
+    kwargs['ha'] *= u.deg
+    kwargs['dec'] *= u.deg
     kwargs['fmin'] *= u.MHz
     kwargs['fmax'] *= u.MHz
+    # add ha dec offsets
+    kwargs['dha'] = dHA
+    kwargs['ddec'] = dDEC
 
     # generate and store full beam pattern
     beam_pattern = SBPattern(**kwargs)
     beam_pattern.save(out_prefix)
     # or load a beam pattern from disk
-    #beam_pattern = SBPattern(load=True, fname='models/synthesized_beam_pattern_gauss_cb_PA10.600506.npy')
+    # beam_pattern = SBPattern(load=True, fname='models/synthesized_beam_pattern_gauss_cb_PA10.600506.npy')
 
     # plot
     if args.plot:

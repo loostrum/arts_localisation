@@ -12,6 +12,23 @@ from astropy.time import Time
 from constants import WSRT_LON, WSRT_LAT
 
 
+def limit(val, minval=-1, maxval=1):
+    """
+    Where val > maxval, replace by maxval
+    Where val < minval, replace by minval
+    :param val: input value
+    :param minval: minimum value
+    :param maxval: maximum value
+    """
+    # replace < minval
+    m = val < minval
+    val[m] = minval
+    # replace > maxval
+    m = val > maxval
+    val[m] = maxval
+    return val
+
+
 def radec_to_hadec(ra, dec, t, lon=WSRT_LON):
     """ 
     Convert J2000 RA, Dec to apparent HA, Dec
@@ -87,7 +104,9 @@ def hadec_to_proj(ha, dec, lat=WSRT_LAT):
     """
 
     alt, az = hadec_to_altaz(ha, dec, lat)
-    theta_proj = np.arccos(np.sqrt(np.sin(alt)**2 + (np.cos(alt)*np.cos(az))**2))
+    cos_theta_proj = np.sqrt(np.sin(alt)**2 + (np.cos(alt)*np.cos(az))**2)
+    cos_theta_proj = limit(cos_theta_proj)
+    theta_proj = np.arccos(cos_theta_proj)
     return theta_proj.to(u.deg)
 
 
@@ -100,9 +119,13 @@ def hadec_to_altaz(ha, dec, lat=WSRT_LAT):
     """
 
     sinalt = np.sin(dec) * np.sin(lat) + np.cos(dec) * np.cos(lat) * np.cos(ha)
+    # avoid sinalt out of range
+    sinalt = limit(sinalt)
     alt = np.arcsin(sinalt)
 
     cosaz = (np.sin(dec) - np.sin(alt) * np.sin(lat)) / (np.cos(alt) * np.cos(lat))
+    # avoid cosaz out of range
+    cosaz = limit(cosaz)
     az = np.arccos(cosaz)
 
     # fix sign of az
@@ -121,9 +144,13 @@ def altaz_to_hadec(alt, az, lat=WSRT_LAT):
     """
 
     sindec = np.cos(az) * np.cos(alt) * np.cos(lat) + np.sin(alt) * np.sin(lat)
+    # avoid sindec out of range
+    sindec = limit(sindec)
     dec = np.arcsin(sindec)
 
     cosha = (np.sin(alt) - np.sin(dec) * np.sin(lat)) / (np.cos(dec) * np.cos(lat))
+    # avoid cosha out of range
+    cosha = limit(cosha)
     ha = np.arccos(cosha)
 
     # fix sign of ha
@@ -230,3 +257,36 @@ def coord_to_offset(ra0, dec0, ra1, dec1):
     vv = k * (cosdec0 * sindec1 - sindec0 * cosdec1 * cosdra) * u.radian
 
     return uu.to(u.arcmin), vv.to(u.arcmin)
+
+
+def rotate_coordinate_grid(X, Y, angle, origin=None):
+    """
+    Rotate input coordinate grid by given angle around given origin (default: center)
+    :param X: input x coordinates
+    :param Y: input y coordinates
+    :param angle: rotation angle
+    :param origin: tuple with origin for rotation (default: center of XY grid)
+    """
+    
+    assert X.shape == Y.shape
+    
+    if origin is None:
+        ny, nx = X.shape
+        yind = int(ny/2)
+        xind = int(nx/2)
+        # find center of grid
+        xmid = X[yind, xind]
+        ymid = Y[yind, xind]
+    else:
+        xmid, ymid = origin
+    
+    # convert to polar
+    r = np.sqrt((X-xmid)**2 + (Y-ymid)**2)
+    theta = np.arctan2(Y-ymid, X-xmid)
+    # apply rotation
+    theta += angle
+    # convert back to cartesian
+    X = r * np.cos(theta) + xmid
+    Y = r * np.sin(theta) + ymid
+    
+    return X, Y

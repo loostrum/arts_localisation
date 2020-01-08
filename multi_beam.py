@@ -15,18 +15,17 @@ from astropy.visualization.wcsaxes import SphericalCircle
 from scipy import stats
 
 import convert
-from constants import CB_HPBW, REF_FREQ
+from constants import CB_HPBW, REF_FREQ, NSB
 from simulate_sb_pattern import SBPattern
 
 plt.rcParams['axes.formatter.useoffset'] = False
 
-NSB = 71
 MAXSNR = 8  # should be the same as used when calculating S/N arrays (typically 8)
 FREQ = 1370*u.MHz  # reference frequency for CB radius in plot
 
 
-def make_plot(chi2, X, Y, dof, title, mode='altaz', sigmas=None, sigma_max=4,
-              t_arr=None, loc=None, cb_pos=None, sb_pos=None):
+def make_plot(chi2, X, Y, dof, title, mode='radec', sigmas=None, sigma_max=4,
+              t_arr=None, loc=None, cb_pos=None):
     # convert to delta chi squared so we can estimate confidence intervals
     if sigmas is None:
         sigmas = [3]
@@ -97,23 +96,6 @@ def make_plot(chi2, X, Y, dof, title, mode='altaz', sigmas=None, sigma_max=4,
             cb_radius = (CB_HPBW * REF_FREQ/FREQ/2)
             patch = SphericalCircle((x_cb, y_cb), cb_radius, ec='k', fc='none', ls='-', alpha=.5)
             ax.add_patch(patch)
-    # add center of best SB
-    if sb_pos is not None:
-        if not isinstance(sb_pos, list):
-            sb_pos = [sb_pos]
-        for pos in sb_pos:
-            if mode == 'altaz':
-                hadec_sb = convert.radec_to_hadec(pos.ra, pos.dec, t_arr)
-                y_sb, x_sb = convert.hadec_to_altaz(hadec_sb.ra, hadec_sb.dec)
-            else:
-                x_sb = pos.ra
-                y_sb = pos.dec
-            if i == 0:
-                label = 'SB center'
-            else:
-                label = ''
-            ax.plot(x_sb.to(u.deg).value, y_sb.to(u.deg).value, c='r', marker='x', ls='', ms=10,
-                    label=label)
 
     # add labels
     if mode == 'altaz':
@@ -163,22 +145,14 @@ if __name__ == '__main__':
     dec = args.dec*u.deg + ddec
     ra = args.ra*u.deg + dra/np.cos(dec)
     RA, DEC = np.meshgrid(ra, dec)
-
-    # Define SB separation (used to plot SB position)
-    # SB separation = TAB separation at fixed freq
-    # Defined for 12 TABs, 10 dishes. Remains the same when using fewer dishes but same number of TABs
-    lambd = 299792458 * u.meter / u.second / (1500. * u.MHz)
-    Bmax = 1296 * u.m
-    scaling = .8  # again for A10, not A8
-    sb_separation = ((scaling * lambd / Bmax).to(1) * u.radian).to(u.arcmin)
+    # store size
+    numY, numX = RA.shape
 
     # loop over bursts
     chi2 = {}
-    XX = {}
-    YY = {}
     tarr = {}
     pointings = {}
-    sb_positions = {}
+    cb_weights = {}
     nburst = 0
     for burst in conf.keys():
         if burst == 'source':
@@ -199,45 +173,48 @@ if __name__ == '__main__':
             # assume ha was specified instead of ra
             hadec_cb = SkyCoord(data['ha']*u.deg, data['dec']*u.deg)
             radec_cb = convert.hadec_to_radec(data['ha']*u.deg, data['dec']*u.deg, t)
-        alt_cb, az_cb = convert.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)
-        projection_angle = convert.hadec_to_proj(hadec_cb.ra, hadec_cb.dec)
+        alt_cb, az_cb = convert.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)  # needed for SB position
+        # projection_angle = convert.hadec_to_proj(hadec_cb.ra, hadec_cb.dec)
         # save pointing
         pointings[burst] = radec_cb
 
-        # convert localisation coordinate grid to altaz
+        # convert localisation coordinate grid to hadec
         hadec_loc = convert.radec_to_hadec(RA, DEC, t)
-        # convert hadec to altaz
-        alt_loc, az_loc = convert.hadec_to_altaz(hadec_loc.ra, hadec_loc.dec)
-        #### TEMP: store for plot
-        XX[burst] = az_loc
-        YY[burst] = alt_loc
+        HA_loc = hadec_loc.ra
+        DEC_loc = hadec_loc.dec
+        # calculate offsets from phase center
+        # without cos(dec) factor for dHA
+        dHA_loc = (HA_loc - hadec_cb.ra) * np.cos(DEC_loc)
+        dDEC_loc = (DEC_loc - hadec_cb.dec)
 
         # convert localisation area to offset from this CB
-        dtheta, dphi = convert.coord_to_offset(az_cb, alt_cb, az_loc, alt_loc)
+        # dtheta, dphi = convert.coord_to_offset(az_cb, alt_cb, az_loc, alt_loc)
 
-        nphi, ntheta = dtheta.shape
+        # nphi, ntheta = dtheta.shape
 
-        # define flips as in plot_sb (use mean alt az for now)
-        if az_loc.mean() > 270 * u.deg or az_loc.mean() < 90 * u.deg:
-            # north
-            sign_du = 1
-            sign_dv = -1
-        else:
-            # south
-            sign_du = -1
-            sign_dv = 1
-        # for some reason SB with best detection matches B0531 only if pattern is mirrored???
-        # so flip again ...
-        sign_du *= -1
-        sign_dv *= -1
-        print("Sign du:", sign_du)
-        print("Sign dv:", sign_dv)
+        # # define flips as in plot_sb (use mean alt az for now)
+        # if az_loc.mean() > 270 * u.deg or az_loc.mean() < 90 * u.deg:
+        #     # north
+        #     sign_du = 1
+        #     sign_dv = -1
+        # else:
+        #     # south
+        #     sign_du = -1
+        #     sign_dv = 1
+        # # for some reason SB with best detection matches B0531 only if pattern is mirrored???
+        # # so flip again ...
+        # sign_du *= -1
+        # sign_dv *= -1
+        # print("Sign du:", sign_du)
+        # print("Sign dv:", sign_dv)
 
-        # generate the SB model
+        # generate the SB model with CB as phase center
         model_type = 'gauss'
-        sbp = SBPattern(dtheta=dtheta*sign_du, dphi=dphi*sign_dv,
-                        fmin=args.fmin*u.MHz, cb_model=model_type, cbnum=data['cb'])
-        sb_model = sbp.beam_pattern_sb_sky
+        sbp = SBPattern(hadec_cb.ra, hadec_cb.dec, dHA_loc, dDEC_loc, fmin=args.fmin*u.MHz,
+                        cb_model=model_type, cbnum=data['cb'])
+        # get pattern integrated over frequency
+        # TODO: spectral indices?
+        sb_model = sbp.beam_pattern_sb_int
 
         # load SNR array
         data = np.loadtxt(data['snr_array'])
@@ -252,32 +229,55 @@ if __name__ == '__main__':
             have_nondet = False
 
         # init chi2 array
-        chi2[burst] = np.zeros((nphi, ntheta))
+        chi2[burst] = np.zeros((numY, numX))
         # use one reference SB
         ind = snr_det.argmax()
         ref_snr = snr_det[ind]
         ref_sb = sb_det[ind]
         print("SB{:02d} SNR {}".format(ref_sb, ref_snr))
-        # save position of best SB
-        # az_sb, alt_sb = convert.offset_to_coord(az_cb, alt_cb, sb_separation*(ref_sb-35)/np.cos(projection_angle),
-        #                                         0*u.deg)
-        az_sb, alt_sb = convert.offset_to_coord(az_cb, alt_cb, sb_separation * (ref_sb - 35), 0 * u.deg)
-        # convert to radec
-        hadec_sb = convert.altaz_to_hadec(alt_sb, az_sb)
-        radec_sb = convert.hadec_to_radec(*hadec_sb, t)
-        sb_positions[burst] = radec_sb
+
+        # the weight of the CB is the max S/N in it
+        cb_weights[burst] = ref_snr
 
         # model of S/N relative to this beam
         snr_model = sb_model * ref_snr / sb_model[ref_sb]
+        ####
+        # tmpsb = 22
+        # tmpy, tmpx = np.array(sb_model[0].shape) / 2
+        # plt.figure()
+        # plt.imshow(sb_model[tmpsb], aspect='equal')
+        # plt.plot(tmpx, tmpy, c='cyan', marker='+', ls='', ms=10)
+        # plt.title('SB{:02d}'.format(tmpsb))
+        # plt.figure()
+        # plt.imshow(sb_model[35], aspect='equal')
+        # plt.plot(tmpx, tmpy, c='cyan', marker='+', ls='', ms=10)
+        # plt.title('SB35')
+        # plt.figure()
+        # img = plt.imshow(ref_snr * sb_model[tmpsb] / sb_model[35] - snr_det[sb_det == tmpsb]+50, aspect='equal',
+        #                  cmap='seismic', vmin=-100, vmax=100)
+        # plt.plot(tmpx, tmpy, c='cyan', marker='+', ls='', ms=10)
+        # plt.colorbar(img)
+        # plt.title('(SNR35 x SB{0:02d} / SB35) - SNR{0:02d}'.format(tmpsb))
+        # plt.show()
+        # exit()
+        ####
 
         # chi2
         # Detection SBs
-        chi2[burst] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2 / snr_model[sb_det], axis=0)
-        # non detection SBs
-        if have_nondet:
-            snr_model_nondet = snr_model[sb_non_det]
-            sb_mask = snr_model_nondet > MAXSNR
-            chi2[burst] += np.sum((snr_model_nondet[sb_mask] - MAXSNR) ** 2 , axis=0)
+        # assume 20% error on S/N
+        snr_err = .2 * snr_det
+        weights = 1/snr_err**2
+        # chi2[burst] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2 / snr_model[sb_det], axis=0)
+        chi2[burst] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2 * weights[:, None, None],
+                              axis=0)
+        # # non detection SBs
+        # if have_nondet:
+        #     snr_err = .2 * MAXSNR
+        #     weight = 1./snr_err**2
+        #
+        #     snr_model_nondet = snr_model[sb_non_det]
+        #     sb_mask = snr_model_nondet > MAXSNR
+        #     chi2[burst] += np.sum((snr_model_nondet[sb_mask] - MAXSNR)**2 * weight, axis=0)
 
         # reference SB has highest S/N: modelled S/N should never be higher than reference
         # bad = (snr_model[sb_det] > ref_snr).sum(axis=0)
@@ -288,10 +288,12 @@ if __name__ == '__main__':
     # parameters: theta, phi = 2
     dof = NSB - 3
 
-    # chi2 of all CBs combined
-    chi2_total = np.zeros((nphi, ntheta))
-    for value in chi2.values():
-        chi2_total += value
+    # chi2 of all CBs combined, each weighted by max S/N in the CB
+    chi2_total = np.zeros((numY, numX))
+    for burst, value in chi2.items():
+        chi2_total += value * cb_weights[burst]
+    # scale by total weight
+    chi2_total /= np.sum(list(cb_weights.values()))
 
     # total number of CBs * (NSB-1) - 2 params
     dof_total = nburst * (NSB - 1) - 2
@@ -325,12 +327,12 @@ if __name__ == '__main__':
             continue
 
         title = "$\Delta \chi^2$ {}".format(burst)
-        make_plot(chi2[burst], XX[burst], YY[burst], dof, title, t_arr=tarr[burst],
-                  cb_pos=pointings[burst], sb_pos=sb_positions[burst])
+        make_plot(chi2[burst], RA, DEC, dof, title, t_arr=tarr[burst],
+                  cb_pos=pointings[burst])
 
     # total
     title = "$\Delta \chi^2$ Total"
-    make_plot(chi2_total, RA, DEC, dof_total, title, mode='radec', loc='lower right',
-              cb_pos=list(pointings.values()), sb_pos=list(sb_positions.values()))
+    make_plot(chi2_total, RA, DEC, dof_total, title, loc='lower right',
+              cb_pos=list(pointings.values()))
 
     plt.show()

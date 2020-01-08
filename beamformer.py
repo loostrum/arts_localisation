@@ -50,7 +50,8 @@ class BeamFormer(object):
         for i, dish in enumerate(self.dish_pos):
             uvw[i] = np.inner(rot_matrix, dish.value)
         # scale by wavelength
-        uvw = uvw[:, None, :] * (self.freqs / const.c).to(1/dish.unit).value
+        scaling = (self.freqs / const.c).to(1/dish.unit).value
+        uvw = uvw[:, None, :] * scaling[None, :, None]
         # shape is now (ndish, nfreq, 3)
         return uvw
     
@@ -80,15 +81,14 @@ class BeamFormer(object):
         # init output voltage beam
         vbeam = np.zeros(self.shape, dtype=complex)
         
-        # loop over dishes phases
-        for i, dphi_g in enumerate(self.dphi_g):
-            # add tab phase offset
-            dphi_tab = i * tab/self.ntab
-            # get total phase offset
-            dphi = dphi_tab + dphi_g
-            # add to voltage beam
-            vbeam += np.exp(1j*2*np.pi*dphi)
-
+        # define TAB phase offsets
+        dphi_tab = np.arange(self.ndish) * tab/self.ntab
+        
+        # get total phase offset
+        dphi = self.dphi_g + dphi_tab[:, None, None, None]
+        
+        # create voltage beam and sum over dishes
+        vbeam = np.exp(1j*2*np.pi*dphi).sum(axis=0)
         # scale by number of dishes
         vbeam /= self.ndish
 
@@ -99,29 +99,30 @@ class BeamFormer(object):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import convert
-    from constants import DISH_ITRF, ARRAY_POS_ITRF, WSRT_LON, WSRT_LAT
+    from constants import DISH_ITRF, ARRAY_ITRF, WSRT_LON, WSRT_LAT
 
     print("Testing beamformer")
     
     # init coordinates
     print("Initializing coordinates")   
+    # due East, 45 deg above horizon
+    # expect TABs parallel to horizon
     ha0, dec0 = convert.altaz_to_hadec(45*u.deg, 90*u.deg)
     
     ddec = np.linspace(-50, 50, 1000)*u.arcmin
-    dra = np.linspace(-50, 50, 2000)*u.arcmin
-    dha = -dra
+    dha = np.linspace(-50, 50, 2000)*u.arcmin
     
-    HA, DEC = np.meshgrid(dha, ddec)
-    DEC += dec0
-    HA = ha0 + HA/np.cos(DEC)
-    # cos(dec) correction
+    dHA, dDEC = np.meshgrid(dha, ddec)
+    DEC = dec0 +dDEC
+    dHA /= np.cos(DEC)
+    HA = ha0 + dHA
     
     tab = 0
     freq = 1370*u.MHz
 
     # get dish positions
     dish_pos_itrf = DISH_ITRF['a8']
-    ref_pos_itrf = ARRAY_POS_ITRF
+    ref_pos_itrf = ARRAY_ITRF
     
     # init beamformer
     print("Initializing beamformer")

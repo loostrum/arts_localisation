@@ -98,6 +98,7 @@ class BeamFormer(object):
 class BeamFormer_1D(object):
 
     def __init__(self, dish_pos, theta_proj=0*u.deg, freqs=1500*u.MHz, ntab=12):
+        print("WARNING: YOU ARE USING THE OLD BEAMFORMER WHICH DOES NOT TAKE TAB ROTATION INTO ACCOUNT")
         self.theta_proj = theta_proj
         if not isinstance(freqs.value, np.ndarray):
             freqs = np.array([freqs.value]) * freqs.unit

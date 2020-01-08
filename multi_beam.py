@@ -187,27 +187,6 @@ if __name__ == '__main__':
         dHA_loc = (HA_loc - hadec_cb.ra) * np.cos(DEC_loc)
         dDEC_loc = (DEC_loc - hadec_cb.dec)
 
-        # convert localisation area to offset from this CB
-        # dtheta, dphi = convert.coord_to_offset(az_cb, alt_cb, az_loc, alt_loc)
-
-        # nphi, ntheta = dtheta.shape
-
-        # # define flips as in plot_sb (use mean alt az for now)
-        # if az_loc.mean() > 270 * u.deg or az_loc.mean() < 90 * u.deg:
-        #     # north
-        #     sign_du = 1
-        #     sign_dv = -1
-        # else:
-        #     # south
-        #     sign_du = -1
-        #     sign_dv = 1
-        # # for some reason SB with best detection matches B0531 only if pattern is mirrored???
-        # # so flip again ...
-        # sign_du *= -1
-        # sign_dv *= -1
-        # print("Sign du:", sign_du)
-        # print("Sign dv:", sign_dv)
-
         # generate the SB model with CB as phase center
         model_type = 'gauss'
         sbp = SBPattern(hadec_cb.ra, hadec_cb.dec, dHA_loc, dDEC_loc, fmin=args.fmin*u.MHz,
@@ -241,47 +220,61 @@ if __name__ == '__main__':
 
         # model of S/N relative to this beam
         snr_model = sb_model * ref_snr / sb_model[ref_sb]
+        # print("S/N at best index:", snr_model[:, INDICES[0], INDICES[1]])
+        # np.savetxt('snr_at_best_index.txt', snr_model[:, INDICES[0], INDICES[1]])
         ####
-        # tmpsb = 22
+        # tmpsb = 50
+        # othersb = 37
         # tmpy, tmpx = np.array(sb_model[0].shape) / 2
         # plt.figure()
         # plt.imshow(sb_model[tmpsb], aspect='equal')
         # plt.plot(tmpx, tmpy, c='cyan', marker='+', ls='', ms=10)
         # plt.title('SB{:02d}'.format(tmpsb))
         # plt.figure()
-        # plt.imshow(sb_model[35], aspect='equal')
+        # plt.imshow(sb_model[othersb], aspect='equal')
         # plt.plot(tmpx, tmpy, c='cyan', marker='+', ls='', ms=10)
-        # plt.title('SB35')
+        # plt.title('SB{:02d}'.format(othersb))
         # plt.figure()
-        # img = plt.imshow(ref_snr * sb_model[tmpsb] / sb_model[35] - snr_det[sb_det == tmpsb]+50, aspect='equal',
+        # img = plt.imshow(ref_snr * sb_model[tmpsb] / sb_model[othersb] - snr_det[sb_det == tmpsb], aspect='equal',
         #                  cmap='seismic', vmin=-100, vmax=100)
         # plt.plot(tmpx, tmpy, c='cyan', marker='+', ls='', ms=10)
         # plt.colorbar(img)
-        # plt.title('(SNR35 x SB{0:02d} / SB35) - SNR{0:02d}'.format(tmpsb))
+        # plt.title('(SNR35 x SB{0:02d} / SB{1:02d}) - SNR{0:02d}'.format(tmpsb, othersb))
         # plt.show()
         # exit()
         ####
 
         # chi2
         # Detection SBs
-        # assume 20% error on S/N
-        snr_err = .2 * snr_det
-        weights = 1/snr_err**2
-        # chi2[burst] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2 / snr_model[sb_det], axis=0)
+        # # assume 20% error on S/N
+        # snr_err = .2 * snr_det
+        # weights = (1/snr_err**2)
+
+        # weight each SB by its S/N
+        weights = snr_det
+
         chi2[burst] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2 * weights[:, None, None],
                               axis=0)
         # # non detection SBs
-        # if have_nondet:
-        #     snr_err = .2 * MAXSNR
-        #     weight = 1./snr_err**2
-        #
-        #     snr_model_nondet = snr_model[sb_non_det]
-        #     sb_mask = snr_model_nondet > MAXSNR
-        #     chi2[burst] += np.sum((snr_model_nondet[sb_mask] - MAXSNR)**2 * weight, axis=0)
+        if have_nondet:
+            # weight for non-detection burst is S/N threshold
+            weight_nondet = MAXSNR
 
-        # reference SB has highest S/N: modelled S/N should never be higher than reference
+            snr_model_nondet = snr_model[sb_non_det]
+            sb_mask = snr_model_nondet > MAXSNR
+            chi2[burst] += np.sum((snr_model_nondet[sb_mask] - MAXSNR)**2 * weight_nondet, axis=0)
+            total_weight_nondet = weight_nondet * len(sb_non_det)
+        else:
+            total_weight_nondet = 0
+
+        # # reference SB has highest S/N: modelled S/N should never be higher than reference
         # bad = (snr_model[sb_det] > ref_snr).sum(axis=0)
+        # print("BAD points:", bad.sum())
         # chi2[burst][bad] = np.inf
+
+        # divide by sum of all weights
+        total_weights = weights.sum() + total_weight_nondet
+        chi2[burst] /= total_weights
 
     # degrees of freedom = number of data points minus number of parameters
     # data points = SBs minus one (reference SB)

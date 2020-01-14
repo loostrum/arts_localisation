@@ -17,7 +17,7 @@ from constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIST, NPOINT
 class SBPattern(object):
 
     def __init__(self, ha, dec, dha, ddec, sbs=None, load=False, fname=None, memmap_file=None, cb_model='gauss', cbnum=None,
-                 fmin=1220*u.MHz, fmax=1520*u.MHz, nfreq=64):
+                 min_freq=1220*u.MHz, fmin=1220*u.MHz, fmax=1520*u.MHz, nfreq=64):
         """
         Generate Synthesized Beam pattern
         :param ha: hour angle of phase center
@@ -30,13 +30,13 @@ class SBPattern(object):
         :param memmap_file: file to use for memmap (Default: no memmap)
         :param cb_model: CB model type to use (default: gauss)
         :param cbnum: which CB to use for modelling (only relevant if cb_model is 'real')
-        :param fmin: minimum frequency (Default 1220 MHz)
-        :param fmax: maximum frequency (Default: 1520 MHz)
+        :param min_freq: lowest frequency of data
+        :param fmin: minimum frequency to consider (Default 1220 MHz)
+        :param fmax: maximum frequency to consider (Default: 1520 MHz)
         :param nfreq: number of frequency channels, should be multiple of nsub=32 (default:64)
 
         """
         dish_mode = 'a8'
-        min_freq = 1220*u.MHz
         df = 300.*u.MHz / nfreq
 
         # fname is required when load is True
@@ -131,14 +131,14 @@ class SBPattern(object):
 
             self.beam_pattern_tab = beam_pattern_tab
 
-            # sum SB pattern over frequency
+            # integrate SB pattern over frequency
             print("Integrating SB pattern over frequency")
             shape = (NSB, numDEC, numHA)
             if memmap_file is not None:
                 self.beam_pattern_sb_int = np.memmap(memmap_file+'_sb.dat', dtype=float, mode='w+', shape=shape)
             else:
                 self.beam_pattern_sb_int = np.zeros(shape)
-            self.beam_pattern_sb_int = beam_pattern_sb.sum(axis=1)
+            self.beam_pattern_sb_int = beam_pattern_sb.mean(axis=1)
 
         self.mid_ha = int(numHA/2)
         self.mid_dec = int(numDEC/2)

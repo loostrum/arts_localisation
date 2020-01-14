@@ -290,8 +290,8 @@ if __name__ == '__main__':
         bad_ind = np.any(sb_model > reference_sb_model, axis=0)
         # save chi2 before applying bad_ind_mask
         np.save('{}_chi2_{}'.format(name, burst), chi2[burst])
-        print("Applying SB mask")
-        chi2[burst][bad_ind] = 1E9
+        #print("Applying SB mask")
+        #chi2[burst][bad_ind] = 1E9
         # save region where S/N > ref_snr for non-ref SB
         np.save('{}_bad_{}'.format(name, burst), bad_ind)
 

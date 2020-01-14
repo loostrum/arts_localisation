@@ -23,7 +23,7 @@ from simulate_sb_pattern import SBPattern
 # Try switching to OSX native backend
 try:
     plt.switch_backend('macosx')
-except ModuleNotFoundError:
+except ImportError:
     pass
 
 plt.rcParams['axes.formatter.useoffset'] = False

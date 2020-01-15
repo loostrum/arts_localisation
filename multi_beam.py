@@ -17,7 +17,7 @@ from astropy.visualization.wcsaxes import SphericalCircle
 from scipy import stats
 
 import convert
-from constants import CB_HPBW, REF_FREQ, NSB
+from constants import CB_HPBW, REF_FREQ, NSB, BANDWIDTH
 from simulate_sb_pattern import SBPattern
 
 # Try switching to OSX native backend
@@ -28,11 +28,9 @@ except ImportError:
 
 plt.rcParams['axes.formatter.useoffset'] = False
 
-FREQ = 1370*u.MHz  # reference frequency for CB radius in plot
-
 
 def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
-              t_arr=None, loc=None, cb_pos=None):
+              freq=1370*u.MHz, t_arr=None, loc=None, cb_pos=None):
     """
     Create plot of localisation area
     :param chi2: chi2 grid
@@ -43,6 +41,7 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
     :param conf_int: confidence interval for localisation area
     :param mode: radec or altaz (default radec)
     :param sigma_max: used to determine maximum value for colors in plot (default 3)
+    :param freq: central frequency (default 1370 MHz)
     :param t_arr: burst arrival time (only required if mode is altaz)
     :param loc: legend location (optional)
     :param cb_pos: cb pointing (optional, tuple or list of tuples)
@@ -105,7 +104,7 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
             ax.plot(x_cb.to(u.deg).value, y_cb.to(u.deg).value, c='k', marker='x', ls='', ms=10,
                     label=label)
             # add CB
-            cb_radius = (CB_HPBW * REF_FREQ/FREQ/2)
+            cb_radius = (CB_HPBW * REF_FREQ/freq/2)
             patch = SphericalCircle((x_cb, y_cb), cb_radius, ec='k', fc='none', ls='-', alpha=.5)
             ax.add_patch(patch)
 
@@ -251,10 +250,6 @@ if __name__ == '__main__':
 
         # non detection beams
         sb_non_det = np.array([sb for sb in range(NSB) if sb not in sb_det])
-        if len(sb_non_det) > 0:
-            have_nondet = True
-        else:
-            have_nondet = False
 
         # init chi2 array
         chi2[burst] = np.zeros((numY, numX))
@@ -278,12 +273,15 @@ if __name__ == '__main__':
         snr_model = sb_model * ref_snr / reference_sb_model 
 
         # detection
-        if len(sb_det) > 0:
-            print("Adding detections")
+        ndet = len(sb_det)
+        if ndet > 0:
+            print("Adding {} detections".format(ndet))
             chi2[burst] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis])**2,axis=0)
         # non detection, observed S/N set to 0
-        if len(sb_non_det) > 0:
+        nnondet = len(sb_non_det)
+        if nnondet > 0:
             print("Adding non-detections")
+            # only select points where the modelled S/N is above the threshold
             chi2[burst] += np.sum((snr_model[sb_non_det] - 0)**2, axis=0)
 
         # # reference SB has highest S/N: modelled S/N should never be higher than reference
@@ -346,6 +344,7 @@ if __name__ == '__main__':
             print(summary)
 
     # plot
+    central_freq = args.min_freq*u.MHz + BANDWIDTH/2
     if not args.noplot:
         # per burst
         for burst in bursts:
@@ -357,11 +356,11 @@ if __name__ == '__main__':
                 dof = NSB - 2
             title = "$\Delta \chi^2$ {}".format(burst)
             make_plot(chi2[burst], RA, DEC, dof, title, args.conf_int, t_arr=tarr[burst],
-                      cb_pos=pointings[burst])
+                      cb_pos=pointings[burst], freq=central_freq)
 
         # total
         title = "$\Delta \chi^2$ Total"
         make_plot(chi2_total, RA, DEC, dof, title, args.conf_int, loc='lower right',
-                  cb_pos=list(pointings.values()))
+                  cb_pos=list(pointings.values()), freq=central_freq)
 
         plt.show()

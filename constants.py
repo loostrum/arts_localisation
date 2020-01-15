@@ -12,6 +12,7 @@ REF_FREQ = 1770*u.MHz  # for then it matches the measured width at 1420
 # CB_HPBW = 35.066*u.arcmin  # fit CB00 Oct 1 2019  @ 1420 MHz
 # REF_FREQ = 1420*u.MHz
 DISH_SIZE = 25 * u.m
+BANDWIDTH = 300 * u.MHz
 
 DISH_A8 = np.arange(8) * 144*u.m
 DISH_A10 = np.arange(10) * 144*u.m

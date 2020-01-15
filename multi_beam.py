@@ -142,6 +142,8 @@ if __name__ == '__main__':
                                                                      '(Default: %(default)s)')
     parser.add_argument('--conf_int', type=float, default=.9, help='Confidence interval for localisation region '
                                                                    '(Default: %(default)s)')
+    parser.add_argument('--snrmin', type=float, default=8, help='S/N threshold '
+                                                                '(Default: %(default)s)')
     parser.add_argument('--noplot', action='store_true', help='Disable plotting')
     parser.add_argument('--outfile', help='Output file for summary')
     args = parser.parse_args()
@@ -194,27 +196,25 @@ if __name__ == '__main__':
     bursts.insert(0, ref_burst)
 
     # loop over bursts
+    nburst = len(bursts)
     chi2 = {}
     tarr = {}
     pointings = {}
-    nburst = 0
     for burst in bursts:
         print("Processing {}".format(burst))
-        nburst += 1
-
-        data = conf[burst]
+        burst_data = conf[burst]
 
         # arrival time
-        t = Time(data['tstart'], format='isot', scale='utc') + TimeDelta(data['tarr'], format='sec')
+        t = Time(burst_data['tstart'], format='isot', scale='utc') + TimeDelta(burst_data['tarr'], format='sec')
         tarr[burst] = t
         # get alt, az of pointing
         try:
-            radec_cb = SkyCoord(data['ra']*u.deg, data['dec']*u.deg)
-            hadec_cb = convert.radec_to_hadec(data['ra']*u.deg, data['dec']*u.deg, t)
+            radec_cb = SkyCoord(burst_data['ra']*u.deg, burst_data['dec']*u.deg)
+            hadec_cb = convert.radec_to_hadec(burst_data['ra']*u.deg, burst_data['dec']*u.deg, t)
         except KeyError:
             # assume ha was specified instead of ra
-            hadec_cb = SkyCoord(data['ha']*u.deg, data['dec']*u.deg)
-            radec_cb = convert.hadec_to_radec(data['ha']*u.deg, data['dec']*u.deg, t)
+            hadec_cb = SkyCoord(burst_data['ha']*u.deg, burst_data['dec']*u.deg)
+            radec_cb = convert.hadec_to_radec(burst_data['ha']*u.deg, burst_data['dec']*u.deg, t)
         alt_cb, az_cb = convert.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)  # needed for SB position
         print("Parallactic angle: {:.2f}".format(convert.hadec_to_par(hadec_cb.ra, hadec_cb.dec)))
         print("AltAz SB rotation angle at center of CB: {:.2f}".format(convert.hadec_to_proj(hadec_cb.ra, hadec_cb.dec)))
@@ -233,14 +233,14 @@ if __name__ == '__main__':
         # generate the SB model with CB as phase center
         model_type = 'gauss'
         sbp = SBPattern(hadec_cb.ra, hadec_cb.dec, dHA_loc, dDEC_loc, fmin=args.fmin*u.MHz,
-                        fmax=args.fmax*u.MHz, min_freq=args.min_freq*u.MHz, cb_model=model_type, cbnum=data['cb'])
+                        fmax=args.fmax*u.MHz, min_freq=args.min_freq*u.MHz, cb_model=model_type, cbnum=burst_data['cb'])
         # get pattern integrated over frequency
         # TODO: spectral indices?
         sb_model = sbp.beam_pattern_sb_int
 
         # load SNR array
         try:
-            data = np.loadtxt(data['snr_array'])
+            data = np.loadtxt(burst_data['snr_array'], ndmin=2)
             sb_det, snr_det = data.T
             sb_det = sb_det.astype(int)
         except KeyError:
@@ -264,25 +264,41 @@ if __name__ == '__main__':
             this_snr = None
             this_sb = None
 
+        # SEFD
+        try:
+            sefd = burst_data['sefd']
+        except KeyError:
+            default_sefd = 100
+            print("No SEFD found, setting to {}".format(default_sefd))
+            sefd = default_sefd
+
         # if this is the reference burst, store the sb model of the reference SB
         if burst == bursts[0]:
             ref_snr = this_snr
             reference_sb_model = sb_model[this_sb]
+            ref_sefd = sefd
 
         # model of S/N relative to the reference beam
-        snr_model = sb_model * ref_snr / reference_sb_model 
+        snr_model = sb_model/reference_sb_model * ref_snr * ref_sefd/sefd
 
         # detection
         ndet = len(sb_det)
         if ndet > 0:
             print("Adding {} detections".format(ndet))
             chi2[burst] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis])**2,axis=0)
+            val = np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis])**2,axis=0)
         # non detection, observed S/N set to 0
         nnondet = len(sb_non_det)
         if nnondet > 0:
-            print("Adding non-detections")
+            print("Adding {} non-detections".format(nnondet))
             # only select points where the modelled S/N is above the threshold
-            chi2[burst] += np.sum((snr_model[sb_non_det] - 0)**2, axis=0)
+            snr_model_nondet = snr_model[sb_non_det]
+            points = np.where(snr_model_nondet > args.snrmin)
+            # temporarily create an array holding the chi2 values to add per SB
+            chi2_to_add = np.zeros_like(snr_model_nondet)
+            chi2_to_add[points] += (snr_model_nondet[points] - args.snrmin)**2
+            # sum over SBs and add 
+            chi2[burst] += chi2_to_add.sum(axis=0)
 
         # # reference SB has highest S/N: modelled S/N should never be higher than reference
         bad_ind = np.any(sb_model > reference_sb_model, axis=0)

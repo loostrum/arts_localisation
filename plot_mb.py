@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from itertools import cycle
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,12 +19,16 @@ try:
 except ImportError:
     pass
 
-CONF_INT = 0.90  # confidence interval for localisation region
+# confidence interval for localisation region
+CONF_INT = 0.90
+# colour cycler for contour overview
+#colormap = next(plt.rcParams['axes.prop_cycle'])
 
 
 def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
             freq, CONF_INT=.90, sigma_max=3, 
-            title=None, src_ra=None, src_dec=None):
+            title=None, src_ra=None, src_dec=None,
+            contour_ax=None):
     # best pos = point with lowest (delta)chi2
     ind = np.unravel_index(np.argmin(dchi2), dchi2.shape)
     best_ra = RA[ind]
@@ -37,22 +42,28 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
     dchi2_value_max = stats.chi2.ppf(conf_int_max, dof)
 
     # plot data with colorbar
-    img = ax.pcolormesh(RA, DEC, dchi2, vmax=dchi2_value_max)
+    img = ax.pcolormesh(RA, DEC, dchi2, vmax=min(dchi2.max(), dchi2_value_max))
     divider = make_axes_locatable(ax) 
     cax = divider.append_axes('right',  size='5%', pad=0.05)
     fig.colorbar(img, cax)
 
     # add contour
     ax.contour(RA, DEC, dchi2, [dchi2_contour_value], colors='r')
+    if contour_ax:
+        # plot contour is this axis too
+        contour_ax.contour(RA, DEC, dchi2, [dchi2_contour_value], label=title)#, c=colormap)
+        #next(colormap)
+        
 
     # add best position
     ax.plot(best_ra, best_dec, c='r', marker='.', ls='', ms=10, label='Best position')
 
     # add source position
     if src_ra is not None and src_dec is not None:
-        ax.plot(src_ra, src_Dec, c='cyan', marker='+', ls='', ms=10, label='Source position')
+        ax.plot(src_ra, src_dec, c='cyan', marker='+', ls='', ms=10, label='Source position')
 
     # add cb position(s)
+    cb_radius = .5*CB_HPBW * REF_FREQ/freq
     if isinstance(cb_ra, float):
         cb_pos = np.array([[cb_ra, cb_dec]])
     else:
@@ -66,10 +77,9 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
             label = ''
         ax.plot(ra, dec, c='k', marker='x', ls='', ms=10, label=label)
 
-    # add CB size
-    cb_radius = .5*CB_HPBW * REF_FREQ/freq
-    patch = SphericalCircle((ra*u.deg, dec*u.deg), cb_radius, ec='k', fc='none', ls='-', alpha=.5)
-    ax.add_patch(patch)
+        # add CB size
+        patch = SphericalCircle((ra*u.deg, dec*u.deg), cb_radius, ec='k', fc='none', ls='-', alpha=.5)
+        ax.add_patch(patch)
 
     # labels
     ax.set_xlabel('Right Ascension (deg)')
@@ -105,6 +115,8 @@ def get_stats(RA, DEC, dchi2, dof):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('config', help='Input yaml config')
+    parser.add_argument('--use_mask', action='store_true', help="Enable use of masks where S/N is"
+                                                                " higher than reference beam")
     parser.add_argument('--freq', type=float, default=1370, help="Reference frequency in MHz "
                         "for CB size in plot. (Default: %(default)s)")
     args = parser.parse_args()
@@ -154,6 +166,10 @@ if __name__ == '__main__':
     cb_ra_all = []
     cb_dec_all = []
 
+    # init final plot
+    fig_final, axes_final = plt.subplots(ncols=2, sharex=True, sharey=True)
+    combined_ax, contour_ax = axes_final
+
     # loop over bursts
     for i, burst in enumerate(bursts):
         print("Plotting {}/{}".format(i+1, nburst))
@@ -165,6 +181,12 @@ if __name__ == '__main__':
             dof = NSB - 2
         # load chi2
         chi2 = np.load('{}_chi2_{}.npy'.format(name_full, burst))
+        # apply bad index mask if enabled
+        if args.use_mask:
+            # load mask
+            mask = np.load('{}_bad_{}.npy'.format(name_full, burst))
+            # apply
+            chi2[mask] = 1E9
         # add to total
         chi2_total += chi2
         # convert to delta chi2
@@ -178,7 +200,7 @@ if __name__ == '__main__':
         # select plot axis
         ax = axes[i]
         do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec, args.freq*u.MHz,
-                src_ra=src_ra, src_dec=src_dec, title=burst)
+                src_ra=src_ra, src_dec=src_dec, title=burst, contour_ax=contour_ax)
 
     # empty non-used plots
     nplot = nrows*ncols
@@ -195,11 +217,16 @@ if __name__ == '__main__':
 
     get_stats(RA, DEC, dchi2_total, dof_total)
 
-    # init plot
     print("Plotting combined localisation region")
-    fig, ax = plt.subplots()
-    do_plot(ax, RA, DEC, dchi2_total, dof_total, cb_ra_all, cb_dec_all, args.freq*u.MHz,
+    # final localisation region
+    
+    do_plot(combined_ax, RA, DEC, dchi2_total, dof_total, cb_ra_all, cb_dec_all, args.freq*u.MHz,
             src_ra=src_ra, src_dec=src_dec, title="{} all CBs combined".format(name))
-    fig.tight_layout()
+    contour_ax.set_xlabel('Right Ascension (deg)')
+    contour_ax.set_ylabel('Declination (deg)')
+    contour_ax.set_title('Contours of all CBs')
+    contour_ax.legend()
+    
+    fig_final.tight_layout()
 
     plt.show()

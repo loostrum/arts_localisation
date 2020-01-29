@@ -7,10 +7,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import astropy.units as u
+from astropy.time import Time, TimeDelta
 from astropy.visualization.wcsaxes import SphericalCircle
 from scipy import stats
 import yaml
 
+import convert
 from constants import NSB, REF_FREQ, CB_HPBW
 
 # Try switching to OSX native backend
@@ -22,11 +24,12 @@ except ImportError:
 # confidence interval for localisation region
 CONF_INT = 0.90
 # colour cycler for contour overview
-#colormap = next(plt.rcParams['axes.prop_cycle'])
+cmap_list = cycle(['377eb8', 'ff7f00', '4daf4a', 'f781bf', 'a65628', '984ea3','999999', 'e41a1c', 'dede00'])
+colormap = next(cmap_list)
 
 
 def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
-            freq, CONF_INT=.90, sigma_max=3, 
+            freq, CONF_INT=.90, sigma_max=3,
             title=None, src_ra=None, src_dec=None,
             contour_ax=None):
     # best pos = point with lowest (delta)chi2
@@ -42,17 +45,19 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
     dchi2_value_max = stats.chi2.ppf(conf_int_max, dof)
 
     # plot data with colorbar
-    img = ax.pcolormesh(RA, DEC, dchi2, vmax=min(dchi2.max(), dchi2_value_max))
+    img = ax.pcolormesh(RA, DEC, dchi2)#, vmax=min(dchi2.max(), dchi2_value_max))
     divider = make_axes_locatable(ax) 
     cax = divider.append_axes('right',  size='5%', pad=0.05)
     fig.colorbar(img, cax)
 
     # add contour
-    ax.contour(RA, DEC, dchi2, [dchi2_contour_value], colors='r')
+    c = ax.contour(RA, DEC, dchi2, [dchi2_contour_value], colors='r')
+    # get points of contour
+    points = np.concatenate(c.allsegs[0])
     if contour_ax:
         # plot contour is this axis too
-        contour_ax.contour(RA, DEC, dchi2, [dchi2_contour_value], label=title)#, c=colormap)
-        #next(colormap)
+        contour_ax.contour(RA, DEC, dchi2, [dchi2_contour_value], c=colormap, label=title)
+        next(cmap_list)
         
 
     # add best position
@@ -85,9 +90,9 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
     ax.set_xlabel('Right Ascension (deg)')
     ax.set_ylabel('Declination (deg)')
     ax.set_title(title)
-    ax.legend()
+    #ax.legend()
 
-    return
+    return points
 
 
 def get_stats(RA, DEC, dchi2, dof):
@@ -107,9 +112,11 @@ def get_stats(RA, DEC, dchi2, dof):
     npoint = np.sum(dchi2 < dchi2_max)
 
     # total localisation area
-    print(npoint)
     area = pix_size * npoint
     print("Total localisation area: {:.2f} = {:.2f}".format(area.to(u.arcmin**2), area.to(u.arcsec**2)))
+
+def fit_ellipse(points):
+    pass
     
 
 if __name__ == '__main__':
@@ -190,10 +197,17 @@ if __name__ == '__main__':
         # add to total
         chi2_total += chi2
         # convert to delta chi2
-        dchi2 = chi2 - chi2.min()
+        dchi2 = chi2 / chi2.min()
         # load CB position
-        cb_ra = conf[burst]['ra']
         cb_dec = conf[burst]['dec']
+        try:
+            cb_ra = conf[burst]['ra']
+        except KeyError:
+            cb_ha = conf[burst]['ha']
+            t = Time(conf[burst]['tstart']) + TimeDelta(conf[burst]['tarr'], format='sec')
+            cb_radec = convert.hadec_to_radec(cb_ha*u.deg, cb_dec*u.deg, t)
+            cb_ra = cb_radec.ra.deg
+            cb_dec = cb_radec.dec.deg
         # store for total
         cb_ra_all.append(cb_ra)
         cb_dec_all.append(cb_dec)
@@ -220,13 +234,15 @@ if __name__ == '__main__':
     print("Plotting combined localisation region")
     # final localisation region
     
-    do_plot(combined_ax, RA, DEC, dchi2_total, dof_total, cb_ra_all, cb_dec_all, args.freq*u.MHz,
-            src_ra=src_ra, src_dec=src_dec, title="{} all CBs combined".format(name))
+    contour_points = do_plot(combined_ax, RA, DEC, dchi2_total, dof_total, cb_ra_all, cb_dec_all, args.freq*u.MHz,
+                             src_ra=src_ra, src_dec=src_dec, title="{} all CBs combined".format(name))
     contour_ax.set_xlabel('Right Ascension (deg)')
     contour_ax.set_ylabel('Declination (deg)')
     contour_ax.set_title('Contours of all CBs')
     contour_ax.legend()
     
     fig_final.tight_layout()
+
+    fit_ellipse(contour_points)
 
     plt.show()

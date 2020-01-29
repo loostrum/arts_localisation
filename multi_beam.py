@@ -118,7 +118,7 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
     ax.legend(loc=loc)
     ax.set_title(title)
 
-    return
+    return fig
 
 
 if __name__ == '__main__':
@@ -145,6 +145,7 @@ if __name__ == '__main__':
     parser.add_argument('--snrmin', type=float, default=8, help='S/N threshold '
                                                                 '(Default: %(default)s)')
     parser.add_argument('--noplot', action='store_true', help='Disable plotting')
+    parser.add_argument('--saveplot', action='store_true', help='Save plots')
     parser.add_argument('--outfile', help='Output file for summary')
     args = parser.parse_args()
 
@@ -277,6 +278,10 @@ if __name__ == '__main__':
             ref_snr = this_snr
             reference_sb_model = sb_model[this_sb]
             ref_sefd = sefd
+        #### TO SET LOCAL REFERENCE BURST
+        #ref_snr = this_snr
+        #reference_sb_model = sb_model[this_sb]
+        #ref_sefd = sefd
 
         # model of S/N relative to the reference beam
         snr_model = sb_model/reference_sb_model * ref_snr * ref_sefd/sefd
@@ -340,11 +345,13 @@ if __name__ == '__main__':
         # find closest ra,dec to source
         dist = ((RA-coord_src.ra)*np.cos(DEC))**2 + (DEC-coord_src.dec)**2
         ind = np.unravel_index(np.argmin(dist), RA.shape)
-        dchi2_at_source = (chi2_total - chi2_total.min())[ind]
+        #dchi2_at_source = (chi2_total - chi2_total.min())[ind]
+        chi2_best = chi2_total.min()
+        chi2_at_source = chi2_total[ind]
         # print info to stderr
-        hdr = "ra_best dec_best ra_src dec_src dchi2_at_src dof"
-        summary = "{} {} {:.2f} {}".format(coord_best.to_string('hmsdms'), coord_src.to_string('hmsdms'),
-                                           dchi2_at_source, dof)
+        hdr = "ra_src, dec_src, ra_best dec_best chi2_best chi2_at_src dof"
+        summary = "{} {} {:.2f} {}".format(coord_src.to_string('hmsdms'), coord_best.to_string('hmsdms'),
+                                           chi2_best, chi2_at_source, dof)
         # store or print summary
         if args.outfile:
             if os.path.isfile(args.outfile):
@@ -371,12 +378,15 @@ if __name__ == '__main__':
                 # all SBs; 2 params
                 dof = NSB - 2
             title = "$\Delta \chi^2$ {}".format(burst)
-            make_plot(chi2[burst], RA, DEC, dof, title, args.conf_int, t_arr=tarr[burst],
-                      cb_pos=pointings[burst], freq=central_freq)
+            fig = make_plot(chi2[burst], RA, DEC, dof, title, args.conf_int, t_arr=tarr[burst],
+                            cb_pos=pointings[burst], freq=central_freq)
+            if args.saveplot:
+                fig.savefig(burst+'.pdf')
 
         # total
         title = "$\Delta \chi^2$ Total"
         make_plot(chi2_total, RA, DEC, dof, title, args.conf_int, loc='lower right',
                   cb_pos=list(pointings.values()), freq=central_freq)
 
-        plt.show()
+        if not args.saveplot:
+            plt.show()

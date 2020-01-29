@@ -56,13 +56,14 @@ def radec_to_hadec(ra, dec, t, lon=WSRT_LON):
     return SkyCoord(ha, dec, frame=coord_system)
 
 
-def hadec_to_radec(ha, dec, t, lon=WSRT_LON):
+def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
     """
     Convert apparent HA, Dec to J2000 RA, Dec
     :param ha: hour angle with unit
     :param dec: declination with unit
     :param t: UT time (string or astropy.time.Time)
     :param lon: Longitude with unit (default: WSRT)
+    :param apparent: Whether or not HA, Dec are apparent coordinates (default: True)
     :return: SkyCoord object of J2000 coordinates
     """
 
@@ -72,8 +73,12 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON):
 
     # Apparent LST at WSRT at this time
     lst = t.sidereal_time('apparent', lon)
-    # Equinox of date (because hour angle uses apparent coordinates)
-    coord_system = FK5(equinox='J{}'.format(t.decimalyear))
+    if apparent:
+        # Equinox of date 
+        coord_system = FK5(equinox='J{}'.format(t.decimalyear))
+    else:
+        # J2000
+        coord_system = FK5(equinox='J2000')
     # apparent RA = LST - HA
     ra_apparent = lst - ha
     coord_apparent = SkyCoord(ra_apparent, dec, frame=coord_system)

@@ -2,9 +2,8 @@
 #
 # beamformer tool to create TAB pattern
 
-import itertools
-
 import numpy as np
+import numba as nb
 import astropy.units as u
 import astropy.constants as const
 
@@ -76,11 +75,16 @@ class BeamFormer(object):
             # u,v,w have shape (nfreq)
             # store phase offset with respect to phase center
             self.dphi_g[i] = (uu[:, None, None] * np.sin(dra) * np.cos(grid_dec) + vv[:, None, None] * np.sin(ddec)).to(1).value
+
+
+    @staticmethod
+    @nb.njit('float64[:, :, :](float64[:, :, :, :])', parallel=True)
+    def phase_to_pbeam(phases):
+        vbeam = np.exp(1j*2*np.pi*phases).sum(axis=0)
+        return np.abs(vbeam)**2
         
+    
     def beamform(self, tab=0):
-        # init output voltage beam
-        vbeam = np.zeros(self.shape, dtype=complex)
-        
         # define TAB phase offsets
         dphi_tab = np.arange(self.ndish) * tab/self.ntab
         
@@ -88,12 +92,13 @@ class BeamFormer(object):
         dphi = self.dphi_g + dphi_tab[:, None, None, None]
         
         # create voltage beam and sum over dishes
-        vbeam = np.exp(1j*2*np.pi*dphi).sum(axis=0)
-        # scale by number of dishes
-        vbeam /= self.ndish
+        pbeam = self.phase_to_pbeam(dphi)
+        # scale by number of dished
+        # squared because this is working on intensity beam
+        pbeam /= self.ndish**2
 
         # return beamformed power
-        return np.abs(vbeam)**2
+        return pbeam
       
     
 if __name__ == '__main__':

@@ -23,6 +23,7 @@ except ImportError:
 
 # confidence interval for localisation region
 CONF_INT = 0.90
+#CONF_INT = 0.68
 # colour cycler for contour overview
 cmap_list = cycle(['377eb8', 'ff7f00', '4daf4a', 'f781bf', 'a65628', '984ea3','999999', 'e41a1c', 'dede00'])
 colormap = next(cmap_list)
@@ -45,7 +46,7 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
     dchi2_value_max = stats.chi2.ppf(conf_int_max, dof)
 
     # plot data with colorbar
-    img = ax.pcolormesh(RA, DEC, dchi2)#, vmax=min(dchi2.max(), dchi2_value_max))
+    img = ax.pcolormesh(RA, DEC, dchi2, vmax=min(dchi2.max(), dchi2_value_max))
     divider = make_axes_locatable(ax) 
     cax = divider.append_axes('right',  size='5%', pad=0.05)
     fig.colorbar(img, cax)
@@ -53,7 +54,10 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
     # add contour
     c = ax.contour(RA, DEC, dchi2, [dchi2_contour_value], colors='r')
     # get points of contour
-    points = np.concatenate(c.allsegs[0])
+    try:
+        points = np.concatenate(c.allsegs[0])
+    except ValueError:
+        points = None
     if contour_ax:
         # plot contour is this axis too
         contour_ax.contour(RA, DEC, dchi2, [dchi2_contour_value], c=colormap, label=title)
@@ -163,7 +167,10 @@ if __name__ == '__main__':
     nrows = int(np.ceil(nburst/ncols))
 
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True)
-    axes = axes.flatten()
+    if nrows*ncols > 1:
+        axes = axes.flatten()
+    else:
+        axes = [axes]
 
     # lood coordinate grid
     RA, DEC = np.load('{}_coord.npy'.format(name_full))
@@ -243,6 +250,7 @@ if __name__ == '__main__':
     
     fig_final.tight_layout()
 
-    fit_ellipse(contour_points)
+    if contour_points is not None:
+        fit_ellipse(contour_points)
 
     plt.show()

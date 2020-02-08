@@ -2,7 +2,7 @@
 #
 # Generate an SB model for several CBs near the same area on-sky
 # then combine posteriors
-
+from time import time
 import argparse
 import os
 import sys
@@ -144,6 +144,8 @@ if __name__ == '__main__':
                                                                    '(Default: %(default)s)')
     parser.add_argument('--snrmin', type=float, default=8, help='S/N threshold '
                                                                 '(Default: %(default)s)')
+    parser.add_argument('--cb_model', default='gauss', help='CB model type '
+                                                            '(Default: %(default)s)')
     parser.add_argument('--noplot', action='store_true', help='Disable plotting')
     parser.add_argument('--saveplot', action='store_true', help='Save plots')
     parser.add_argument('--outfile', help='Output file for summary')
@@ -232,9 +234,8 @@ if __name__ == '__main__':
         dDEC_loc = (DEC_loc - hadec_cb.dec)
 
         # generate the SB model with CB as phase center
-        model_type = 'gauss'
         sbp = SBPattern(hadec_cb.ra, hadec_cb.dec, dHA_loc, dDEC_loc, fmin=args.fmin*u.MHz,
-                        fmax=args.fmax*u.MHz, min_freq=args.min_freq*u.MHz, cb_model=model_type, cbnum=burst_data['cb'])
+                        fmax=args.fmax*u.MHz, min_freq=args.min_freq*u.MHz, cb_model=args.cb_model, cbnum=burst_data['cb'])
         # get pattern integrated over frequency
         # TODO: spectral indices?
         sb_model = sbp.beam_pattern_sb_int

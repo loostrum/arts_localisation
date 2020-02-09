@@ -114,9 +114,9 @@ class SBPattern(object):
             print("Generating requested SBs")
             shape = (NSB, nfreq, numDEC, numHA)
             if memmap_file is not None:
-                beam_pattern_sb = np.memmap(memmap_file+'_full_sb.dat', dtype=float, mode='w+', shape=shape)
+                beam_pattern_sb = np.memmap(memmap_file+'_full_sb.dat', dtype=np.float, mode='w+', shape=shape)
             else:
-                beam_pattern_sb = np.zeros(shape)
+                beam_pattern_sb = np.zeros(shape, dtype=np.float32)
             for sb in tqdm.tqdm(sbs):
                 # apply 2D primary beam and store
                 # each part is one step in phi

@@ -99,7 +99,7 @@ class SBPattern(object):
 
             print("Generating TABs")
             # get TAB pattern for each tab, freq, ha, dec (image order: dec, then ha)
-            beam_pattern_tab = np.zeros((NTAB, nfreq, numDEC, numHA))
+            beam_pattern_tab = np.zeros((NTAB, nfreq, numDEC, numHA), dtype=np.float32)
 
             for tab in tqdm.tqdm(range(NTAB)):
                 # run TAB beamformer
@@ -109,7 +109,7 @@ class SBPattern(object):
                 # apply primary beam
                 intensity = tab_fringes * primary_beam
                 # store to output grid
-                beam_pattern_tab[tab] = intensity
+                beam_pattern_tab[tab] = intensity.astype(np.float32)
 
             print("Generating requested SBs")
             shape = (NSB, nfreq, numDEC, numHA)

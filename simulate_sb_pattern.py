@@ -138,6 +138,7 @@ class SBPattern(object):
                 self.beam_pattern_sb_int = np.memmap(memmap_file+'_sb.dat', dtype=float, mode='w+', shape=shape)
             else:
                 self.beam_pattern_sb_int = np.zeros(shape)
+            self.beam_pattern_sb_full = beam_pattern_sb
             self.beam_pattern_sb_int = beam_pattern_sb.mean(axis=1)
 
         self.mid_ha = int(numHA/2)

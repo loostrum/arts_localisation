@@ -25,6 +25,7 @@ try:
     plt.switch_backend('macosx')
 except ImportError:
     pass
+plt.switch_backend('pdf')
 
 plt.rcParams['axes.formatter.useoffset'] = False
 
@@ -200,6 +201,7 @@ if __name__ == '__main__':
 
     # loop over bursts
     nburst = len(bursts)
+    numsb_det = 0
     chi2 = {}
     tarr = {}
     pointings = {}
@@ -249,6 +251,7 @@ if __name__ == '__main__':
             print("No S/N array found for {}, assuming this is a non-detection beam".format(burst))
             sb_det = np.array([])
             snr_det = np.array([])
+        numsb_det += len(sb_det)
 
         # non detection beams
         sb_non_det = np.array([sb for sb in range(NSB) if sb not in sb_det])
@@ -350,9 +353,9 @@ if __name__ == '__main__':
         chi2_best = chi2_total.min()
         chi2_at_source = chi2_total[ind]
         # print info to stderr
-        hdr = "ra_src, dec_src, ra_best dec_best chi2_best chi2_at_src dof"
-        summary = "{} {} {:.2f} {}".format(coord_src.to_string('hmsdms'), coord_best.to_string('hmsdms'),
-                                           chi2_best, chi2_at_source, dof)
+        hdr = "ra_src, dec_src, ra_best dec_best chi2_best chi2_at_src dof numsb_det"
+        summary = "{} {} {:.2f} {:.2f} {} {}".format(coord_src.to_string('hmsdms'), coord_best.to_string('hmsdms'),
+                                           chi2_best, chi2_at_source, dof, numsb_det)
         # store or print summary
         if args.outfile:
             if os.path.isfile(args.outfile):

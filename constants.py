@@ -14,9 +14,12 @@ REF_FREQ = 1770*u.MHz  # for then it matches the measured width at 1420
 DISH_SIZE = 25 * u.m
 BANDWIDTH = 300 * u.MHz
 
-DISH_A8 = np.arange(8) * 144*u.m
-DISH_A10 = np.arange(10) * 144*u.m
-DISH_MAXISHORT = np.concatenate([np.arange(8) * 144, np.array([36, 90, 1332, 1404]) + 7*144]) * u.m
+DISH_A8 = np.zeros((8, 3)) * u.m
+DISH_A8[:, 1] = np.arange(8) * 144*u.m
+DISH_A10 = np.zeros((10, 3)) * u.m
+DISH_A10[:, 1] = np.arange(10) * 144*u.m
+DISH_MAXISHORT = np.zeros((12, 3)) * u.m
+DISH_MAXISHORT[:, 1] = np.concatenate([np.arange(8) * 144, np.array([36, 90, 1332, 1404]) + 7*144]) * u.m
 
 DISH = {'a8': DISH_A8, 'a10': DISH_A10, 'maxi-short': DISH_MAXISHORT}
 

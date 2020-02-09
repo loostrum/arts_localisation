@@ -12,14 +12,19 @@ from constants import NTAB, WSRT_LON
 
 class BeamFormer(object):
     
-    def __init__(self, dish_pos, freqs, ntab=NTAB, lon=WSRT_LON, ref_pos=None):
+    def __init__(self, dish_pos, freqs, ntab=NTAB, lon=WSRT_LON, ref_pos=None, itrf=True):
         if not isinstance(freqs.value, np.ndarray):
             freqs = np.array([freqs.value]) * freqs.unit
         self.freqs = freqs
         self.ntab = ntab
         
         # dish positions relative to reference position
-        self.dish_pos = self._itrf_to_xyz(dish_pos, lon, ref_pos)
+        if itrf:
+            self.dish_pos = self._itrf_to_xyz(dish_pos, lon, ref_pos)
+        elif ref_pos is None:
+            self.dish_pos = dish_pos
+        else:
+            self.dish_pos = dish_pos - ref_pos
         self.ndish = len(self.dish_pos)
         
         self.dphi_g = None

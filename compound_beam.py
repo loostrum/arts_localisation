@@ -7,8 +7,10 @@ import os
 
 import numpy as np
 import astropy.units as u
+import astropy.constants as const
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
+from scipy.special import j1
 
 from constants import CB_HPBW, REF_FREQ, DISH_SIZE, CB_MODEL_FILE
 
@@ -86,14 +88,14 @@ class CompoundBeam(object):
         elif mode == 'real':
             return self.__real(cb)
         elif mode == 'airy':
-            raise NotImplementedError("Airy disk not yet implemented")
+            #raise NotImplementedError("Airy disk not yet implemented")
+            return self.__airy()
         else:
             raise ValueError("Mode should be gauss, real, or airy")
 
     def __gaussian(self):
         """
         Gaussian beam pattern
-        print(freqs.shape)
         :return: beam pattern
         """
 
@@ -116,6 +118,35 @@ class CompoundBeam(object):
             output_grid[i] = np.exp(arg)
 
         return output_grid
+
+    def __airy(self):
+        """
+        Airy disk beam pattern
+        :return: beam pattern
+        """
+        if self.grid:
+            # shape of phi and theta are equal in this case
+            output_grid = np.zeros((self.freqs.shape[0], self.phi.shape[0], self.theta.shape[1]))
+        else:
+            # separate 1D phi and theta arrays
+            output_grid = np.zeros((self.freqs.shape[0], self.phi.shape[0], self.theta.shape[0]))
+
+        lambd = const.c / self.freqs
+        k = 2*np.pi/lambd
+        a = DISH_SIZE/2
+        if self.grid:
+            angle = np.sqrt(self.phi**2 + self.theta**2)
+        else:
+            angle = np.sqrt(self.phi[..., None]**2 + self.theta**2)
+
+        arg = k[..., None] * a * np.sin(angle)[None, ...]
+        arg = arg.to(1).value
+
+        out = 2 * j1(arg) / arg
+        out[arg == 0] = 1.
+
+        return  out
+        
 
     def __real(self, cb, thresh=.5):
         """

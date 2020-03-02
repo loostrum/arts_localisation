@@ -21,11 +21,11 @@ from constants import CB_HPBW, REF_FREQ, NSB, BANDWIDTH
 from simulate_sb_pattern import SBPattern
 
 # Try switching to OSX native backend
+plt.switch_backend('pdf')
 try:
     plt.switch_backend('macosx')
 except ImportError:
     pass
-plt.switch_backend('pdf')
 
 plt.rcParams['axes.formatter.useoffset'] = False
 

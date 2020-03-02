@@ -69,8 +69,7 @@ class SBPattern(object):
             # create grid
             dHA, dDEC = np.meshgrid(dha, ddec)
         else:
-            print("ERROR: Input coordinates should be 1D or 2D arrays")
-            return
+            raise ValueError("Input coordinates should be 1D or 2D arrays")
 
         # set coordinates
         numDEC, numHA = dHA.shape

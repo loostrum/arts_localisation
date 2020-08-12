@@ -6,7 +6,7 @@ import yaml
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 
-from .convert import cb_index_to_pointing
+from convert import cb_index_to_pointing
 
 
 logger = logging.getLogger(__name__)

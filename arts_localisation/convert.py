@@ -30,7 +30,7 @@ def limit(val, minval=-1, maxval=1):
 
 
 def radec_to_hadec(ra, dec, t, lon=WSRT_LON):
-    """ 
+    """
     Convert J2000 RA, Dec to apparent HA, Dec
     :param ra: right ascension with unit
     :param dec: declination with unit
@@ -74,7 +74,7 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
     # Apparent LST at WSRT at this time
     lst = t.sidereal_time('apparent', lon)
     if apparent:
-        # Equinox of date 
+        # Equinox of date
         coord_system = FK5(equinox='J{}'.format(t.decimalyear))
     else:
         # J2000
@@ -87,7 +87,7 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
 
 def hadec_to_par(ha, dec, lat=WSRT_LAT):
     """
-    Convert HA, Dec to parallactic angle 
+    Convert HA, Dec to parallactic angle
     This is the SB rotation w.r.t. the RA-Dec frame
     :param ha: hour angle with unit
     :param dec: declination with unit
@@ -272,9 +272,9 @@ def rotate_coordinate_grid(X, Y, angle, origin=None):
     :param angle: rotation angle
     :param origin: tuple with origin for rotation (default: center of XY grid)
     """
-    
+
     assert X.shape == Y.shape
-    
+
     if origin is None:
         ny, nx = X.shape
         yind = int(ny/2)
@@ -284,7 +284,7 @@ def rotate_coordinate_grid(X, Y, angle, origin=None):
         ymid = Y[yind, xind]
     else:
         xmid, ymid = origin
-    
+
     # convert to polar
     r = np.sqrt((X-xmid)**2 + (Y-ymid)**2)
     theta = np.arctan2(Y-ymid, X-xmid)
@@ -293,5 +293,9 @@ def rotate_coordinate_grid(X, Y, angle, origin=None):
     # convert back to cartesian
     X = r * np.cos(theta) + xmid
     Y = r * np.sin(theta) + ymid
-    
+
     return X, Y
+
+
+def cb_index_to_pointing(cb, pointing_ra, pointing_dec):
+    raise NotImplementedError

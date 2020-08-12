@@ -1,2 +1,2 @@
-# arts-localisation
+# ARTS Localisation
 Localisation of ARTS transients

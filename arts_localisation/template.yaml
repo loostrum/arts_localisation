@@ -1,0 +1,50 @@
+# Template configuration file for localisation
+
+
+# the global section is optional; any parameters not listed here
+# will be set to their defaults
+global:
+    # actual source position, if known. Values must be in decimal degrees
+    #source_ra:
+    #source_dec:
+
+    # S/N threshold used in determining S/N at each SB
+    # This can also be set per burst, which takes precedence over this global value
+    snrmin: 
+
+
+# example burst
+burst00:
+    # arrival time, can either be specified as tarr, or as tstart + toa
+    # tarr takes precedence and should be UTC, in ISOT format
+    # tstart uses the same format. ToA must be in seconds
+    tarr: 
+    #tstart:
+    #toa:
+
+    # telescope pointing, in decimal degrees. Only use this if the reference beam
+    # during the observation was zero (which is the default).
+    # If not, as is the case e.g. for drift scans, manually put in the RA, Dec in
+    # the subsection for each CB
+    pointing_ra:
+    pointing_dec:
+
+    # subsection per CB. The subsection must be named CBXX
+    CB00:
+        # pointing of this CB, in decimal degrees
+        # these are optional if a telescope pointing is given
+        ra:
+        dec:
+        
+        # Path to file with S/N of each SB
+        # comment out to treat this as an upper limit beam
+        snr_array: 
+
+        # SEFD estimate for this CB in Jy (for CB center)
+        # comment out to use default value
+        #sefd:
+    
+        # To overwite the global S/N threshold, change the value here
+        #snrmin:
+
+    

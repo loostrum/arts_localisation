@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 import astropy.units as u
 
 #from darc.sb_generator import SBGenerator
-from sb_generator import SBGenerator
+from .sb_generator import SBGenerator
 
-from beamformer import BeamFormer
-from compound_beam import CompoundBeam
+from .beamformer import BeamFormer
+from .compound_beam import CompoundBeam
 from constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIST, NPOINT
 
 
@@ -87,7 +87,8 @@ class SBPattern(object):
             # init compound beam
             cb = CompoundBeam(freqs, dHA, dDEC)
             # init SB generator
-            sb_gen = SBGenerator.from_science_case(4)
+            #sb_gen = SBGenerator.from_science_case(4)
+            sb_gen = SBGenerator.from_table('./arts_localisation/sbtable-sc4-12tabs-71sbs.txt')
 
             # CB pattern
             if cbnum is not None:

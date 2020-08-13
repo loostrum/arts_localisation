@@ -5,7 +5,7 @@ python:
   '3.7'
   '3.8'
 install:
-  pip install pycodestyle
+  pip install sphinx pycodestyle
   pip install .
 script:
   find . -name "*.py" -exec pycodestyle --ignore E501,W503 {} +

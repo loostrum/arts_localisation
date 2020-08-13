@@ -7,8 +7,6 @@ import socket
 import yaml
 import numpy as np
 
-from darc.definitions import *
-
 
 class SBGeneratorException(Exception):
     pass
@@ -23,16 +21,13 @@ class SBGenerator(object):
         self.numsb = None
         self.__reversed = None
 
-        # Load config
-        with open(CONFIG_FILE, 'r') as f:
-            config = yaml.load(f, Loader=yaml.SafeLoader)['sb_generator']
+        # set config
+        self.table_folder = "{home}/.controller/synthesized_beam_tables/".format(os.path.expanduser('~'))
+        self.table = {'sc3': "sbtable-9tabs-114sbs-f1370.txt"
+                      'sc4:' "sbtable-sc4-12tabs-71sbs.txt"}
 
-        # set config, expanding strings
-        kwargs = {'home': os.path.expanduser('~'), 'hostname': socket.gethostname()}
-        for key, value in config.items():
-            if isinstance(value, str):
-                value = value.format(**kwargs)
-            setattr(self, key, value)
+        self.numtab = {'sc3': 9, 'sc4': 12}
+        self.numsb = {'sc3': 114, 'sc4': 71}
 
         # Get full path to SB table
         if fname:

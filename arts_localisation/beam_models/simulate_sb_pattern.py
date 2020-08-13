@@ -6,9 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import astropy.units as u
 
-#from darc.sb_generator import SBGenerator
 from .sb_generator import SBGenerator
-
 from .beamformer import BeamFormer
 from .compound_beam import CompoundBeam
 from constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIST, NPOINT

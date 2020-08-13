@@ -39,12 +39,14 @@ def parse_yaml(fname):
         config['global']['fmax'] = np.inf
 
     # check for known source coordinates
+    source_coord = None
     try:
         source_ra = config['global']['source_ra']
         source_dec = config['global']['source_dec']
-        config['global']['source_coord'] = (source_ra * u.deg, source_dec * u.deg)
+        source_coord = (source_ra * u.deg, source_dec * u.deg)
     except KeyError:
         logger.debug('No source coordinates found')
+    config['global']['source_coord'] = source_coord
 
     # check for S/N threshold
     snrmin = None

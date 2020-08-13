@@ -93,9 +93,9 @@ def hadec_to_par(ha, dec, lat=WSRT_LAT):
     :param dec: declination with unit
     :param lat: Latitude with unit (default: WSRT)
     """
-    theta_par = np.arctan(np.cos(lat) * np.sin(ha) /
-                          (np.sin(lat) * np.cos(dec) -
-                          np.cos(lat) * np.sin(dec) * np.cos(ha))).to(u.deg)
+    theta_par = np.arctan(np.cos(lat) * np.sin(ha)
+                          / (np.sin(lat) * np.cos(dec)
+                          - np.cos(lat) * np.sin(dec) * np.cos(ha))).to(u.deg)
     return theta_par.to(u.deg)
 
 

@@ -3,7 +3,7 @@
 
 import argparse
 import astropy.units as u
- 
+
 from convert import hadec_to_proj, hadec_to_par
 
 if __name__ == '__main__':

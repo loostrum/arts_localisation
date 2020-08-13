@@ -23,9 +23,9 @@ except ImportError:
 
 # confidence interval for localisation region
 CONF_INT = 0.90
-#CONF_INT = 0.68
+# CONF_INT = 0.68
 # colour cycler for contour overview
-cmap_list = cycle(['377eb8', 'ff7f00', '4daf4a', 'f781bf', 'a65628', '984ea3','999999', 'e41a1c', 'dede00'])
+cmap_list = cycle(['377eb8', 'ff7f00', '4daf4a', 'f781bf', 'a65628', '984ea3', '999999', 'e41a1c', 'dede00'])
 colormap = next(cmap_list)
 
 
@@ -42,13 +42,13 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
     dchi2_contour_value = stats.chi2.ppf(CONF_INT, dof)
 
     # convert sigma_max to dchi2 value
-    conf_int_max = stats.chi2.cdf(sigma_max**2, 1)
+    conf_int_max = stats.chi2.cdf(sigma_max ** 2, 1)
     dchi2_value_max = stats.chi2.ppf(conf_int_max, dof)
 
     # plot data with colorbar
     img = ax.pcolormesh(RA, DEC, dchi2, vmax=min(dchi2.max(), dchi2_value_max))
-    divider = make_axes_locatable(ax) 
-    cax = divider.append_axes('right',  size='5%', pad=0.05)
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes('right', size='5%', pad=0.05)
     fig.colorbar(img, cax)
 
     # add contour
@@ -62,7 +62,6 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
         # plot contour is this axis too
         contour_ax.contour(RA, DEC, dchi2, [dchi2_contour_value], c=colormap, label=title)
         next(cmap_list)
-        
 
     # add best position
     ax.plot(best_ra, best_dec, c='r', marker='.', ls='', ms=10, label='Best position')
@@ -72,7 +71,7 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
         ax.plot(src_ra, src_dec, c='cyan', marker='+', ls='', ms=10, label='Source position')
 
     # add cb position(s)
-    cb_radius = .5*CB_HPBW * REF_FREQ/freq
+    cb_radius = .5 * CB_HPBW * REF_FREQ / freq
     if isinstance(cb_ra, float):
         cb_pos = np.array([[cb_ra, cb_dec]])
     else:
@@ -87,14 +86,14 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
         ax.plot(ra, dec, c='k', marker='x', ls='', ms=10, label=label)
 
         # add CB size
-        patch = SphericalCircle((ra*u.deg, dec*u.deg), cb_radius, ec='k', fc='none', ls='-', alpha=.5)
+        patch = SphericalCircle((ra * u.deg, dec * u.deg), cb_radius, ec='k', fc='none', ls='-', alpha=.5)
         ax.add_patch(patch)
 
     # labels
     ax.set_xlabel('Right Ascension (deg)')
     ax.set_ylabel('Declination (deg)')
     ax.set_title(title)
-    #ax.legend()
+    # ax.legend()
 
     return points
 
@@ -102,13 +101,13 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
 def get_stats(RA, DEC, dchi2, dof):
     # get midpoint of coord grid
     ny, nx = RA.shape
-    midx = int(nx/2)
-    midy = int(ny/2)
+    midx = int(nx / 2)
+    midy = int(ny / 2)
 
     # get pixel size
-    ddec = np.abs(DEC[midy, midx] - DEC[midy+1, midx]) * u.deg
-    dra_scaled = np.abs((RA[midy, midx] - RA[midy, midx+1]) * np.cos(DEC[midy, midx])) * u.deg
-    pix_size = dra_scaled*ddec
+    ddec = np.abs(DEC[midy, midx] - DEC[midy + 1, midx]) * u.deg
+    dra_scaled = np.abs((RA[midy, midx] - RA[midy, midx + 1]) * np.cos(DEC[midy, midx])) * u.deg
+    pix_size = dra_scaled * ddec
 
     # convert conf_int to dchi2 value
     dchi2_max = stats.chi2.ppf(CONF_INT, dof)
@@ -117,11 +116,12 @@ def get_stats(RA, DEC, dchi2, dof):
 
     # total localisation area
     area = pix_size * npoint
-    print("Total localisation area: {:.2f} = {:.2f}".format(area.to(u.arcmin**2), area.to(u.arcsec**2)))
+    print("Total localisation area: {:.2f} = {:.2f}".format(area.to(u.arcmin ** 2), area.to(u.arcsec ** 2)))
+
 
 def fit_ellipse(points):
     pass
-    
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     except KeyError:
         src_ra = None
         src_dec = None
-        
+
     # get lists of burst names
     bursts = list(conf.keys())
     # remove non-burst keys from list
@@ -164,10 +164,10 @@ if __name__ == '__main__':
 
     # create one figure for individual bursts and one for total
     ncols = int(np.ceil(np.sqrt(nburst)))
-    nrows = int(np.ceil(nburst/ncols))
+    nrows = int(np.ceil(nburst / ncols))
 
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True)
-    if nrows*ncols > 1:
+    if nrows * ncols > 1:
         axes = axes.flatten()
     else:
         axes = [axes]
@@ -186,8 +186,8 @@ if __name__ == '__main__':
 
     # loop over bursts
     for i, burst in enumerate(bursts):
-        print("Plotting {}/{}".format(i+1, nburst))
-        # degrees of freedom for one CB: NSB - nparam (2) 
+        print("Plotting {}/{}".format(i + 1, nburst))
+        # degrees of freedom for one CB: NSB - nparam (2)
         # reference burst has one dof less
         if burst == ref_burst:
             dof = NSB - 3
@@ -212,7 +212,7 @@ if __name__ == '__main__':
         except KeyError:
             cb_ha = conf[burst]['ha']
             t = Time(conf[burst]['tstart']) + TimeDelta(conf[burst]['tarr'], format='sec')
-            cb_radec = convert.hadec_to_radec(cb_ha*u.deg, cb_dec*u.deg, t)
+            cb_radec = convert.hadec_to_radec(cb_ha * u.deg, cb_dec * u.deg, t)
             cb_ra = cb_radec.ra.deg
             cb_dec = cb_radec.dec.deg
         # store for total
@@ -220,11 +220,11 @@ if __name__ == '__main__':
         cb_dec_all.append(cb_dec)
         # select plot axis
         ax = axes[i]
-        do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec, args.freq*u.MHz,
+        do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec, args.freq * u.MHz,
                 src_ra=src_ra, src_dec=src_dec, title=burst, contour_ax=contour_ax)
 
     # empty non-used plots
-    nplot = nrows*ncols
+    nplot = nrows * ncols
     if nburst < nplot:
         for i in range(nburst, nplot):
             axes[i].axis('off')
@@ -233,21 +233,21 @@ if __name__ == '__main__':
 
     # total
     # dof of total: nburst * nsb - 1 - nparam
-    dof_total = nburst * NSB - 3 
+    dof_total = nburst * NSB - 3
     dchi2_total = chi2_total - chi2_total.min()
 
     get_stats(RA, DEC, dchi2_total, dof_total)
 
     print("Plotting combined localisation region")
     # final localisation region
-    
-    contour_points = do_plot(combined_ax, RA, DEC, dchi2_total, dof_total, cb_ra_all, cb_dec_all, args.freq*u.MHz,
+
+    contour_points = do_plot(combined_ax, RA, DEC, dchi2_total, dof_total, cb_ra_all, cb_dec_all, args.freq * u.MHz,
                              src_ra=src_ra, src_dec=src_dec, title="{} all CBs combined".format(name))
     contour_ax.set_xlabel('Right Ascension (deg)')
     contour_ax.set_ylabel('Declination (deg)')
     contour_ax.set_title('Contours of all CBs')
     contour_ax.legend()
-    
+
     fig_final.tight_layout()
 
     if contour_points is not None:

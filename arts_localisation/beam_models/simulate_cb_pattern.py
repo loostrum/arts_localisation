@@ -22,7 +22,7 @@ if __name__ == '__main__':
                         help="Number of frequency channels (default: %(default)s)")
 
     args = parser.parse_args()
-    
+
     output_file = 'models/all_cb_{}_{}-{}.npy'.format(args.mode, args.fmin, args.fmax)
 
     # load CB offsets (decimal degrees in RA, Dec)
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         dra, ddec = cb_pos[cb]
         # calculate CB integrated over frequencies
         freqs = np.linspace(args.fmin, args.fmax, args.nfreq) * u.MHz
-        beam = CompoundBeam(freqs, theta-dra, phi-ddec)
+        beam = CompoundBeam(freqs, theta - dra, phi - ddec)
         # create and normalise cb
         pattern = beam.beam_pattern(args.mode, cb=cb).mean(axis=0)
         pattern /= pattern.max()

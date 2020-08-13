@@ -15,7 +15,7 @@ from constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIST, NPOINT
 class SBPattern(object):
 
     def __init__(self, ha, dec, dha, ddec, sbs=None, load=False, fname=None, memmap_file=None, cb_model='gauss', cbnum=None,
-                 min_freq=1220*u.MHz, fmin=1220*u.MHz, fmax=1520*u.MHz, nfreq=64):
+                 min_freq=1220 * u.MHz, fmin=1220 * u.MHz, fmax=1520 * u.MHz, nfreq=64):
         """
         Generate Synthesized Beam pattern
         :param ha: hour angle of phase center
@@ -35,7 +35,7 @@ class SBPattern(object):
 
         """
         dish_mode = 'a8'
-        df = 300.*u.MHz / nfreq
+        df = 300. * u.MHz / nfreq
 
         # fname is required when load is True
         if load and fname is None:
@@ -85,7 +85,6 @@ class SBPattern(object):
             # init compound beam
             cb = CompoundBeam(freqs, dHA, dDEC)
             # init SB generator
-            #sb_gen = SBGenerator.from_science_case(4)
             sb_gen = SBGenerator.from_table('sbtable-sc4-12tabs-71sbs.txt')
 
             # CB pattern
@@ -112,18 +111,11 @@ class SBPattern(object):
             print("Generating requested SBs")
             shape = (NSB, nfreq, numDEC, numHA)
             if memmap_file is not None:
-                beam_pattern_sb = np.memmap(memmap_file+'_full_sb.dat', dtype=np.float, mode='w+', shape=shape)
+                beam_pattern_sb = np.memmap(memmap_file + '_full_sb.dat', dtype=np.float, mode='w+', shape=shape)
             else:
                 beam_pattern_sb = np.zeros(shape, dtype=np.float32)
             for sb in tqdm.tqdm(sbs):
                 # apply 2D primary beam and store
-                # each part is one step in phi
-                # this is needed until the SB generator supports 3D input (tab, phi, theta)
-                # for step in range(NPHI_SB):
-                #     # all TAB, all freq, one phi, all theta
-                #     data = beam_pattern_tab[:, :, step, :]
-                #     beam = sb_gen.synthesize_beam(data, sb)
-                #     beam_pattern_sb[sb][:, step] = primary_beam[:, step] * beam
                 beam = sb_gen.synthesize_beam(beam_pattern_tab, sb)
                 beam_pattern_sb[sb] = primary_beam * beam
 
@@ -133,15 +125,15 @@ class SBPattern(object):
             print("Integrating SB pattern over frequency")
             shape = (NSB, numDEC, numHA)
             if memmap_file is not None:
-                self.beam_pattern_sb_int = np.memmap(memmap_file+'_sb.dat', dtype=float, mode='w+', shape=shape)
+                self.beam_pattern_sb_int = np.memmap(memmap_file + '_sb.dat', dtype=float, mode='w+', shape=shape)
             else:
                 self.beam_pattern_sb_int = np.zeros(shape)
             self.beam_pattern_sb_full = beam_pattern_sb
             self.beam_pattern_sb_int = beam_pattern_sb.mean(axis=1)
 
-        self.mid_ha = int(numHA/2)
-        self.mid_dec = int(numDEC/2)
-        self.mid_freq = int(nfreq/2)
+        self.mid_ha = int(numHA / 2)
+        self.mid_dec = int(numDEC / 2)
+        self.mid_freq = int(nfreq / 2)
 
         self.dHA = dHA
         self.dDEC = dDEC

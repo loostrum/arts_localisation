@@ -145,7 +145,7 @@ class SBGenerator(object):
         # verify that number of TABs is ok
         if not ntab == self.numtab:
             raise SBGeneratorException("Number of TABs ({}) not equal to expected number of TABs ({})".format(
-                                        ntab, self.numtab))
+                                       ntab, self.numtab))
         # verify number of channels
         if nfreq % self.nsub:
             raise SBGeneratorException("Error: Number of subbands ({}) is not a factor of "
@@ -158,5 +158,5 @@ class SBGenerator(object):
             # get correct subband of correct tab and add it to raw SB
             # after vsplit, shape is (nsub, nfreq/nsub, ntime) -> simply [subband] gets correct subband
             # assign to subband of sb
-            beam[subband*nchan_per_subband:(subband+1)*nchan_per_subband] = np.vsplit(data[tab], self.nsub)[subband]
+            beam[subband * nchan_per_subband:(subband + 1) * nchan_per_subband] = np.vsplit(data[tab], self.nsub)[subband]
         return beam

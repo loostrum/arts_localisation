@@ -25,16 +25,16 @@ def gauss_2d(xy, x_mean, x_sig, y_mean, y_sig, rho):
     rho: correlation between x and y
     """
     x, y = xy
-    a = -1 / (2*(1-rho**2))
-    b = ((x-x_mean)/x_sig)**2
-    c = ((y-y_mean)/y_sig)**2
-    d = (2*rho*(x-y_mean)*(x-y_mean) / (x_sig * y_sig))
-    return np.exp(a * (b+c-d))
+    a = -1 / (2 * (1 - rho ** 2))
+    b = ((x - x_mean) / x_sig) ** 2
+    c = ((y - y_mean) / y_sig) ** 2
+    d = (2 * rho * (x - y_mean) * (x - y_mean) / (x_sig * y_sig))
+    return np.exp(a * (b + c - d))
 
 
 class CompoundBeam(object):
-    
-    def __init__(self, freqs, theta=0*u.deg, phi=0*u.deg, rot=0*u.deg):
+
+    def __init__(self, freqs, theta=0 * u.deg, phi=0 * u.deg, rot=0 * u.deg):
         """
         Generate a compound beam pattern
         :param freqs: observing frequencies
@@ -88,7 +88,6 @@ class CompoundBeam(object):
         elif mode == 'real':
             return self.__real(cb)
         elif mode == 'airy':
-            #raise NotImplementedError("Airy disk not yet implemented")
             return self.__airy()
         else:
             raise ValueError("Mode should be gauss, real, or airy")
@@ -112,9 +111,9 @@ class CompoundBeam(object):
         # calculate response at each sigma
         for i, sigma in enumerate(sigmas):
             if self.grid:
-                arg = -.5 * (self.theta**2 + self.phi**2) / sigma**2
+                arg = -.5 * (self.theta ** 2 + self.phi ** 2) / sigma ** 2
             else:
-                arg = -.5 * (self.theta**2 + self.phi[..., None]**2) / sigma**2
+                arg = -.5 * (self.theta ** 2 + self.phi[..., None] ** 2) / sigma ** 2
             output_grid[i] = np.exp(arg)
 
         return output_grid
@@ -132,12 +131,12 @@ class CompoundBeam(object):
             output_grid = np.zeros((self.freqs.shape[0], self.phi.shape[0], self.theta.shape[0]))
 
         lambd = const.c / self.freqs
-        k = 2*np.pi/lambd
-        a = DISH_SIZE/2
+        k = 2 * np.pi / lambd
+        a = DISH_SIZE / 2
         if self.grid:
-            angle = np.sqrt(self.phi**2 + self.theta**2)
+            angle = np.sqrt(self.phi ** 2 + self.theta ** 2)
         else:
-            angle = np.sqrt(self.phi[..., None]**2 + self.theta**2)
+            angle = np.sqrt(self.phi[..., None] ** 2 + self.theta ** 2)
 
         arg = k[..., None] * a * np.sin(angle)[None, ...]
         arg = arg.to(1).value
@@ -145,8 +144,7 @@ class CompoundBeam(object):
         out = 2 * j1(arg) / arg
         out[arg == 0] = 1.
 
-        return  out
-        
+        return out
 
     def __real(self, cb, thresh=.5):
         """
@@ -161,24 +159,24 @@ class CompoundBeam(object):
         name = 'B{:02d}_{}'.format(cb, ref_freq_str)
         beam = self.beams_measured[name].reshape(n, n)
 
-        dy = 1./36 * 60   # arcmin at ref freq
+        dy = 1. / 36 * 60   # arcmin at ref freq
         dx = -dy  # horizontal axis of data is ha instead of ra
 
         # fit 2D gaussian
-        x = (np.arange(n) - n/2) * dx
-        y = (np.arange(n) - n/2) * dy
+        x = (np.arange(n) - n / 2) * dx
+        y = (np.arange(n) - n / 2) * dy
         X, Y = np.meshgrid(x, y)
 
         # apply rotation
-        r = np.sqrt(X**2 + Y**2)
+        r = np.sqrt(X ** 2 + Y ** 2)
         theta = np.arctan2(Y, X)
         theta -= self.rot.to(u.radian).value
-        X = r*np.cos(theta)
-        Y = r*np.sin(theta)
+        X = r * np.cos(theta)
+        Y = r * np.sin(theta)
 
         # check NaNs
         nans = ~np.isfinite(beam)
-        nan_frac = np.sum(nans) / float(n)**2
+        nan_frac = np.sum(nans) / float(n) ** 2
         if nan_frac > thresh:
             print("Warning: NaN frac is {} for CB{:02d}, "
                   "reverting to default gaussian beam".format(nan_frac, cb))

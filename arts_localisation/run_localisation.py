@@ -46,7 +46,7 @@ def makedirs(path):
 
 
 def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
-              freq=1370*u.MHz, t_arr=None, loc=None, cb_pos=None,
+              freq=1370 * u.MHz, t_arr=None, loc=None, cb_pos=None,
               src_pos=None):
     """
     Create plot of localisation area
@@ -86,7 +86,7 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
     # plot delta chi 2
     img = ax.pcolormesh(X, Y, dchi2, vmax=vmax)
     cbar = fig.colorbar(img, ax=ax)
-    cbar.set_label('$\Delta \chi^2$', rotation=270)
+    cbar.set_label(r'$\Delta \chi^2$', rotation=270)
 
     # add contours
     cont = ax.contour(X, Y, dchi2, contour_values, colors=['#FF0000', '#C00000', '#800000'])
@@ -121,7 +121,7 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
             ax.plot(x_cb.to(u.deg).value, y_cb.to(u.deg).value, c='k', marker='x', ls='', ms=10,
                     label=label)
             # add CB
-            cb_radius = (CB_HPBW * REF_FREQ/freq/2)
+            cb_radius = (CB_HPBW * REF_FREQ / freq / 2)
             patch = SphericalCircle((x_cb, y_cb), cb_radius, ec='k', fc='none', ls='-', alpha=.5)
             ax.add_patch(patch)
 
@@ -310,8 +310,8 @@ def main():
             ndet = len(sb_det)
             if ndet > 0:
                 print("Adding {} detections".format(ndet))
-                chi2[CB] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis])**2,axis=0)
-                val = np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis])**2, axis=0)
+                chi2[CB] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2, axis=0)
+                val = np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2, axis=0)
             # non detection, observed S/N set to 0
             nnondet = len(sb_non_det)
             if nnondet > 0:
@@ -345,13 +345,13 @@ def main():
 
         # find size of localisation area within given confidence level
         max_dchi2 = stats.chi2.ppf(args.conf_int, dof)
-        dchi2_total = chi2_total-chi2_total.min()
+        dchi2_total = chi2_total - chi2_total.min()
         npix_below_max = (dchi2_total < max_dchi2).sum()
-        pix_area = ((config['global']['resolution']*u.arcsec)**2)
+        pix_area = ((config['global']['resolution'] * u.arcsec) ** 2)
         total_area = pix_area * npix_below_max
-        print("Found {} pixels below within {}% confidence region".format(npix_below_max, args.conf_int*100))
+        print("Found {} pixels below within {}% confidence region".format(npix_below_max, args.conf_int * 100))
         print("Area of one pixel is {} ".format(pix_area))
-        print("Localisation area is {:.2f} = {:.2f}".format(total_area, total_area.to(u.arcmin**2)))
+        print("Localisation area is {:.2f} = {:.2f}".format(total_area, total_area.to(u.arcmin ** 2)))
 
         # find best position
         ind = np.unravel_index(np.argmin(chi2_total), chi2_total.shape)
@@ -364,7 +364,7 @@ def main():
             print("Separation: {}".format(coord_src.separation(coord_best).to(u.arcsec)))
 
             # find closest ra,dec to source
-            dist = ((RA-coord_src.ra)*np.cos(DEC))**2 + (DEC-coord_src.dec)**2
+            dist = ((RA - coord_src.ra) * np.cos(DEC)) ** 2 + (DEC - coord_src.dec) ** 2
             ind = np.unravel_index(np.argmin(dist), RA.shape)
             chi2_best = chi2_total.min()
             chi2_at_source = chi2_total[ind]
@@ -380,8 +380,8 @@ def main():
                     mode = 'w'
                 with open(args.outfile, mode) as f:
                     if mode == 'w':
-                        f.write(hdr+'\n')
-                    f.write(summary+'\n')
+                        f.write(hdr + '\n')
+                    f.write(summary + '\n')
             else:
                 print(hdr)
                 print(summary)
@@ -398,14 +398,14 @@ def main():
                 else:
                     # all SBs; 2 params
                     dof = NSB - 2
-                title = "$\Delta \chi^2$ {}".format(CB)
+                title = r"$\Delta \chi^2$ {}".format(CB)
                 fig = make_plot(chi2[CB], RA, DEC, dof, title, args.conf_int, t_arr=tarr,
                                 cb_pos=pointings[CB], freq=central_freq)
                 if args.saveplot:
                     fig.savefig('{}_{}_{}.pdf'.format(output_prefix, burst, CB))
 
             # total
-            title = "$\Delta \chi^2$ Total"
+            title = r"$\Delta \chi^2$ Total"
             fig = make_plot(chi2_total, RA, DEC, dof, title, args.conf_int, loc='lower right',
                             cb_pos=list(pointings.values()), freq=central_freq)
 

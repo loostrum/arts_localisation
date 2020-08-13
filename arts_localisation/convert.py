@@ -93,9 +93,9 @@ def hadec_to_par(ha, dec, lat=WSRT_LAT):
     :param dec: declination with unit
     :param lat: Latitude with unit (default: WSRT)
     """
-    theta_par = np.arctan(np.cos(lat)*np.sin(ha) /
-                          (np.sin(lat)*np.cos(dec) -
-                          np.cos(lat)*np.sin(dec)*np.cos(ha))).to(u.deg)
+    theta_par = np.arctan(np.cos(lat) * np.sin(ha) /
+                          (np.sin(lat) * np.cos(dec) -
+                          np.cos(lat) * np.sin(dec) * np.cos(ha))).to(u.deg)
     return theta_par.to(u.deg)
 
 
@@ -109,7 +109,7 @@ def hadec_to_proj(ha, dec, lat=WSRT_LAT):
     """
 
     alt, az = hadec_to_altaz(ha, dec, lat)
-    cos_theta_proj = np.sqrt(np.sin(alt)**2 + (np.cos(alt)*np.cos(az))**2)
+    cos_theta_proj = np.sqrt(np.sin(alt) ** 2 + (np.cos(alt) * np.cos(az)) ** 2)
     cos_theta_proj = limit(cos_theta_proj)
     theta_proj = np.arccos(cos_theta_proj)
     return theta_proj.to(u.deg)
@@ -135,7 +135,7 @@ def hadec_to_altaz(ha, dec, lat=WSRT_LAT):
 
     # fix sign of az
     m = np.sin(ha) > 0
-    az[m] = 360*u.deg - az[m]
+    az[m] = 360 * u.deg - az[m]
 
     return alt.to(u.deg), az.to(u.deg)
 
@@ -159,7 +159,7 @@ def altaz_to_hadec(alt, az, lat=WSRT_LAT):
     ha = np.arccos(cosha)
 
     # fix sign of ha
-    m = az < 180*u.deg
+    m = az < 180 * u.deg
     ha[m] = -ha[m]
 
     return ha.to(u.deg), dec.to(u.deg)
@@ -195,7 +195,7 @@ def offset_to_coord(ra0, dec0, theta, phi):
     # we only need sin(c) and cos(c), which are a function of r**2 only
     # define r**2
     rsq = uu**2 + vv**2
-    cosc = 1./np.sqrt(1 + rsq)
+    cosc = 1. / np.sqrt(1 + rsq)
     # sinc = r * cos(c), but we only need sinc / r
     sinc_over_r = cosc
 
@@ -277,8 +277,8 @@ def rotate_coordinate_grid(X, Y, angle, origin=None):
 
     if origin is None:
         ny, nx = X.shape
-        yind = int(ny/2)
-        xind = int(nx/2)
+        yind = int(ny / 2)
+        xind = int(nx / 2)
         # find center of grid
         xmid = X[yind, xind]
         ymid = Y[yind, xind]
@@ -286,8 +286,8 @@ def rotate_coordinate_grid(X, Y, angle, origin=None):
         xmid, ymid = origin
 
     # convert to polar
-    r = np.sqrt((X-xmid)**2 + (Y-ymid)**2)
-    theta = np.arctan2(Y-ymid, X-xmid)
+    r = np.sqrt((X - xmid) ** 2 + (Y - ymid) ** 2)
+    theta = np.arctan2(Y - ymid, X - xmid)
     # apply rotation
     theta += angle
     # convert back to cartesian

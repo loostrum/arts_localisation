@@ -1,12 +1,25 @@
-dist: xenial   # required for Python >= 3.7
+dist: xenial
 language: python
 python:
-    - "3.6"
-    - "3.7"
-    - "3.8"
+- '3.6'
+- '3.7'
+- '3.8'
+before_install:
+- openssl aes-256-cbc -K $encrypted_189e52c2c347_key -iv $encrypted_189e52c2c347_iv
+  -in deploy_key.enc -out deploy_key -d
 install:
-    - pip install pycodestyle
-    - pip install .
-script: 
-    #- pytest
-    - find . -name "*.py" -exec pycodestyle --ignore E501,W503 {} +
+- pip install pycodestyle
+- pip install .
+script:
+- find . -name "*.py" -exec pycodestyle --ignore E501,W503 {} +
+after_success:
+- make -C docs/ html
+- touch docs/_build/html/.nojekyll
+deploy:
+- provider: pages:git
+  verbose: true
+  token: "$GITHUB_TOKEN"
+  edge: true
+  branch: master
+  local_dir: "./docs/_build/html"
+  deploy_key: deploy_key

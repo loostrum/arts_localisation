@@ -30,7 +30,7 @@ def limit(val, minval=-1, maxval=1):
 
 
 def radec_to_hadec(ra, dec, t, lon=WSRT_LON):
-    """ 
+    """
     Convert J2000 RA, Dec to apparent HA, Dec
     :param ra: right ascension with unit
     :param dec: declination with unit
@@ -74,7 +74,7 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
     # Apparent LST at WSRT at this time
     lst = t.sidereal_time('apparent', lon)
     if apparent:
-        # Equinox of date 
+        # Equinox of date
         coord_system = FK5(equinox='J{}'.format(t.decimalyear))
     else:
         # J2000
@@ -87,15 +87,15 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
 
 def hadec_to_par(ha, dec, lat=WSRT_LAT):
     """
-    Convert HA, Dec to parallactic angle 
+    Convert HA, Dec to parallactic angle
     This is the SB rotation w.r.t. the RA-Dec frame
     :param ha: hour angle with unit
     :param dec: declination with unit
     :param lat: Latitude with unit (default: WSRT)
     """
-    theta_par = np.arctan(np.cos(lat)*np.sin(ha) /
-                          (np.sin(lat)*np.cos(dec) -
-                          np.cos(lat)*np.sin(dec)*np.cos(ha))).to(u.deg)
+    theta_par = np.arctan(np.cos(lat) * np.sin(ha) /
+                          (np.sin(lat) * np.cos(dec) -
+                          np.cos(lat) * np.sin(dec) * np.cos(ha))).to(u.deg)
     return theta_par.to(u.deg)
 
 
@@ -109,7 +109,7 @@ def hadec_to_proj(ha, dec, lat=WSRT_LAT):
     """
 
     alt, az = hadec_to_altaz(ha, dec, lat)
-    cos_theta_proj = np.sqrt(np.sin(alt)**2 + (np.cos(alt)*np.cos(az))**2)
+    cos_theta_proj = np.sqrt(np.sin(alt) ** 2 + (np.cos(alt) * np.cos(az)) ** 2)
     cos_theta_proj = limit(cos_theta_proj)
     theta_proj = np.arccos(cos_theta_proj)
     return theta_proj.to(u.deg)
@@ -135,7 +135,7 @@ def hadec_to_altaz(ha, dec, lat=WSRT_LAT):
 
     # fix sign of az
     m = np.sin(ha) > 0
-    az[m] = 360*u.deg - az[m]
+    az[m] = 360 * u.deg - az[m]
 
     return alt.to(u.deg), az.to(u.deg)
 
@@ -159,7 +159,7 @@ def altaz_to_hadec(alt, az, lat=WSRT_LAT):
     ha = np.arccos(cosha)
 
     # fix sign of ha
-    m = az < 180*u.deg
+    m = az < 180 * u.deg
     ha[m] = -ha[m]
 
     return ha.to(u.deg), dec.to(u.deg)
@@ -195,7 +195,7 @@ def offset_to_coord(ra0, dec0, theta, phi):
     # we only need sin(c) and cos(c), which are a function of r**2 only
     # define r**2
     rsq = uu**2 + vv**2
-    cosc = 1./np.sqrt(1 + rsq)
+    cosc = 1. / np.sqrt(1 + rsq)
     # sinc = r * cos(c), but we only need sinc / r
     sinc_over_r = cosc
 
@@ -272,26 +272,30 @@ def rotate_coordinate_grid(X, Y, angle, origin=None):
     :param angle: rotation angle
     :param origin: tuple with origin for rotation (default: center of XY grid)
     """
-    
+
     assert X.shape == Y.shape
-    
+
     if origin is None:
         ny, nx = X.shape
-        yind = int(ny/2)
-        xind = int(nx/2)
+        yind = int(ny / 2)
+        xind = int(nx / 2)
         # find center of grid
         xmid = X[yind, xind]
         ymid = Y[yind, xind]
     else:
         xmid, ymid = origin
-    
+
     # convert to polar
-    r = np.sqrt((X-xmid)**2 + (Y-ymid)**2)
-    theta = np.arctan2(Y-ymid, X-xmid)
+    r = np.sqrt((X - xmid) ** 2 + (Y - ymid) ** 2)
+    theta = np.arctan2(Y - ymid, X - xmid)
     # apply rotation
     theta += angle
     # convert back to cartesian
     X = r * np.cos(theta) + xmid
     Y = r * np.sin(theta) + ymid
-    
+
     return X, Y
+
+
+def cb_index_to_pointing(cb, pointing_ra, pointing_dec):
+    raise NotImplementedError

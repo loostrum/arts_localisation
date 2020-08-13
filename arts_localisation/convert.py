@@ -9,13 +9,15 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord, FK5
 from astropy.time import Time
 
-from constants import WSRT_LON, WSRT_LAT
+from .constants import WSRT_LON, WSRT_LAT
 
 
 def limit(val, minval=-1, maxval=1):
     """
     Where val > maxval, replace by maxval
+
     Where val < minval, replace by minval
+
     :param val: input value
     :param minval: minimum value
     :param maxval: maximum value
@@ -32,6 +34,7 @@ def limit(val, minval=-1, maxval=1):
 def radec_to_hadec(ra, dec, t, lon=WSRT_LON):
     """
     Convert J2000 RA, Dec to apparent HA, Dec
+
     :param ra: right ascension with unit
     :param dec: declination with unit
     :param t: UT time (string or astropy.time.Time)
@@ -59,6 +62,7 @@ def radec_to_hadec(ra, dec, t, lon=WSRT_LON):
 def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
     """
     Convert apparent HA, Dec to J2000 RA, Dec
+
     :param ha: hour angle with unit
     :param dec: declination with unit
     :param t: UT time (string or astropy.time.Time)
@@ -88,7 +92,7 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
 def hadec_to_par(ha, dec, lat=WSRT_LAT):
     """
     Convert HA, Dec to parallactic angle
-    This is the SB rotation w.r.t. the RA-Dec frame
+
     :param ha: hour angle with unit
     :param dec: declination with unit
     :param lat: Latitude with unit (default: WSRT)
@@ -103,6 +107,7 @@ def hadec_to_proj(ha, dec, lat=WSRT_LAT):
     """
     Convert HA, Dec to projection angle
     This is the E-W baseline projection angle
+
     :param ha: hour angle with unit
     :param dec: declination with unit
     :param lat: Latitude with unit (default: WSRT)
@@ -118,6 +123,7 @@ def hadec_to_proj(ha, dec, lat=WSRT_LAT):
 def hadec_to_altaz(ha, dec, lat=WSRT_LAT):
     """
     Convert HA, Dec to Alt, Az
+
     :param ha: hour angle with unit
     :param dec: declination with unit
     :param lat: Latitude with unit (default: WSRT)
@@ -143,6 +149,7 @@ def hadec_to_altaz(ha, dec, lat=WSRT_LAT):
 def altaz_to_hadec(alt, az, lat=WSRT_LAT):
     """
     Convert Alt, Az to HA, Dec
+
     :param alt: altitude with unit
     :param az: azimuth with unit
     :param lat: Latitude with unit (default: WSRT)
@@ -168,7 +175,8 @@ def altaz_to_hadec(alt, az, lat=WSRT_LAT):
 def offset_to_coord(ra0, dec0, theta, phi):
     """
     Convert a projected offset (theta, phi) to
-    coordinate with reference (ra0, dec0
+    coordinate with reference (ra0, dec0)
+
     :param ra0: Reference RA or Az
     :param dec0: Reference Dec or Alt
     :param theta: RA or Az offset
@@ -223,6 +231,7 @@ def coord_to_offset(ra0, dec0, ra1, dec1):
     """
     Convert point (ra1, dec1) to projected offset
     from reference (ra0, dec0)
+
     :param ra0: Reference RA or Az
     :param dec0: Reference Dec or Alt
     :param ra1: Target RA or Az
@@ -267,6 +276,7 @@ def coord_to_offset(ra0, dec0, ra1, dec1):
 def rotate_coordinate_grid(X, Y, angle, origin=None):
     """
     Rotate input coordinate grid by given angle around given origin (default: center)
+
     :param X: input x coordinates
     :param Y: input y coordinates
     :param angle: rotation angle

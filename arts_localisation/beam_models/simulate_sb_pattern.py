@@ -88,7 +88,7 @@ class SBPattern(object):
             cb = CompoundBeam(freqs, dHA, dDEC)
             # init SB generator
             #sb_gen = SBGenerator.from_science_case(4)
-            sb_gen = SBGenerator.from_table('./arts_localisation/sbtable-sc4-12tabs-71sbs.txt')
+            sb_gen = SBGenerator.from_table('sbtable-sc4-12tabs-71sbs.txt')
 
             # CB pattern
             if cbnum is not None:

@@ -120,6 +120,10 @@ class SBGenerator(object):
                                            max(self.sb_mapping), expected_numtab))
             self.numsb = numsb
             self.numtab = expected_numtab
+        else:
+            self.numsb = numsb
+            # assume the highest TAB index is used in the table
+            self.numtab = np.amax(self.sb_mapping) + 1
         self.__reversed = False
 
     def get_map(self, sb):

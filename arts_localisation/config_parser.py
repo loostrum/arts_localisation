@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import logging
 
 import yaml
@@ -29,7 +30,7 @@ def parse_yaml(fname):
     assert 'global' in config.keys(), 'Global config missing'
 
     # check if required keys are present
-    for key in ('ra', 'dec', 'size', 'resolution', 'cb_model', 'fmin_data', 'bandwidth'):
+    for key in ('snrmin', 'ra', 'dec', 'size', 'resolution', 'cb_model', 'fmin_data', 'bandwidth'):
         assert key in config['global'].keys(), 'Key missing: {}'.format(key)
 
     # check if frequency range to use is given, else set such that full range is used
@@ -48,17 +49,12 @@ def parse_yaml(fname):
         logger.debug('No source coordinates found')
     config['global']['source_coord'] = source_coord
 
-    # check for S/N threshold
-    snrmin = None
-    try:
-        snrmin = config['global']['snrmin']
-    except KeyError:
-        logger.debug('No S/N threshold found in global config')
-
     # the remaining config keys are individual bursts
     bursts = [key for key in config.keys() if not key == 'global']
     # there should be at least one burst
     assert bursts, 'No bursts found'
+    # store list of bursts
+    config['bursts'] = bursts
     for burst in bursts:
         # parameters of the burst
         # try to read arrival time, either directly or as start time plus ToA
@@ -91,19 +87,18 @@ def parse_yaml(fname):
         except KeyError:
             logging.debug("No telescope pointing found")
 
-        # Verify S/N limit is present if not globally set
-        if snrmin is None:
-            assert 'snrmin' in config[burst].keys(), 'No global nor local S/N threshold found'
-        # else set local S/N limit to global value
-        config[burst]['snrmin'] = snrmin
-
         # now check section for each compound beam
         beams = [key for key in config[burst].keys() if key.upper().startswith('CB')]
+        # there should be at least one beam
+        assert beams, 'No beams found for burst {}'.format(burst)
         # check reference CB is present and valid
         assert 'reference_cb' in config[burst].keys(), 'Reference CB missing'
         assert config[burst]['reference_cb'] in beams, 'Invalid reference CB: {}'.format(config[burst]['reference_cb'])
-        # there should be at least one beam
-        assert beams, 'No beams found for burst {}'.format(burst)
+        # ensure reference CB is first in list
+        beams.remove(config[burst]['reference_cb'])
+        beams.insert(0, config[burst]['reference_cb'])
+        # store list of beams
+        config[burst]['beams'] = beams
         for beam in beams:
             # read keys in lowercase
             keys = [key.lower() for key in config[burst][beam].keys()]
@@ -130,9 +125,14 @@ def parse_yaml(fname):
                 logger.warning("No SEFD given for {} of burst {}".format(beam, burst))
 
             # check for S/N array; absent means it is assumed to be an upper limit beam
-            if 'snr_array' not in keys:
-                logger.warning("No S/N array found for {} of burst {}, assuming it "
-                               "is an upper limit beam".format(beam, burst))
+            if 'snr_array' in keys:
+                # if the file cannot be found, assume it is a relative path
+                if not os.path.isfile(config[burst][beam]['snr_array']):
+                    yaml_dir = os.path.dirname(os.path.abspath(fname))
+                    config[burst][beam]['snr_array'] = os.path.join(yaml_dir, config[burst][beam]['snr_array'])
+            else:
+                logger.info("No S/N array found for {} of burst {}, assuming it "
+                            "is an upper limit beam".format(beam, burst))
 
     return config
 

@@ -6,20 +6,20 @@ global:
     # actual source position, if known. Values must be in decimal degrees
     #source_ra:
     #source_dec:
+    #
+    # note: The settings below this line can be set on the command line when running
+    # the localisation as well. Those would overwrite the values in this config file
 
     # S/N threshold used in determining S/N at each SB
     # This can also be set per burst, which takes precedence over this global value
-    snrmin: 
-
-    # note: The settings below this line can be set on the command line when running
-    # the localisation as well. Those would overwrite the values in this config file
+    snrmin:
 
     # centroid of localisation region, in decimal degrees
     ra:
     dec:
 
     # size of localisation region, in arcminutes
-    size: 
+    size:
 
     # localisation resolution, in arcseconds
     resolution:
@@ -30,12 +30,12 @@ global:
 
     # minimum and maximum frequency to use for localisation, in MHz
     # if left out, the full data range will be used
-    #fmin: 
+    #fmin:
     #fmax:
-    
+
     # lowest frequency of data, in MHz.
     # Usually 1219.70092773 MHz for Apertif (central freq ~1370 MHz)
-    fmin_data: 
+    fmin_data:
 
     # bandwidth of the data, in MHz. 300 MHz for Apertif
     bandwidth:
@@ -46,7 +46,7 @@ burst00:
     # arrival time, can either be specified as tarr, or as tstart + toa
     # tarr takes precedence and should be UTC, in ISOT format
     # tstart uses the same format. ToA must be in seconds
-    tarr: 
+    tarr:
     #tstart:
     #toa:
 
@@ -57,10 +57,10 @@ burst00:
     #pointing_ra:
     #pointing_dec:
 
-    # reference CB, should the subsection name of one of the CBs
+    # reference CB, should the subsection name of one of the CBs with a detection
     # used for localisation.
     # the S/N in other CBs is scaled to this CB
-    reference_cb: 
+    reference_cb:
 
     # subsection per CB. The subsection must be named CBXX
     CB00:
@@ -68,16 +68,16 @@ burst00:
         # these are optional if a telescope pointing is given
         ra:
         dec:
-        
-        # Path to file with S/N of each SB
+
+        # Path to file with S/N of each SB. Should be full path or relative to this file
         # comment out to treat this as an upper limit beam
-        snr_array: 
+        snr_array:
 
         # SEFD estimate for this CB in Jy (for CB center)
         # comment out to use default value
         #sefd:
-    
+
         # To overwite the global S/N threshold, change the value here
         #snrmin:
 
-    
+

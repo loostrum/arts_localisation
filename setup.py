@@ -18,11 +18,11 @@ setup(name='arts_localisation',
                         'scipy',
                         'matplotlib'],
       include_package_data=True,
-      #entry_points={'console_scripts': ['darc=darc.control:main',
-      #                                  'darc_service=darc.darc_master:main']},
-      #scripts=['bin/darc_start_all_services',
-      #         'bin/darc_stop_all_services',
-      #         'bin/darc_start_master',
-      #         'bin/darc_stop_master',
-      #         'bin/darc_kill_all'])
+      # entry_points={'console_scripts': ['darc=darc.control:main',
+      #                                   'darc_service=darc.darc_master:main']},
+      # scripts=['bin/darc_start_all_services',
+      #          'bin/darc_stop_all_services',
+      #          'bin/darc_start_master',
+      #          'bin/darc_stop_master',
+      #          'bin/darc_kill_all'])
       )

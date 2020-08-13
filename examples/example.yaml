@@ -1,0 +1,83 @@
+# Template configuration file for localisation
+
+
+# global settings
+global:
+    # actual source position, if known. Values must be in decimal degrees
+    #source_ra:
+    #source_dec:
+
+    # note: The settings below this line can be set on the command line when running
+    # the localisation as well. Those would overwrite the values in this config file
+    #
+    # S/N threshold used in determining S/N at each SB
+    # This can also be set per burst, which takes precedence over this global value
+    snrmin: 8
+
+    # centroid of localisation region, in decimal degrees
+    ra: 180.0
+    dec: 30.0
+
+    # size of localisation region, in arcminutes
+    size: 5.0
+
+    # localisation resolution, in arcseconds
+    resolution: 10.0
+
+
+    # CB model type, one of gauss, airy, real
+    cb_model: "gauss"
+
+    # minimum and maximum frequency to use for localisation, in MHz
+    # if set to values outside of the frequency range of the data, the full
+    # band will be used
+    fmin: 1300
+    
+    # lowest frequency of data, in MHz.
+    # Usually 1219.70092773 MHz for Apertif (central freq ~1370 MHz)
+    fmin_data: 1219.70092773
+
+    # bandwidth of the data, in MHz. 300 MHz for Apertif
+    bandwidth: 300
+
+
+# example burst, name can be anything
+burst00:
+    # arrival time, can either be specified as tarr, or as tstart + toa
+    # tarr takes precedence and should be UTC, in ISOT format
+    # tstart uses the same format. ToA must be in seconds
+    tarr: "2020-01-01T13:00:00.0"
+    #tstart:
+    #toa:
+
+    # telescope pointing, in decimal degrees. Only use this if the reference beam
+    # during the observation was zero (which is the default).
+    # If not, as is the case e.g. for drift scans, manually put in the RA, Dec in
+    # the subsection for each CB
+    #pointing_ra: 
+    #pointing_dec:
+
+    # reference CB, should the subsection name of one of the CBs
+    # used for localisation.
+    # the S/N in other CBs is scaled to this CB
+    reference_cb: "CB00"
+
+    # subsection per CB. The subsection must be named CBXX
+    CB00:
+        # pointing of this CB, in decimal degrees
+        # these are optional if a telescope pointing is given
+        ra: 180.1
+        dec: 30.1
+        
+        # Path to file with S/N of each SB. Should be full path or relative to this file
+        # comment out to treat this as an upper limit beam
+        snr_array: 'example_snr_array.txt'
+
+        # SEFD estimate for this CB in Jy (for CB center)
+        # comment out to use default value
+        sefd: 80
+    
+        # To overwite the global S/N threshold, change the value here
+        #snrmin:
+
+    

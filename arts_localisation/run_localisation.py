@@ -156,31 +156,7 @@ def load_config(args):
     return config
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', required=True, help='Input yaml config')
-    parser.add_argument('--conf_int', type=float, default=.9, help='Confidence interval for localisation region '
-                                                                   '(Default: %(default)s)')
-    parser.add_argument('--output_folder', default='.', help='Output folder '
-                                                             '(Default: current directory)')
-    parser.add_argument('--noplot', action='store_true', help='Disable plotting')
-    parser.add_argument('--saveplot', action='store_true', help='Save plots')
-    parser.add_argument('--outfile', help='Output file for summary')
-    parser.add_argument('--verbose', action='store_true', help="Enable verbose logging")
-
-    group_overwrites = parser.add_argument_group('Config overwrites', 'Settings to overwrite from yaml config')
-    group_overwrites.add_argument('--ra', type=float, help='Central RA (deg)')
-    group_overwrites.add_argument('--dec', type=float, help='Central Dec (deg)')
-    group_overwrites.add_argument('--resolution', type=float, help='Resolution (arcmin)')
-    group_overwrites.add_argument('--size', type=float, help='Localisation area size (arcmin)')
-    group_overwrites.add_argument('--fmin', type=float, help='Ignore frequency below this value in MHz')
-    group_overwrites.add_argument('--fmax', type=float, help='Ignore frequency below this value in MHz')
-    group_overwrites.add_argument('--fmin_data', type=float, help='Lowest frequency of data')
-    group_overwrites.add_argument('--bandwidth', type=float, help='Bandwidth of data')
-    group_overwrites.add_argument('--cb_model', help='CB model type')
-
-    args = parser.parse_args()
-
+def main(args):
     if args.verbose:
         logger.setLevel(logging.DEBUG)
     else:
@@ -282,6 +258,7 @@ def main():
                 this_sb = sb_det[ind]
                 print("SB{:02d} SNR {}".format(this_sb, this_snr))
             except ValueError:
+                # non-detection beam
                 this_snr = None
                 this_sb = None
 
@@ -298,10 +275,6 @@ def main():
                 ref_snr = this_snr
                 reference_sb_model = sb_model[this_sb]
                 ref_sefd = sefd
-            # TO SET LOCAL REFERENCE BURST:
-            # ref_snr = this_snr
-            # reference_sb_model = sb_model[this_sb]
-            # ref_sefd = sefd
 
             # model of S/N relative to the reference beam
             snr_model = sb_model / reference_sb_model * ref_snr * ref_sefd / sefd
@@ -311,8 +284,7 @@ def main():
             if ndet > 0:
                 print("Adding {} detections".format(ndet))
                 chi2[CB] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2, axis=0)
-                val = np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2, axis=0)
-            # non detection, observed S/N set to 0
+            # non detection
             nnondet = len(sb_non_det)
             if nnondet > 0:
                 print("Adding {} non-detections".format(nnondet))
@@ -321,7 +293,7 @@ def main():
                 points = np.where(snr_model_nondet > config['global']['snrmin'])
                 # temporarily create an array holding the chi2 values to add per SB
                 chi2_to_add = np.zeros_like(snr_model_nondet)
-                chi2_to_add[points] += (snr_model_nondet[points] - config['global']['snrmin'])**2
+                chi2_to_add[points] += (snr_model_nondet[points] - config['global']['snrmin']) ** 2
                 # sum over SBs and add
                 chi2[CB] += chi2_to_add.sum(axis=0)
 
@@ -329,10 +301,8 @@ def main():
             bad_ind = np.any(sb_model > reference_sb_model, axis=0)
             # save chi2 before applying bad_ind_mask
             np.save('{}_{}_{}_chi2'.format(output_prefix, burst, CB), chi2[CB])
-            # print("Applying SB mask")
-            # chi2[CB][bad_ind] = 1E9
             # save region where S/N > ref_snr for non-ref SB
-            np.save('{}_{}_{}_bad'.format(output_prefix, burst, CB), bad_ind)
+            np.save('{}_{}_{}_snr_too_high'.format(output_prefix, burst, CB), bad_ind)
 
         # chi2 of all CBs combined
         chi2_total = np.zeros((numY, numX))
@@ -341,7 +311,7 @@ def main():
 
         # degrees of freedom = number of data points minus number of parameters
         # total number of CBs * NSB - 1 (ref SB) - 2 (params)
-        dof = nCB * NSB - 1 - 2
+        dof = nCB * NSB - 3
 
         # find size of localisation area within given confidence level
         max_dchi2 = stats.chi2.ppf(args.conf_int, dof)
@@ -387,8 +357,7 @@ def main():
                 print(summary)
 
         # plot
-        # TODO: should actually central freq by half channel width
-        central_freq = (config['global']['fmin_data'] + config['global']['bandwidth'] / 2) * u.MHz
+        central_freq = int(np.round((config['global']['fmin_data'] + config['global']['bandwidth'] / 2))) * u.MHz
         if not args.noplot:
             # per CB
             for CB in burst_config['beams']:
@@ -416,4 +385,27 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', required=True, help='Input yaml config')
+    parser.add_argument('--conf_int', type=float, default=.9, help='Confidence interval for localisation region '
+                                                                   '(Default: %(default)s)')
+    parser.add_argument('--output_folder', default='.', help='Output folder '
+                                                             '(Default: current directory)')
+    parser.add_argument('--noplot', action='store_true', help='Disable plotting')
+    parser.add_argument('--saveplot', action='store_true', help='Save plots')
+    parser.add_argument('--outfile', help='Output file for summary')
+    parser.add_argument('--verbose', action='store_true', help="Enable verbose logging")
+
+    group_overwrites = parser.add_argument_group('Config overwrites', 'Settings to overwrite from yaml config')
+    group_overwrites.add_argument('--ra', type=float, help='Central RA (deg)')
+    group_overwrites.add_argument('--dec', type=float, help='Central Dec (deg)')
+    group_overwrites.add_argument('--resolution', type=float, help='Resolution (arcmin)')
+    group_overwrites.add_argument('--size', type=float, help='Localisation area size (arcmin)')
+    group_overwrites.add_argument('--fmin', type=float, help='Ignore frequency below this value in MHz')
+    group_overwrites.add_argument('--fmax', type=float, help='Ignore frequency below this value in MHz')
+    group_overwrites.add_argument('--fmin_data', type=float, help='Lowest frequency of data')
+    group_overwrites.add_argument('--bandwidth', type=float, help='Bandwidth of data')
+    group_overwrites.add_argument('--cb_model', help='CB model type')
+
+    args = parser.parse_args()
+    main(args)

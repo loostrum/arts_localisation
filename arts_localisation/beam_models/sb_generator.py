@@ -22,22 +22,18 @@ class SBGenerator(object):
         self.__reversed = None
 
         # set config
-        self.table_folder = "{home}/.controller/synthesized_beam_tables/".format(os.path.expanduser('~'))
-        self.table = {'sc3': "sbtable-9tabs-114sbs-f1370.txt"
-                      'sc4:' "sbtable-sc4-12tabs-71sbs.txt"}
+        self.table_folder = os.path.dirname(os.path.abspath(__file__))
+        self.table = {'sc3': "sbtable-9tabs-114sbs-f1370.txt",
+                      'sc4': "sbtable-sc4-12tabs-71sbs.txt"}
 
         self.numtab = {'sc3': 9, 'sc4': 12}
         self.numsb = {'sc3': 114, 'sc4': 71}
 
         # Get full path to SB table
-        if fname:
-            if not fname.startswith('/'):
-                fname = os.path.join(self.table_folder, fname)
+        if fname and not fname.startswith('/'):
+            fname = os.path.join(self.table_folder, fname)
         elif science_case:
-            if science_case == 3:
-                fname = os.path.join(self.table_folder, self.table['sc3'])
-            else:
-                fname = os.path.join(self.table_folder, self.table['sc4'])
+            fname = os.path.join(self.table_folder, self.table['sc{:.0f}'.format(science_case)])
         self.science_case = science_case
         self.fname = fname
 

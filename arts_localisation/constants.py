@@ -7,27 +7,35 @@ import astropy.units as u
 from astropy.coordinates import EarthLocation
 
 
+#: CB half-power width
 CB_HPBW = 28.0835088 * u.arcmin  # calculated from CB offsets file
+#: Reference frequency for CB half-power width
 REF_FREQ = 1770 * u.MHz  # for then it matches the measured width at 1420
-# CB_HPBW = 35.066*u.arcmin  # fit CB00 Oct 1 2019  @ 1420 MHz
-# REF_FREQ = 1420*u.MHz
+#: Dish diameter
 DISH_SIZE = 25 * u.m
+#: Bandwidth
 BANDWIDTH = 300 * u.MHz
 
+#: Dish positions in Apertif-8 setup
 DISH_A8 = np.zeros((8, 3)) * u.m
 DISH_A8[:, 1] = np.arange(8) * 144 * u.m
+#: Dish positions in Apertif-10 setup
 DISH_A10 = np.zeros((10, 3)) * u.m
 DISH_A10[:, 1] = np.arange(10) * 144 * u.m
+#: Dish positions in Maxi-short setup
 DISH_MAXISHORT = np.zeros((12, 3)) * u.m
 DISH_MAXISHORT[:, 1] = np.concatenate([np.arange(8) * 144, np.array([36, 90, 1332, 1404]) + 7 * 144]) * u.m
+
 
 DISH = {'a8': DISH_A8, 'a10': DISH_A10, 'maxi-short': DISH_MAXISHORT}
 
 WSRT_LAT = 52.915184 * u.deg  # = 52:54:54.66
 WSRT_LON = 6.60387 * u.deg  # = 06:36:13.93
 WSRT_ALT = 16 * u.m
+#: WSRT location
 WSRT_LOC = EarthLocation.from_geodetic(WSRT_LON, WSRT_LAT, WSRT_ALT)
 
+#: Path to fitted CB model parameters
 CB_MODEL_FILE = 'beam_models_190607.csv'
 
 THETAMAX_CB = 130

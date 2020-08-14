@@ -19,4 +19,4 @@ deploy:
   edge: true
   local_dir: "./docs/_build/html"
   on:
-      branch: docs
+      branch: master

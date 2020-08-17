@@ -19,7 +19,7 @@ class ARTSFilterbankReaderError(Exception):
     pass
 
 
-class ARTSFilterbankReader(object):
+class ARTSFilterbankReader:
     def __init__(self, fname, cb, ntab=12):
         self.ntab = ntab
         self.fnames = [fname.format(cb=cb, tab=tab) for tab in range(ntab)]
@@ -60,7 +60,7 @@ class ARTSFilterbankReader(object):
 
     def get_sb(self, sb):
         if self.tab_data is None:
-            raise ARTSFilterbankReaderError("No TAB data available, run {}.read_tabs first".format(__class__.__name__))
+            raise ARTSFilterbankReaderError(f"No TAB data available, run {__class__.__name__}.read_tabs first")
         # synthesize the beam
         sb_data = self.sb_generator.synthesize_beam(self.tab_data, sb)
         # return as spectra object

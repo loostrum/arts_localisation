@@ -133,7 +133,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # load yaml file
-    with open(args.config, 'r') as f:
+    with open(args.config) as f:
         conf = yaml.load(f, Loader=yaml.SafeLoader)
     # target name
     name_full = args.config.replace('.yaml', '')
@@ -160,7 +160,7 @@ if __name__ == '__main__':
             continue
 
     nburst = len(bursts)
-    print("Found {} bursts".format(nburst))
+    print(f"Found {nburst} bursts")
 
     # create one figure for individual bursts and one for total
     ncols = int(np.ceil(np.sqrt(nburst)))
@@ -173,7 +173,7 @@ if __name__ == '__main__':
         axes = [axes]
 
     # lood coordinate grid
-    RA, DEC = np.load('{}_coord.npy'.format(name_full))
+    RA, DEC = np.load(f'{name_full}_coord.npy')
 
     # init totals
     chi2_total = np.zeros(RA.shape)
@@ -194,11 +194,11 @@ if __name__ == '__main__':
         else:
             dof = NSB - 2
         # load chi2
-        chi2 = np.load('{}_chi2_{}.npy'.format(name_full, burst))
+        chi2 = np.load(f'{name_full}_chi2_{burst}.npy')
         # apply bad index mask if enabled
         if args.use_mask:
             # load mask
-            mask = np.load('{}_bad_{}.npy'.format(name_full, burst))
+            mask = np.load(f'{name_full}_bad_{burst}.npy')
             # apply
             chi2[mask] = 1E9
         # add to total
@@ -242,7 +242,7 @@ if __name__ == '__main__':
     # final localisation region
 
     contour_points = do_plot(combined_ax, RA, DEC, dchi2_total, dof_total, cb_ra_all, cb_dec_all, args.freq * u.MHz,
-                             src_ra=src_ra, src_dec=src_dec, title="{} all CBs combined".format(name))
+                             src_ra=src_ra, src_dec=src_dec, title=f"{name} all CBs combined")
     contour_ax.set_xlabel('Right Ascension (deg)')
     contour_ax.set_ylabel('Declination (deg)')
     contour_ax.set_title('Contours of all CBs')

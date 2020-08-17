@@ -23,7 +23,7 @@ def parse_yaml(fname):
     """
 
     # read the file
-    with open(fname, 'r') as f:
+    with open(fname) as f:
         config = yaml.load(f, Loader=yaml.SafeLoader)
 
     # read global settings
@@ -31,7 +31,7 @@ def parse_yaml(fname):
 
     # check if required keys are present
     for key in ('snrmin', 'ra', 'dec', 'size', 'resolution', 'cb_model', 'fmin_data', 'bandwidth'):
-        assert key in config['global'].keys(), 'Key missing: {}'.format(key)
+        assert key in config['global'].keys(), f'Key missing: {key}'
 
     # check if frequency range to use is given, else set such that full range is used
     if 'fmin' not in config['global'].keys():
@@ -90,7 +90,7 @@ def parse_yaml(fname):
         # now check section for each compound beam
         beams = [key for key in config[burst].keys() if key.upper().startswith('CB')]
         # there should be at least one beam
-        assert beams, 'No beams found for burst {}'.format(burst)
+        assert beams, f'No beams found for burst {burst}'
         # check reference CB is present and valid
         assert 'reference_cb' in config[burst].keys(), 'Reference CB missing'
         assert config[burst]['reference_cb'] in beams, 'Invalid reference CB: {}'.format(config[burst]['reference_cb'])
@@ -122,7 +122,7 @@ def parse_yaml(fname):
 
             # SEFD is optional, but give user a warning if it is not present as it is easy to overlook
             if 'sefd' not in keys:
-                logger.warning("No SEFD given for {} of burst {}".format(beam, burst))
+                logger.warning(f"No SEFD given for {beam} of burst {burst}")
 
             # check for S/N array; absent means it is assumed to be an upper limit beam
             if 'snr_array' in keys:

@@ -12,7 +12,7 @@ class SBGeneratorException(Exception):
     pass
 
 
-class SBGenerator(object):
+class SBGenerator:
 
     def __init__(self, fname=None, science_case=None):
         self.sb_table = None
@@ -33,7 +33,7 @@ class SBGenerator(object):
         if fname and not fname.startswith('/'):
             fname = os.path.join(self.table_folder, fname)
         elif science_case:
-            fname = os.path.join(self.table_folder, self.table['sc{:.0f}'.format(science_case)])
+            fname = os.path.join(self.table_folder, self.table[f'sc{science_case:.0f}'])
         self.science_case = science_case
         self.fname = fname
 
@@ -80,7 +80,7 @@ class SBGenerator(object):
         :return: SBGenerator object
         """
         if science_case not in (3, 4):
-            raise SBGeneratorException('Invalid science case: {}'.format(science_case))
+            raise SBGeneratorException(f'Invalid science case: {science_case}')
         return cls(science_case=science_case)
 
     def _load_table(self):

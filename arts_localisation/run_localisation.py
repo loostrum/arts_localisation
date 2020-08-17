@@ -150,7 +150,7 @@ def load_config(args):
     for key in ('ra', 'dec', 'resolution', 'size', 'fmin', 'fmax', 'bandwidth', 'cb_model'):
         value = getattr(args, key)
         if value is not None:
-            logger.debug("Overwriting {} from settings with command line value".format(key))
+            logger.debug(f"Overwriting {key} from settings with command line value")
             config['global'][key] = value
 
     return config
@@ -185,11 +185,11 @@ def main(args):
     # store size
     numY, numX = RA.shape
     # save coordinate grid
-    np.save('{}_coord'.format(output_prefix), np.array([RA, DEC]))
+    np.save(f'{output_prefix}_coord', np.array([RA, DEC]))
 
     # process each burst
     for burst in config['bursts']:
-        logging.info("Processing {}".format(burst))
+        logging.info(f"Processing {burst}")
         burst_config = config[burst]
 
         # loop over CBs
@@ -199,7 +199,7 @@ def main(args):
         tarr = {}
         pointings = {}
         for CB in burst_config['beams']:
-            print("Processing {}".format(CB))
+            print(f"Processing {CB}")
             beam_config = burst_config[CB]
 
             # get alt, az of pointing
@@ -240,7 +240,7 @@ def main(args):
                 sb_det, snr_det = data.T
                 sb_det = sb_det.astype(int)
             except KeyError:
-                print("No S/N array found for {}, assuming this is a non-detection beam".format(burst))
+                print(f"No S/N array found for {burst}, assuming this is a non-detection beam")
                 sb_det = np.array([])
                 snr_det = np.array([])
             numsb_det += len(sb_det)
@@ -256,7 +256,7 @@ def main(args):
                 ind = snr_det.argmax()
                 this_snr = snr_det[ind]
                 this_sb = sb_det[ind]
-                print("SB{:02d} SNR {}".format(this_sb, this_snr))
+                print(f"SB{this_sb:02d} SNR {this_snr}")
             except ValueError:
                 # non-detection beam
                 this_snr = None
@@ -267,7 +267,7 @@ def main(args):
                 sefd = beam_config['sefd']
             except KeyError:
                 default_sefd = 100
-                print("No SEFD found, setting to {}".format(default_sefd))
+                print(f"No SEFD found, setting to {default_sefd}")
                 sefd = default_sefd
 
             # if this is the reference burst, store the sb model of the reference SB
@@ -282,12 +282,12 @@ def main(args):
             # detection
             ndet = len(sb_det)
             if ndet > 0:
-                print("Adding {} detections".format(ndet))
+                print(f"Adding {ndet} detections")
                 chi2[CB] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2, axis=0)
             # non detection
             nnondet = len(sb_non_det)
             if nnondet > 0:
-                print("Adding {} non-detections".format(nnondet))
+                print(f"Adding {nnondet} non-detections")
                 # only select points where the modelled S/N is above the threshold
                 snr_model_nondet = snr_model[sb_non_det]
                 points = np.where(snr_model_nondet > config['global']['snrmin'])
@@ -300,9 +300,9 @@ def main(args):
             # # reference SB has highest S/N: modelled S/N should never be higher than reference
             bad_ind = np.any(sb_model > reference_sb_model, axis=0)
             # save chi2 before applying bad_ind_mask
-            np.save('{}_{}_{}_chi2'.format(output_prefix, burst, CB), chi2[CB])
+            np.save(f'{output_prefix}_{burst}_{CB}_chi2', chi2[CB])
             # save region where S/N > ref_snr for non-ref SB
-            np.save('{}_{}_{}_snr_too_high'.format(output_prefix, burst, CB), bad_ind)
+            np.save(f'{output_prefix}_{burst}_{CB}_snr_too_high', bad_ind)
 
         # chi2 of all CBs combined
         chi2_total = np.zeros((numY, numX))
@@ -320,7 +320,7 @@ def main(args):
         pix_area = ((config['global']['resolution'] * u.arcsec) ** 2)
         total_area = pix_area * npix_below_max
         print("Found {} pixels below within {}% confidence region".format(npix_below_max, args.conf_int * 100))
-        print("Area of one pixel is {} ".format(pix_area))
+        print(f"Area of one pixel is {pix_area} ")
         print("Localisation area is {:.2f} = {:.2f}".format(total_area, total_area.to(u.arcmin ** 2)))
 
         # find best position
@@ -357,7 +357,7 @@ def main(args):
                 print(summary)
 
         # plot
-        central_freq = int(np.round((config['global']['fmin_data'] + config['global']['bandwidth'] / 2))) * u.MHz
+        central_freq = int(np.round(config['global']['fmin_data'] + config['global']['bandwidth'] / 2)) * u.MHz
         if not args.noplot:
             # per CB
             for CB in burst_config['beams']:
@@ -367,11 +367,11 @@ def main(args):
                 else:
                     # all SBs; 2 params
                     dof = NSB - 2
-                title = r"$\Delta \chi^2$ {}".format(CB)
+                title = fr"$\Delta \chi^2$ {CB}"
                 fig = make_plot(chi2[CB], RA, DEC, dof, title, args.conf_int, t_arr=tarr,
                                 cb_pos=pointings[CB], freq=central_freq)
                 if args.saveplot:
-                    fig.savefig('{}_{}_{}.pdf'.format(output_prefix, burst, CB))
+                    fig.savefig(f'{output_prefix}_{burst}_{CB}.pdf')
 
             # total
             title = r"$\Delta \chi^2$ Total"
@@ -379,7 +379,7 @@ def main(args):
                             cb_pos=list(pointings.values()), freq=central_freq)
 
             if args.saveplot:
-                fig.savefig('{}_{}_total.pdf'.format(output_prefix, burst))
+                fig.savefig(f'{output_prefix}_{burst}_total.pdf')
             else:
                 plt.show()
 

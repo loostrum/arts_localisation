@@ -9,7 +9,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord, FK5
 from astropy.time import Time
 
-from .constants import WSRT_LON, WSRT_LAT
+from constants import WSRT_LON, WSRT_LAT
 
 
 def limit(val, minval=-1, maxval=1):
@@ -49,7 +49,7 @@ def radec_to_hadec(ra, dec, t, lon=WSRT_LON):
     # Apparent LST at WSRT at this time
     lst = t.sidereal_time('apparent', WSRT_LON)
     # Equinox of date (because hour angle uses apparent coordinates)
-    coord_system = FK5(equinox='J{}'.format(t.decimalyear))
+    coord_system = FK5(equinox=f'J{t.decimalyear}')
     # convert coordinates to apparent
     coord_apparent = SkyCoord(ra, dec, frame='icrs').transform_to(coord_system)
     # HA = LST - apparent RA
@@ -79,7 +79,7 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
     lst = t.sidereal_time('apparent', lon)
     if apparent:
         # Equinox of date
-        coord_system = FK5(equinox='J{}'.format(t.decimalyear))
+        coord_system = FK5(equinox=f'J{t.decimalyear}')
     else:
         # J2000
         coord_system = FK5(equinox='J2000')

@@ -112,7 +112,7 @@ def plot_tab_pattern(tabnum):
 
     ax.set_xlim(theta.min().value, theta.max().value)
     ax.set_ylim(freqs.min().value, freqs.max().value)
-    ax.set_title('8-dish tied-array beam for Gaussian compound beam (TAB{:02d})'.format(tabnum))
+    ax.set_title(f'8-dish tied-array beam for Gaussian compound beam (TAB{tabnum:02d})')
     ax.set_xlabel('E-W (arcmin)')
     ax.set_ylabel('Frequency (MHz)')
     plt.show()
@@ -204,7 +204,7 @@ def plot_sb_rotation():
             patch = SphericalCircle((ra, dec), cb_radius,
                                     ec='k', fc='none', ls='-', alpha=.5)
             ax.add_patch(patch)
-            ax.text(_ra, _dec, 'CB{:02d}'.format(cb), va='center', ha='center',
+            ax.text(_ra, _dec, f'CB{cb:02d}', va='center', ha='center',
                     fontdict=font, clip_on=True)
 
             # AltAz
@@ -220,7 +220,7 @@ def plot_sb_rotation():
             patch = SphericalCircle((az, alt), cb_radius,
                                     ec='k', fc='none', ls='-', alpha=.5)
             ax2.add_patch(patch)
-            ax2.text(_az, _alt, 'CB{:02d}'.format(cb), va='center', ha='center',
+            ax2.text(_az, _alt, f'CB{cb:02d}', va='center', ha='center',
                      fontdict=font, clip_on=True)
 
         # plot SBs
@@ -267,7 +267,7 @@ def plot_sb_rotation():
 
                 ax.plot(x, y, c='b')
                 # add text above lines
-                ax.text(np.mean(x), np.mean(y), "SB{:02d}".format(sb), va='center', ha='center')
+                ax.text(np.mean(x), np.mean(y), f"SB{sb:02d}", va='center', ha='center')
 
                 # plot in AltAz
                 x = [azs.to(u.deg).value, aze.to(u.deg).value]
@@ -275,7 +275,7 @@ def plot_sb_rotation():
 
                 ax2.plot(x, y, c='b')
                 # add text above lines
-                ax2.text(np.mean(x), np.mean(y), "SB{:02d}".format(sb), va='center', ha='center')
+                ax2.text(np.mean(x), np.mean(y), f"SB{sb:02d}", va='center', ha='center')
 
                 # polar
                 # theta_start = np.arctan2(dy, sb_offset)

@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    output_file = 'models/all_cb_{}_{}-{}.npy'.format(args.mode, args.fmin, args.fmax)
+    output_file = f'models/all_cb_{args.mode}_{args.fmin}-{args.fmax}.npy'
 
     # load CB offsets (decimal degrees in RA, Dec)
     cb_offsets = np.loadtxt('square_39p1.cb_offsets', usecols=[1, 2], delimiter=',')

@@ -17,7 +17,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # source parameters
-    with open(args.file, 'r') as f:
+    with open(args.file) as f:
         params = yaml.load(f, Loader=yaml.SafeLoader)
 
         tarr = Time(params['tstart']) + TimeDelta(params['t_in_obs'], format='sec')
@@ -39,5 +39,5 @@ if __name__ == '__main__':
     if ha00 > 180 * u.deg:
         ha00 -= 360 * u.deg
 
-    print("Best CB apparent HA, Dec: ({:.5f}, {:.5f})".format(ha_best, CB_best_center.dec))
-    print("CB00 apparent HA, Dec: ({:.5f}, {:.5f})".format(ha00, CB00_center.dec))
+    print(f"Best CB apparent HA, Dec: ({ha_best:.5f}, {CB_best_center.dec:.5f})")
+    print(f"CB00 apparent HA, Dec: ({ha00:.5f}, {CB00_center.dec:.5f})")

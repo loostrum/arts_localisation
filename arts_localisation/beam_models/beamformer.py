@@ -10,7 +10,7 @@ import astropy.constants as const
 from constants import NTAB, WSRT_LON
 
 
-class BeamFormer(object):
+class BeamFormer:
 
     def __init__(self, dish_pos, freqs, ntab=NTAB, lon=WSRT_LON, ref_pos=None, itrf=True):
         if not isinstance(freqs.value, np.ndarray):
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     bf.set_coordinates_and_phases(HA, DEC, ha0, dec0)
 
     # run beamformer
-    print("Forming TAB{:02d}".format(tab))
+    print(f"Forming TAB{tab:02d}")
     power = bf.beamform(tab)
     # remove freq axis
     power = power[0]
@@ -149,9 +149,9 @@ if __name__ == '__main__':
         row = int(np.round(y))
         try:
             val = power[row, col]
-            txt = 'x={:.4f}    y={:.4f}    [{:.4f}]'.format(x, y, val)
+            txt = f'x={x:.4f}    y={y:.4f}    [{val:.4f}]'
         except Exception:
-            txt = 'x={:.4f}    y={:.4f}'.format(x, y)
+            txt = f'x={x:.4f}    y={y:.4f}'
         return txt
 
     ALT, AZ = convert.hadec_to_altaz(HA, DEC)

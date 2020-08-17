@@ -32,7 +32,7 @@ def gauss_2d(xy, x_mean, x_sig, y_mean, y_sig, rho):
     return np.exp(a * (b + c - d))
 
 
-class CompoundBeam(object):
+class CompoundBeam:
 
     def __init__(self, freqs, theta=0 * u.deg, phi=0 * u.deg, rot=0 * u.deg):
         """
@@ -72,7 +72,7 @@ class CompoundBeam(object):
             fname = os.path.join(os.path.dirname(os.path.abspath(__file__)), CB_MODEL_FILE)
             self.beams_measured = np.genfromtxt(fname, delimiter=',', names=True)
         except OSError as e:
-            print("Failed to load beam measurement file, real beams not available ({})".format(e))
+            print(f"Failed to load beam measurement file, real beams not available ({e})")
             self.beams_measured = None
 
     def beam_pattern(self, mode, cb=None):
@@ -156,7 +156,7 @@ class CompoundBeam(object):
         n = 40
         ref_freq = 1399.662250 * u.MHz
         ref_freq_str = '1399662250'
-        name = 'B{:02d}_{}'.format(cb, ref_freq_str)
+        name = f'B{cb:02d}_{ref_freq_str}'
         beam = self.beams_measured[name].reshape(n, n)
 
         dy = 1. / 36 * 60   # arcmin at ref freq

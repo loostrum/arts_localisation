@@ -19,5 +19,5 @@ if __name__ == '__main__':
     proj = hadec_to_proj(ha, dec)
     parang = hadec_to_par(ha, dec)
 
-    print("Projection angle (E-W baseline projection; also SB rotation in AltAz): {:.2f}".format(proj))
-    print("Parallactic angle (SB rotation): {:.2f}".format(parang))
+    print(f"Projection angle (E-W baseline projection; also SB rotation in AltAz): {proj:.2f}")
+    print(f"Parallactic angle (SB rotation): {parang:.2f}")

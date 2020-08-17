@@ -39,7 +39,7 @@ def delay_from_DM(DM, freq_emitted):
                         DM / (0.000241 * freq_emitted * freq_emitted), 0.0)
 
 
-class Spectra(object):
+class Spectra:
     """A class to store spectra. This is mainly to provide
         reusable functionality.
     """

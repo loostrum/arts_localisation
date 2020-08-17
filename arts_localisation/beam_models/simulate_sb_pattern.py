@@ -12,7 +12,7 @@ from .compound_beam import CompoundBeam
 from constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIST, NPOINT
 
 
-class SBPattern(object):
+class SBPattern:
 
     def __init__(self, ha, dec, dha, ddec, sbs=None, load=False, fname=None, memmap_file=None, cb_model='gauss', cbnum=None,
                  min_freq=1220 * u.MHz, fmin=1220 * u.MHz, fmax=1520 * u.MHz, nfreq=64):
@@ -89,7 +89,7 @@ class SBPattern(object):
 
             # CB pattern
             if cbnum is not None:
-                print("Generating CB{:02d}".format(cbnum))
+                print(f"Generating CB{cbnum:02d}")
             else:
                 print("Generating CB")
             primary_beam = cb.beam_pattern(cb_model, cb=cbnum)
@@ -145,8 +145,8 @@ class SBPattern(object):
         :param prefix: file name prefix
         """
 
-        fname_tab = "models/tied-array_beam_pattern_{}".format(prefix)
-        fname_sb = "models/synthesized_beam_pattern_{}".format(prefix)
+        fname_tab = f"models/tied-array_beam_pattern_{prefix}"
+        fname_sb = f"models/synthesized_beam_pattern_{prefix}"
         np.save(fname_tab, self.beam_pattern_tab)
         np.save(fname_sb, self.beam_pattern_sb_int)
 
@@ -179,7 +179,7 @@ class SBPattern(object):
             ax.set_title('Constant DEC slice through center of CB')
 
             fig.tight_layout()
-            fig.suptitle('TAB{:02d}'.format(tab))
+            fig.suptitle(f'TAB{tab:02d}')
         else:
             print("TAB data not available - not plotting")
 
@@ -199,7 +199,7 @@ class SBPattern(object):
                 ax.set_aspect('equal')
                 ax.set_xlabel('dHA [arcmin]')
                 ax.set_ylabel('dDec [arcmin]')
-                ax.set_title('SB{:02d}'.format(sb))
+                ax.set_title(f'SB{sb:02d}')
 
             fig.tight_layout()
             fig.suptitle('On-sky pattern summed over frequency')
@@ -238,7 +238,7 @@ if __name__ == '__main__':
         out_prefix = "{}_cb{:02d}_HA{:.2f}_Dec{:.2f}_{}-{}".format(args.cb_model, args.cb, args.ha, args.dec,
                                                                    args.fmin, args.fmax)
     else:
-        out_prefix = "{}_cb_HA{:.2f}_Dec{:.2f}_{}-{}".format(args.cb_model, args.ha, args.dec, args.fmin, args.fmax)
+        out_prefix = f"{args.cb_model}_cb_HA{args.ha:.2f}_Dec{args.dec:.2f}_{args.fmin}-{args.fmax}"
 
     # convert args to dict and remove unused params
     kwargs = vars(args).copy()

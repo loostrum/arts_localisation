@@ -6,9 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import astropy.units as u
 
-from .sb_generator import SBGenerator
-from .beamformer import BeamFormer
-from .compound_beam import CompoundBeam
+from arts_localisation.beam_models.sb_generator import SBGenerator
+from arts_localisation.beam_models.beamformer import BeamFormer
+from arts_localisation.beam_models.compound_beam import CompoundBeam
 from arts_localisation.constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIST, NPOINT
 
 

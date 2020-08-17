@@ -3,10 +3,17 @@
 
 # global settings
 global:
+    # CB/SB of main detection, used to determine where in the file the burst is located
+    main_cb: 0
+    main_sb: 35
+    # Window size (seconds) when loading raw data, should be at least twice the DM delay across the band
+    window_load: 2.0
+    # Window size (seconds) when zooming in on pulse
+    window_zoom: 0.5
     # S/N threshold
     snrmin: 8
     # path to filterbank snippets. Use {cb} and {tab} in place of CB and TAB index
-    path: 'data/CB{cb}_10.0sec_dm0_t03610_sb-1_tab{tab}.fil'
+    filterbank: 'data/CB{cb}_10.0sec_dm0_t03610_sb-1_tab{tab}.fil'
     # list of CBs to calculate S/N for. 
     cbs: [0]
     # If neighbours = True, also calculate S/N for CBs surrounding those in the CB list

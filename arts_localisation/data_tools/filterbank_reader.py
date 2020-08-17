@@ -5,9 +5,9 @@ import numpy as np
 from blimpy import Waterfall
 from tqdm import tqdm
 
-from .spectra import Spectra
+from arts_localisation.data_tools.spectra import Spectra
 from arts_localisation.beam_models.sb_generator import SBGenerator
-
+from arts_localisation.constants import NTAB
 
 # init logger
 logger = logging.getLogger(__name__)
@@ -20,8 +20,9 @@ class ARTSFilterbankReaderError(Exception):
 
 
 class ARTSFilterbankReader:
-    def __init__(self, fname, cb, ntab=12):
+    def __init__(self, fname, cb, ntab=NTAB, median_filter=True):
         self.ntab = ntab
+        self.median_filter = median_filter
         self.fnames = [fname.format(cb=cb, tab=tab) for tab in range(ntab)]
         self.nfreq, self.freqs, self.nsamp, self.tsamp = self.get_fil_params(tab=0)
 
@@ -47,7 +48,12 @@ class ARTSFilterbankReader:
         # read chunk of data
         fil.read_data(None, None, startbin, startbin + chunksize)
         # keep only time and freq axes, transpose to have frequency first
-        return fil.data[:, 0, :].T
+        # data = fil.data[:, 0, :].T.astype(float)
+        data = fil.data[:, 0, :].T
+        data = data.astype(float)
+        if self.median_filter:
+            data -= np.median(data, axis=1, keepdims=True)
+        return data
 
     def read_tabs(self, startbin, chunksize, tabs=None):
         tab_data = np.zeros((self.ntab, self.nfreq, chunksize))
@@ -55,6 +61,8 @@ class ARTSFilterbankReader:
             tabs = range(self.ntab)
         for tab in tqdm(tabs, desc="Loading TAB data"):
             tab_data[tab] = self.read_filterbank(tab, startbin, chunksize)
+            if self.median_filter:
+                tab_data[tab] -= np.median(tab_data[tab], axis=1, keepdims=True)
         self.tab_data = tab_data
         self.startbin = startbin
         self.chunksize = chunksize

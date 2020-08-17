@@ -8,10 +8,14 @@ import numpy as np
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 
-from .tools import cb_index_to_pointing, get_neighbours
+from arts_localisation.tools import cb_index_to_pointing, get_neighbours
 
 
 logger = logging.getLogger(__name__)
+
+REQUIRED_KEYS_SNR = ('snrmin', 'filterbank', 'cbs', 'neighbours', 'dm', 'window_load', 'window_zoom',
+                     'main_cb', 'main_sb')
+REQUIRED_KEYS_LOC = ('snrmin', 'ra', 'dec', 'size', 'resolution', 'cb_model', 'fmin_data', 'bandwidth')
 
 
 def parse_yaml(fname, for_snr=False):
@@ -28,22 +32,29 @@ def parse_yaml(fname, for_snr=False):
     with open(fname) as f:
         config = yaml.load(f, Loader=yaml.SafeLoader)
 
+    # store path to the yaml file
+    yaml_dir = os.path.dirname(os.path.abspath(fname))
+
     # read global settings
     assert 'global' in config.keys(), 'Global config missing'
 
     # if for S/N determination, only load those settings
     if for_snr:
-        for key in ('snrmin', 'path', 'cbs', 'neighbours', 'dm'):
+        for key in REQUIRED_KEYS_SNR:
             assert key in config['global'].keys(), f'Key missing: {key}'
         snr_config = {}
-        snr_config['snrmin'] = config['global']['snrmin']
-        snr_config['dm'] = config['global']['dm']
+        for key in ('snrmin', 'dm', 'main_cb', 'main_sb'):
+            snr_config[key] = config['global'][key]
+
         # check if cb and tab keys are present in path
         # first ensure two digits are used (which user may or may not have added)
-        path = config['global']['path'].replace('{cb}', '{cb:02d}').replace('{tab}', '{tab:02d}')
+        path = config['global']['filterbank'].replace('{cb}', '{cb:02d}').replace('{tab}', '{tab:02d}')
         assert '{cb:02d}' in path, '{cb} missing from path'
         assert '{tab:02d}' in path, '{tab} missing from path'
-        snr_config['path'] = path
+        # if a relative path, it is relative to the location of the yaml file
+        if not os.path.isdir(path):
+            path = os.path.join(yaml_dir, path)
+        snr_config['filterbank'] = path
 
         # check CB list is not empty
         assert config['global']['cbs'], 'CB list cannot be empty'
@@ -57,7 +68,7 @@ def parse_yaml(fname, for_snr=False):
 
     # localisation mode
     # check if required keys are present
-    for key in ('snrmin', 'ra', 'dec', 'size', 'resolution', 'cb_model', 'fmin_data', 'bandwidth'):
+    for key in REQUIRED_KEYS_LOC:
         assert key in config['global'].keys(), f'Key missing: {key}'
 
     # check if frequency range to use is given, else set such that full range is used
@@ -155,7 +166,6 @@ def parse_yaml(fname, for_snr=False):
             if 'snr_array' in keys:
                 # if the file cannot be found, assume it is a relative path
                 if not os.path.isfile(config[burst][beam]['snr_array']):
-                    yaml_dir = os.path.dirname(os.path.abspath(fname))
                     config[burst][beam]['snr_array'] = os.path.join(yaml_dir, config[burst][beam]['snr_array'])
             else:
                 logger.info("No S/N array found for {} of burst {}, assuming it "
@@ -174,11 +184,18 @@ def load_config(args, for_snr=False):
     """
     config = parse_yaml(args.config, for_snr)
     # overwrite parameters also given on command line
-    for key in ('ra', 'dec', 'resolution', 'size', 'fmin', 'fmax', 'bandwidth', 'cb_model'):
+    if for_snr:
+        keys = REQUIRED_KEYS_SNR
+    else:
+        keys = REQUIRED_KEYS_LOC
+    for key in keys:
         value = getattr(args, key)
         if value is not None:
             logger.debug(f"Overwriting {key} from settings with command line value")
-            config['global'][key] = value
+            if for_snr:
+                config[key] = value
+            else:
+                config['global'][key] = value
 
     return config
 

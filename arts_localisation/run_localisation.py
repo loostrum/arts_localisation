@@ -14,9 +14,9 @@ from astropy.visualization.wcsaxes import SphericalCircle
 from scipy import stats
 
 from arts_localisation import tools
-from .constants import CB_HPBW, REF_FREQ, NSB
-from .beam_models.simulate_sb_pattern import SBPattern
-from .config_parser import load_config
+from arts_localisation.constants import CB_HPBW, REF_FREQ, NSB
+from arts_localisation.beam_models.simulate_sb_pattern import SBPattern
+from arts_localisation.config_parser import load_config
 
 logger = logging.getLogger(__name__)
 plt.rcParams['axes.formatter.useoffset'] = False

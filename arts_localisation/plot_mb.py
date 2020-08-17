@@ -13,7 +13,7 @@ from scipy import stats
 import yaml
 
 from arts_localisation import tools
-from .constants import NSB, REF_FREQ, CB_HPBW
+from arts_localisation.constants import NSB, REF_FREQ, CB_HPBW
 
 # Try switching to OSX native backend
 try:

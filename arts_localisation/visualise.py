@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 from astropy.visualization.wcsaxes import SphericalCircle
 from matplotlib.widgets import Slider
 
-from constants import WSRT_LAT, DISH, CB_HPBW, REF_FREQ
-from compound_beam import CompoundBeam
-from beamformer import BeamFormer
-import convert
+from arts_localisation.constants import WSRT_LAT, DISH, CB_HPBW, REF_FREQ
+from arts_localisation.beam_models.compound_beam import CompoundBeam
+from arts_localisation.beam_models.beamformer import BeamFormer
+import tools
 
 
 def plot_hadec():
@@ -23,8 +23,8 @@ def plot_hadec():
 
     X, Y = np.meshgrid(ha, dec)
 
-    parang = convert.hadec_to_par(X, Y)
-    proj = convert.hadec_to_proj(X, Y)
+    parang = tools.hadec_to_par(X, Y)
+    proj = tools.hadec_to_proj(X, Y)
 
     fig, axes = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(12, 8))
 
@@ -101,7 +101,7 @@ def plot_tab_pattern(tabnum):
         ha = slider_ha.val
         dec = slider_dec.val
         # create new tab
-        bf.theta_proj = convert.hadec_to_proj(ha * u.deg, dec * u.deg)
+        bf.theta_proj = tools.hadec_to_proj(ha * u.deg, dec * u.deg)
         tab = bf.beamform(theta, tab=tabnum) * primary_beam
 
         pcm.set_array(tab[:-1, :-1].ravel())
@@ -190,12 +190,12 @@ def plot_sb_rotation():
     def do_plot(ha0=0 * u.deg, dec0=0 * u.deg, parang=0 * u.deg):
         # store coordinates of CB00
         ra0 = lst - ha0
-        alt0, az0 = convert.hadec_to_altaz(ha0, dec0)
+        alt0, az0 = tools.hadec_to_altaz(ha0, dec0)
         # plot CBs
         for cb, (dra, ddec) in enumerate(cb_pos):
             # RADec
             # pointing of this CB
-            ra, dec = convert.offset_to_coord(ra0, dec0, dra, ddec)
+            ra, dec = tools.offset_to_coord(ra0, dec0, dra, ddec)
 
             _ra = ra.to(u.deg).value
             _dec = dec.to(u.deg).value
@@ -209,7 +209,7 @@ def plot_sb_rotation():
 
             # AltAz
             ha = lst - ra
-            alt, az = convert.hadec_to_altaz(ha, dec)
+            alt, az = tools.hadec_to_altaz(ha, dec)
             dalt = alt - alt0
             daz = az - az0
 
@@ -255,8 +255,8 @@ def plot_sb_rotation():
                 aze = az0 + sgn * sb_offset / np.cos(alte) + cb_shift_az
 
                 # convert to HA, Dec
-                has, decs = convert.altaz_to_hadec(alts, azs)
-                hae, dece = convert.altaz_to_hadec(alte, aze)
+                has, decs = tools.altaz_to_hadec(alts, azs)
+                hae, dece = tools.altaz_to_hadec(alte, aze)
                 # convert HA to RA
                 ras = lst - has
                 rae = lst - hae
@@ -300,8 +300,8 @@ def plot_sb_rotation():
 
                 # continue
                 # plot Alt Az
-                # ystart, xstart = convert.hadec_to_altaz(ha0-xstart*u.arcmin, dec0+ystart*u.arcmin)
-                # yend, xend = convert.hadec_to_altaz(ha0-xend*u.arcmin, dec0+yend*u.arcmin)
+                # ystart, xstart = tools.hadec_to_altaz(ha0-xstart*u.arcmin, dec0+ystart*u.arcmin)
+                # yend, xend = tools.hadec_to_altaz(ha0-xend*u.arcmin, dec0+yend*u.arcmin)
                 # subtract center and remove cosine correction
                 # #xstart = (xstart - az0).to(u.arcmin).value
                 # #xend = (xend - az0).to(u.arcmin).value
@@ -336,7 +336,7 @@ def plot_sb_rotation():
     def update(val):
         ha = slider_ha.val * u.deg
         dec = slider_dec.val * u.deg
-        parang = convert.hadec_to_par(ha, dec)
+        parang = tools.hadec_to_par(ha, dec)
         ax.cla()
         ax2.cla()
         do_plot(ha, dec, parang)

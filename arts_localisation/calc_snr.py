@@ -6,7 +6,6 @@ import numpy as np
 from blimpy import Waterfall
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-plt.switch_backend('TkAgg')
 
 from data_tools import ARTSFilterbankReader, calc_snr_matched_filter
 

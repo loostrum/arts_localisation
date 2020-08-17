@@ -5,7 +5,6 @@
 import argparse
 import os
 import logging
-import errno
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,7 +16,7 @@ from scipy import stats
 import tools
 from constants import CB_HPBW, REF_FREQ, NSB, BANDWIDTH
 from beam_models import SBPattern
-from config_parser import parse_yaml
+from config_parser import load_config
 
 logger = logging.getLogger(__name__)
 
@@ -29,20 +28,6 @@ logger = logging.getLogger(__name__)
 #     pass
 
 plt.rcParams['axes.formatter.useoffset'] = False
-
-
-def makedirs(path):
-    """
-    Mimic os.makedirs, but do not error when directory already exists
-    :param str path: path to recursively create
-    """
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno == errno.EEXIST:
-            pass
-        else:
-            raise
 
 
 def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
@@ -138,24 +123,6 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
     return fig
 
 
-def load_config(args):
-    """
-    Load yaml config file and overwrite settings that are alos given on command line
-
-    :param argparse.Namespace args: Command line arguments
-    :return: config (dict)
-    """
-    config = parse_yaml(args.config)
-    # overwrite parameters also given on command line
-    for key in ('ra', 'dec', 'resolution', 'size', 'fmin', 'fmax', 'bandwidth', 'cb_model'):
-        value = getattr(args, key)
-        if value is not None:
-            logger.debug(f"Overwriting {key} from settings with command line value")
-            config['global'][key] = value
-
-    return config
-
-
 def main(args):
     if args.verbose:
         logger.setLevel(logging.DEBUG)
@@ -168,7 +135,7 @@ def main(args):
     # get output prefix from yaml file name and output folder
     if args.output_folder is None:
         args.output_folder = os.getcwd()
-    makedirs(args.output_folder)
+    tools.makedirs(args.output_folder)
     output_prefix = os.path.join(args.output_folder, os.path.basename(args.config).replace('.yaml', ''))
 
     # Define global RA, Dec localisation area

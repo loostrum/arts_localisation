@@ -4,6 +4,9 @@
 # HA/Dec to Alt/Az taken from:
 # http://www.stargazing.net/kepler/altaz.html
 
+import os
+import errno
+
 import numpy as np
 import astropy.units as u
 from astropy.coordinates import SkyCoord, FK5
@@ -337,3 +340,17 @@ def get_neighbours(cbs):
         output.extend(all_neighbours[cb])
     # remove duplicates and return in ascending order
     return sorted(list(set(output)))
+
+
+def makedirs(path):
+    """
+    Mimic os.makedirs, but do not error when directory already exists
+    :param str path: path to recursively create
+    """
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            pass
+        else:
+            raise

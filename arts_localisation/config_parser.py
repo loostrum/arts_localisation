@@ -33,10 +33,11 @@ def parse_yaml(fname, for_snr=False):
 
     # if for S/N determination, only load those settings
     if for_snr:
-        for key in ('snrmin', 'path', 'cbs', 'neighbours'):
+        for key in ('snrmin', 'path', 'cbs', 'neighbours', 'dm'):
             assert key in config['global'].keys(), f'Key missing: {key}'
         snr_config = {}
         snr_config['snrmin'] = config['global']['snrmin']
+        snr_config['dm'] = config['global']['dm']
         # check if cb and tab keys are present in path
         # first ensure two digits are used (which user may or may not have added)
         path = config['global']['path'].replace('{cb}', '{cb:02d}').replace('{tab}', '{tab:02d}')
@@ -159,6 +160,25 @@ def parse_yaml(fname, for_snr=False):
             else:
                 logger.info("No S/N array found for {} of burst {}, assuming it "
                             "is an upper limit beam".format(beam, burst))
+
+    return config
+
+
+def load_config(args, for_snr=False):
+    """
+    Load yaml config file and overwrite settings that are also given on command line
+
+    :param argparse.Namespace args: Command line arguments
+    :param bool for_snr: Only load settings related to S/N determination, skip everything else
+    :return: config (dict)
+    """
+    config = parse_yaml(args.config, for_snr)
+    # overwrite parameters also given on command line
+    for key in ('ra', 'dec', 'resolution', 'size', 'fmin', 'fmax', 'bandwidth', 'cb_model'):
+        value = getattr(args, key)
+        if value is not None:
+            logger.debug(f"Overwriting {key} from settings with command line value")
+            config['global'][key] = value
 
     return config
 

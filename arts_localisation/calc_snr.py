@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import os
 import logging
 import argparse
@@ -11,28 +10,37 @@ from tqdm import tqdm
 from arts_localisation import tools
 from arts_localisation.config_parser import load_config
 from arts_localisation.data_tools import ARTSFilterbankReader, calc_snr_matched_filter
+from arts_localisation.constants import NSB
 
 
 logger = logging.getLogger(__name__)
 
 
-def get_burst_arrival_time(**config):
+def get_burst_window(**config):
     """
-    Load a single SB and determine the arrival time of a burst
+    Load a single SB and determine the arrival time of a burst within window_load / window_zoom of the centre
     :param ARTSFilterbankReader fil_reader: Filterbank reader
     :param config: S/N configuration
-    :return float toa: burst arrival time at top of band
+    :return: startbin_wide, chunksize_wide, startbin_small, chunksize_small (all int)
     """
     # initialise the filterbank reader
     fil_reader = ARTSFilterbankReader(config['filterbank'], config['main_cb'])
-    # load the entire file for one SB
-    sb = fil_reader.load_single_sb(config['main_sb'], 0, fil_reader.nsamp)
+    # load the file
+    chunksize_wide = int(config['window_load'] / fil_reader.tsamp)
+    startbin_wide = int(.5 * (fil_reader.nsamp - chunksize_wide))
+    sb = fil_reader.load_single_sb(config['main_sb'], startbin_wide, chunksize_wide)
     # dedisperse and create timeseries
     sb.dedisperse(config['dm'])
     ts = sb.data.sum(axis=0)
     # find peak
-    ind_max = np.amax(ts)
-    return ind_max * fil_reader.tsamp
+    ind_max = np.argmax(ts)
+    # shift startbin such that ind_max is in the center of a chunk of size chunksize
+    startbin_wide -= int(ind_max - .5 * chunksize_wide)
+    # calculate the required parameters for the zoomed window
+    chunksize_small = int(config['window_zoom'] / fil_reader.tsamp)
+    # startbin_small is relative to startbin_wide
+    startbin_small = int(.5 * (chunksize_wide - chunksize_small))
+    return startbin_wide, chunksize_wide, startbin_small, chunksize_small
 
 
 def main():
@@ -74,46 +82,64 @@ def main():
     tools.makedirs(args.output_folder)
     output_prefix = os.path.join(args.output_folder, os.path.basename(args.config).replace('.yaml', ''))
 
-    # find the arrival time of the burst in the file (assumed the same for all CBs)
-    toa = get_burst_arrival_time(**config)
-    print(toa)
+    # find the burst window
+    logger.info('Finding burst window in file')
+    startbin_wide, chunksize_wide, startbin_small, chunksize_small = get_burst_window(**config)
+
+    # Run S/N determination loop for each CB
+    logger.info('Calculating S/N in each SB of given CBs')
+    for cb in tqdm(config['cbs'], desc='CB'):
+        # initialise the filterbank reader
+        fil_reader = ARTSFilterbankReader(config['filterbank'], cb)
+        # load all TABs around the burst
+        fil_reader.read_tabs(startbin_wide, chunksize_wide)
+        # get the S/N of each SB
+        snr_all = np.zeros(NSB)
+        for sb in tqdm(range(NSB), desc='SB'):
+            # get the SB data
+            spec = fil_reader.get_sb(sb)
+            # dedisperse
+            spec.dedisperse(config['dm'], padval='rotate')
+            # zoom in
+            spec.data = spec.data[:, startbin_small:startbin_small + chunksize_small]
+            # TODO: load frequency masking parameters in config_parser
+            # bad_low = spec.freqs < config['fmin']
+            # bad_high = spec.freqs > config['fmax']
+            # bad_zero = spec.data.mean(axis=1) == 0
+            # bad_data = np.logical_or(np.logical_or(bad_low, bad_high), bad_zero)
+            # data.data[bad_data, :] = 0
+
+            # create timeseries
+            ts = spec.data.sum(axis=0)
+            # get S/N
+            # TODO: turns width range into parameter
+            snr, width = calc_snr_matched_filter(ts, widths=range(1, 101))
+            snr_all[sb] = snr
+
+        if np.all(snr_all < config['snrmin']):
+            logger.warning(f'No S/N above threshold found for CB{cb:02d}, not creating output file')
+            continue
+
+        # store S/N file
+        output_file = f'{output_prefix}_SNR_CB{cb:02d}.txt'
+        with open(output_file, 'w') as f:
+            f.write('#sb snr\n')
+            # format each line, keep only values above S/N threshold
+            for sb, snr in enumerate(snr_all):
+                if snr < config['snrmin']:
+                    continue
+                f.write(f'{sb:02d} {snr:.2f}\n')
+
+        # plot
+        fig, ax = plt.subplots()
+        ax.scatter(range(NSB), snr_all, c='k')
+        ax.axhline(config['snrmin'], label='Threshold')
+        ax.set_xlabel('SB index')
+        ax.set_ylabel('S/N')
+        plt.show()
+
+    logger.info("Done")
 
 
 if __name__ == '__main__':
-    fname = '../examples/data/CB{cb:02d}_10.0sec_dm0_t03610_sb-1_tab{tab:02d}.fil'
-    dm = 349
-
-    fil = ARTSFilterbankReader(fname, cb=0)
-
-    # load 1.024 s around midpoint
-    mid = int(fil.nsamp // 2)
-    chunksize = int(1.024 / fil.tsamp)
-    startbin = mid - int(chunksize // 2)
-
-    # plot central SB
-    sb = fil.load_single_sb(35, startbin, chunksize)
-    sb.data -= sb.data.mean(axis=1, keepdims=True)
-    sb.dedisperse(dm)
-    sb.subband(128)
-    sb.downsample(4)
-    plt.imshow(sb.data, aspect='auto')
-
-    # load all TABs and get S/N per SB
-    fil.read_tabs(startbin, chunksize)
-    nsb = 71
-    snrmin = 8
-    snrs = np.zeros(nsb)
-
-    for sb in tqdm(range(nsb), desc="Getting S/N in each SB"):
-        spec = fil.get_sb(sb)
-        spec.dedisperse(dm, padval='rotate')
-        ts = spec.data.sum(axis=0)
-        snr, width = calc_snr_matched_filter(ts, widths=range(1, 101))
-        snrs[sb] = snr
-
-    fig, ax = plt.subplots()
-    ax.plot(range(nsb), snrs)
-    ax.axhline(snrmin, ls='--', c='r')
-    ax.set_xlabel('SB')
-    ax.set_ylabel('S/N')
-    plt.show()
+    main()

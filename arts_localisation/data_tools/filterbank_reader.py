@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import logging
 import numpy as np
 from blimpy import Waterfall
@@ -48,9 +47,7 @@ class ARTSFilterbankReader:
         # read chunk of data
         fil.read_data(None, None, startbin, startbin + chunksize)
         # keep only time and freq axes, transpose to have frequency first
-        # data = fil.data[:, 0, :].T.astype(float)
-        data = fil.data[:, 0, :].T
-        data = data.astype(float)
+        data = fil.data[:, 0, :].T.astype(float)
         if self.median_filter:
             data -= np.median(data, axis=1, keepdims=True)
         return data

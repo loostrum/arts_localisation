@@ -43,7 +43,7 @@ def parse_yaml(fname, for_snr=False):
         for key in REQUIRED_KEYS_SNR:
             assert key in config['global'].keys(), f'Key missing: {key}'
         snr_config = {}
-        for key in ('snrmin', 'dm', 'main_cb', 'main_sb'):
+        for key in ('snrmin', 'dm', 'main_cb', 'main_sb', 'window_load', 'window_zoom'):
             snr_config[key] = config['global'][key]
 
         # check if cb and tab keys are present in path
@@ -52,7 +52,7 @@ def parse_yaml(fname, for_snr=False):
         assert '{cb:02d}' in path, '{cb} missing from path'
         assert '{tab:02d}' in path, '{tab} missing from path'
         # if a relative path, it is relative to the location of the yaml file
-        if not os.path.isdir(path):
+        if not os.path.isfile(path.format(cb=snr_config['main_cb'], tab=0)):
             path = os.path.join(yaml_dir, path)
         snr_config['filterbank'] = path
 

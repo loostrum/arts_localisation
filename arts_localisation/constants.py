@@ -6,7 +6,8 @@ import numpy as np
 import astropy.units as u
 from astropy.coordinates import EarthLocation
 
-
+#: File with definition of CB offsets
+CB_OFFSETS = 'square_39p1.cb_offsets'
 #: CB half-power width
 CB_HPBW = 28.0835088 * u.arcmin  # calculated from CB offsets file
 #: Reference frequency for CB half-power width

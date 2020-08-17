@@ -12,7 +12,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord, FK5
 from astropy.time import Time
 
-from .constants import WSRT_LON, WSRT_LAT, NCB
+from .constants import WSRT_LON, WSRT_LAT, NCB, CB_OFFSETS
 
 
 def limit(val, minval=-1, maxval=1):
@@ -311,7 +311,31 @@ def rotate_coordinate_grid(X, Y, angle, origin=None):
 
 
 def cb_index_to_pointing(cb, pointing_ra, pointing_dec):
-    raise NotImplementedError
+    """
+    Get pointing of given CB based on telescope pointing. Assumes reference_beam = 0,
+    i.e. the telescope pointing coincides with the phase center of CB00
+
+    :param int/list cb: CB index
+    :param Quantity pointing_ra: Pointing right ascension
+    :param Quantity pointing_dec: Pointing Declination
+    :return: (RA, Dec) tuple of CB pointing, with unit
+    """
+    assert cb >= 0, 'CB index cannot be lower than zero'
+    assert cb < NCB, f'CB index cannot be higher than {NCB - 1}'
+
+    # load the offsets file
+    offsets_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), CB_OFFSETS)
+    raw_cb_offsets = np.loadtxt(offsets_file, usecols=[1, 2], delimiter=',')
+    assert len(raw_cb_offsets) == NCB, f'CB offsets file does not contain {NCB} CBs'
+
+    # get offset for requested CB
+    dra, ddec = raw_cb_offsets[cb]
+    dra = dra * u.deg
+    ddec = ddec * u.deg
+
+    # calculate position of the CB
+    cb_ra, cb_dec = offset_to_coord(pointing_ra, pointing_dec, dra, ddec)
+    return cb_ra.to(u.deg), cb_dec.to(u.deg)
 
 
 def get_neighbours(cbs):

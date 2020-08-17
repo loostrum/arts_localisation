@@ -120,8 +120,8 @@ def main():
     parser.add_argument('--config', required=True, help='Input yaml config')
     parser.add_argument('--conf_int', type=float, default=.9, help='Confidence interval for localisation region '
                                                                    '(Default: %(default)s)')
-    parser.add_argument('--output_folder', default='.', help='Output folder '
-                                                             '(Default: current directory)')
+    parser.add_argument('--output_folder', help='Output folder '
+                                                '(Default: current directory)')
     parser.add_argument('--noplot', action='store_true', help='Disable plotting')
     parser.add_argument('--saveplot', action='store_true', help='Save plots')
     parser.add_argument('--outfile', help='Output file for summary')

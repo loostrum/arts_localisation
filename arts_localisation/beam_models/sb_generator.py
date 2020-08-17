@@ -28,7 +28,7 @@ class SBGenerator:
         self.numsb = {'sc3': 114, 'sc4': 71}
 
         # Get full path to SB table
-        if fname and not fname.startswith('/'):
+        if fname and not os.path.isfile(fname):
             fname = os.path.join(self.table_folder, fname)
         elif science_case:
             fname = os.path.join(self.table_folder, self.table[f'sc{science_case:.0f}'])

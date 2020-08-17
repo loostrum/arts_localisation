@@ -1,0 +1,3 @@
+include arts_localisation/square_39p1.cb_offsets
+include arts_localisation/beam_models/sbtable-sc4-12tabs-71sbs.txt
+include arts_localisation/beam_models/beam_models_190607.csv

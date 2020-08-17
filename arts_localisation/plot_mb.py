@@ -12,7 +12,7 @@ from astropy.visualization.wcsaxes import SphericalCircle
 from scipy import stats
 import yaml
 
-import convert
+import tools
 from constants import NSB, REF_FREQ, CB_HPBW
 
 # Try switching to OSX native backend
@@ -212,7 +212,7 @@ if __name__ == '__main__':
         except KeyError:
             cb_ha = conf[burst]['ha']
             t = Time(conf[burst]['tstart']) + TimeDelta(conf[burst]['tarr'], format='sec')
-            cb_radec = convert.hadec_to_radec(cb_ha * u.deg, cb_dec * u.deg, t)
+            cb_radec = tools.hadec_to_radec(cb_ha * u.deg, cb_dec * u.deg, t)
             cb_ra = cb_radec.ra.deg
             cb_dec = cb_radec.dec.deg
         # store for total

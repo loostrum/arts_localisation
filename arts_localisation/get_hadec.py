@@ -7,7 +7,7 @@ import astropy.units as u
 from astropy.time import Time, TimeDelta
 from astropy.coordinates import SkyCoord
 
-from convert import radec_to_hadec
+from tools import radec_to_hadec
 
 
 if __name__ == '__main__':

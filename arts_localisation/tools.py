@@ -9,7 +9,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord, FK5
 from astropy.time import Time
 
-from constants import WSRT_LON, WSRT_LAT
+from constants import WSRT_LON, WSRT_LAT, NCB
 
 
 def limit(val, minval=-1, maxval=1):
@@ -310,5 +310,30 @@ def rotate_coordinate_grid(X, Y, angle, origin=None):
 def cb_index_to_pointing(cb, pointing_ra, pointing_dec):
     raise NotImplementedError
 
-def get_neighbours(cb):
-    raise NotImplementedError
+
+def get_neighbours(cbs):
+    """
+    Get neighbouring CBs of given CB(s)
+
+    :param int/list cbs: CB(s) to get neighbours for
+    :return: flattened list of neighbours
+    """
+    # list of neighbours for all CBs, ordered per CB row
+    # TODO: double check this list
+    all_neighbours = [[17, 18, 23, 24],
+                      [2, 8], [1, 3, 8, 9], [2, 4, 9, 10], [3, 5, 10, 11], [4, 6, 11, 12], [5, 7, 12, 13], [6, 13, 14],
+                      [1, 2, 9, 15], [2, 3, 8, 10, 15, 16], [3, 4, 9, 11, 16, 17], [4, 5, 10, 12, 17, 18], [5, 6, 11, 13, 18, 19], [6, 7, 12, 14, 19, 20], [7, 13, 20],
+                      [8, 9, 16, 21, 22], [9, 10, 15, 17, 22, 23], [0, 10, 11, 16, 18, 23, 24], [0, 11, 12, 17, 19, 24, 26], [12, 13, 18, 20, 25, 26], [13, 14, 19, 26],
+                      [15, 22, 27], [15, 16,21, 23, 27, 28], [0, 16, 17, 22, 24, 28, 29], [0, 17, 18, 23, 25, 29, 30], [18, 19, 24, 26, 30, 31], [19, 20, 25, 31, 32],
+                      [21, 22, 28, 33, 34], [22, 23, 27, 29, 34, 35], [23, 24, 28, 30, 35, 36], [24, 25, 29, 31, 36, 37], [25, 26, 30, 32, 37, 38], [26, 31, 38, 39],
+                      [27, 34], [27, 28, 33, 35], [28, 29, 34, 36], [29, 30, 35, 37], [30, 31, 36, 38], [31, 32, 37, 39], [32, 38]]
+
+    output = []
+    if isinstance(cbs, int):
+        cbs = [cbs]
+    assert min(cbs) >= 0, 'CB index cannot be lower than zero'
+    assert max(cbs) < NCB, f'CB index cannot be higher than {NCB - 1}'
+    for cb in cbs:
+        output.extend(all_neighbours[cb])
+    # remove duplicates and return in ascending order
+    return sorted(list(set(output)))

@@ -52,6 +52,7 @@ NPHI_SB = 201
 MAXDIST = 30  # arcmin
 NPOINT = 300
 
+NCB = 40
 NTAB = 12
 NSB = 71
 

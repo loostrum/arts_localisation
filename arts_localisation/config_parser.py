@@ -8,7 +8,7 @@ import numpy as np
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 
-from convert import cb_index_to_pointing, get_neighbours
+from tools import cb_index_to_pointing, get_neighbours
 
 
 logger = logging.getLogger(__name__)

@@ -3,8 +3,6 @@
 # synthesized beam generator
 
 import os
-import socket
-import yaml
 import numpy as np
 
 

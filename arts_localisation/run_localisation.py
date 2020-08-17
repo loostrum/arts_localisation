@@ -14,7 +14,7 @@ from astropy.coordinates import SkyCoord
 from astropy.visualization.wcsaxes import SphericalCircle
 from scipy import stats
 
-import convert
+import tools
 from constants import CB_HPBW, REF_FREQ, NSB, BANDWIDTH
 from beam_models import SBPattern
 from config_parser import parse_yaml
@@ -97,8 +97,8 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
     # add source position if available
     if src_pos is not None:
         if mode == 'altaz':
-            hadec_src = convert.radec_to_hadec(*src_pos, t_arr)
-            y_src, x_src = convert.hadec_to_altaz(hadec_src.ra, hadec_src.dec)
+            hadec_src = tools.radec_to_hadec(*src_pos, t_arr)
+            y_src, x_src = tools.hadec_to_altaz(hadec_src.ra, hadec_src.dec)
         else:
             x_src, y_src = src_pos
         ax.plot(x_src.to(u.deg).value, y_src.to(u.deg).value, c='cyan', marker='+', ls='', ms=10,
@@ -109,8 +109,8 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
             cb_pos = [cb_pos]
         for i, pos in enumerate(cb_pos):
             if mode == 'altaz':
-                hadec_cb = convert.radec_to_hadec(pos.ra, pos.dec, t_arr)
-                y_cb, x_cb = convert.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)
+                hadec_cb = tools.radec_to_hadec(pos.ra, pos.dec, t_arr)
+                y_cb, x_cb = tools.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)
             else:
                 x_cb = pos.ra
                 y_cb = pos.dec
@@ -206,19 +206,19 @@ def main(args):
             # TODO: support HA
             # try:
             radec_cb = SkyCoord(*beam_config['pointing'])
-            hadec_cb = convert.radec_to_hadec(*beam_config['pointing'], burst_config['tarr'])
+            hadec_cb = tools.radec_to_hadec(*beam_config['pointing'], burst_config['tarr'])
             # except KeyError:
             #     # assume ha was specified instead of ra
             #     hadec_cb = SkyCoord(beam_config['ha']*u.deg, beam_config['dec']*u.deg)
-            #     radec_cb = convert.hadec_to_radec(beam_config['ha']*u.deg, beam_config['dec']*u.deg, t)
-            alt_cb, az_cb = convert.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)  # needed for SB position
-            print("Parallactic angle: {:.2f}".format(convert.hadec_to_par(hadec_cb.ra, hadec_cb.dec)))
-            print("AltAz SB rotation angle at center of CB: {:.2f}".format(convert.hadec_to_proj(hadec_cb.ra, hadec_cb.dec)))
+            #     radec_cb = tools.hadec_to_radec(beam_config['ha']*u.deg, beam_config['dec']*u.deg, t)
+            alt_cb, az_cb = tools.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)  # needed for SB position
+            print("Parallactic angle: {:.2f}".format(tools.hadec_to_par(hadec_cb.ra, hadec_cb.dec)))
+            print("AltAz SB rotation angle at center of CB: {:.2f}".format(tools.hadec_to_proj(hadec_cb.ra, hadec_cb.dec)))
             # save pointing
             pointings[CB] = radec_cb
 
             # convert localisation coordinate grid to hadec
-            hadec_loc = convert.radec_to_hadec(RA, DEC, burst_config['tarr'])
+            hadec_loc = tools.radec_to_hadec(RA, DEC, burst_config['tarr'])
             HA_loc = hadec_loc.ra
             DEC_loc = hadec_loc.dec
             # calculate offsets from phase center

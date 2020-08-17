@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 setup(name='arts_localisation',
       version='0.1',
       description='Localisation of ARTS transients',
-      url='http://github.com/loostrum/arts-localisation',
+      url='http://github.com/loostrum/arts_localisation',
       author='Leon Oostrum',
       author_email='oostrum@astron.nl',
       license='GPLv3',

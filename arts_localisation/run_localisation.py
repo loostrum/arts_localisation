@@ -13,20 +13,12 @@ from astropy.coordinates import SkyCoord
 from astropy.visualization.wcsaxes import SphericalCircle
 from scipy import stats
 
-import tools
-from constants import CB_HPBW, REF_FREQ, NSB, BANDWIDTH
-from beam_models import SBPattern
-from config_parser import load_config
+from arts_localisation import tools
+from .constants import CB_HPBW, REF_FREQ, NSB
+from .beam_models.simulate_sb_pattern import SBPattern
+from .config_parser import load_config
 
 logger = logging.getLogger(__name__)
-
-# Try switching to OSX native backend
-# plt.switch_backend('pdf')
-# try:
-#     plt.switch_backend('macosx')
-# except ImportError:
-#     pass
-
 plt.rcParams['axes.formatter.useoffset'] = False
 
 
@@ -123,7 +115,31 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
     return fig
 
 
-def main(args):
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', required=True, help='Input yaml config')
+    parser.add_argument('--conf_int', type=float, default=.9, help='Confidence interval for localisation region '
+                                                                   '(Default: %(default)s)')
+    parser.add_argument('--output_folder', default='.', help='Output folder '
+                                                             '(Default: current directory)')
+    parser.add_argument('--noplot', action='store_true', help='Disable plotting')
+    parser.add_argument('--saveplot', action='store_true', help='Save plots')
+    parser.add_argument('--outfile', help='Output file for summary')
+    parser.add_argument('--verbose', action='store_true', help="Enable verbose logging")
+
+    group_overwrites = parser.add_argument_group('Config overwrites', 'Settings to overwrite from yaml config')
+    group_overwrites.add_argument('--ra', type=float, help='Central RA (deg)')
+    group_overwrites.add_argument('--dec', type=float, help='Central Dec (deg)')
+    group_overwrites.add_argument('--resolution', type=float, help='Resolution (arcmin)')
+    group_overwrites.add_argument('--size', type=float, help='Localisation area size (arcmin)')
+    group_overwrites.add_argument('--fmin', type=float, help='Ignore frequency below this value in MHz')
+    group_overwrites.add_argument('--fmax', type=float, help='Ignore frequency below this value in MHz')
+    group_overwrites.add_argument('--fmin_data', type=float, help='Lowest frequency of data')
+    group_overwrites.add_argument('--bandwidth', type=float, help='Bandwidth of data')
+    group_overwrites.add_argument('--cb_model', help='CB model type')
+
+    args = parser.parse_args()
+
     if args.verbose:
         logger.setLevel(logging.DEBUG)
     else:
@@ -349,30 +365,3 @@ def main(args):
                 fig.savefig(f'{output_prefix}_{burst}_total.pdf')
             else:
                 plt.show()
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', required=True, help='Input yaml config')
-    parser.add_argument('--conf_int', type=float, default=.9, help='Confidence interval for localisation region '
-                                                                   '(Default: %(default)s)')
-    parser.add_argument('--output_folder', default='.', help='Output folder '
-                                                             '(Default: current directory)')
-    parser.add_argument('--noplot', action='store_true', help='Disable plotting')
-    parser.add_argument('--saveplot', action='store_true', help='Save plots')
-    parser.add_argument('--outfile', help='Output file for summary')
-    parser.add_argument('--verbose', action='store_true', help="Enable verbose logging")
-
-    group_overwrites = parser.add_argument_group('Config overwrites', 'Settings to overwrite from yaml config')
-    group_overwrites.add_argument('--ra', type=float, help='Central RA (deg)')
-    group_overwrites.add_argument('--dec', type=float, help='Central Dec (deg)')
-    group_overwrites.add_argument('--resolution', type=float, help='Resolution (arcmin)')
-    group_overwrites.add_argument('--size', type=float, help='Localisation area size (arcmin)')
-    group_overwrites.add_argument('--fmin', type=float, help='Ignore frequency below this value in MHz')
-    group_overwrites.add_argument('--fmax', type=float, help='Ignore frequency below this value in MHz')
-    group_overwrites.add_argument('--fmin_data', type=float, help='Lowest frequency of data')
-    group_overwrites.add_argument('--bandwidth', type=float, help='Bandwidth of data')
-    group_overwrites.add_argument('--cb_model', help='CB model type')
-
-    args = parser.parse_args()
-    main(args)

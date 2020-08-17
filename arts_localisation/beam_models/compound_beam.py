@@ -8,11 +8,10 @@ import os
 import numpy as np
 import astropy.units as u
 import astropy.constants as const
-from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 from scipy.special import j1
 
-from constants import CB_HPBW, REF_FREQ, DISH_SIZE, CB_MODEL_FILE
+from arts_localisation.constants import CB_HPBW, REF_FREQ, DISH_SIZE, CB_MODEL_FILE
 
 
 def gauss_2d(xy, x_mean, x_sig, y_mean, y_sig, rho):

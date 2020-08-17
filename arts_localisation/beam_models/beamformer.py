@@ -7,7 +7,7 @@ import numba as nb
 import astropy.units as u
 import astropy.constants as const
 
-from constants import NTAB, WSRT_LON
+from arts_localisation.constants import NTAB, WSRT_LON
 
 
 class BeamFormer:

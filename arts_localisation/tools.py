@@ -12,7 +12,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord, FK5
 from astropy.time import Time
 
-from constants import WSRT_LON, WSRT_LAT, NCB
+from .constants import WSRT_LON, WSRT_LAT, NCB
 
 
 def limit(val, minval=-1, maxval=1):

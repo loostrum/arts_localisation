@@ -6,7 +6,7 @@ from blimpy import Waterfall
 from tqdm import tqdm
 
 from .spectra import Spectra
-from beam_models import SBGenerator
+from arts_localisation.beam_models.sb_generator import SBGenerator
 
 
 # init logger

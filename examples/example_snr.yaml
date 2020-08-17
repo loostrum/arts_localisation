@@ -11,3 +11,5 @@ global:
     cbs: [0]
     # If neighbours = True, also calculate S/N for CBs surrounding those in the CB list
     neighbours: False
+    # dispersion measure in pc/cm^3
+    dm: 350

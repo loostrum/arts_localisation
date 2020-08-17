@@ -9,7 +9,7 @@ import astropy.units as u
 from .sb_generator import SBGenerator
 from .beamformer import BeamFormer
 from .compound_beam import CompoundBeam
-from constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIST, NPOINT
+from arts_localisation.constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIST, NPOINT
 
 
 class SBPattern:

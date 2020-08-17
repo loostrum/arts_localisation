@@ -8,18 +8,20 @@ import numpy as np
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 
-from convert import cb_index_to_pointing
+from convert import cb_index_to_pointing, get_neighbours
 
 
 logger = logging.getLogger(__name__)
 
 
-def parse_yaml(fname):
+def parse_yaml(fname, for_snr=False):
     """
     Parse a yaml file with settings for burst localisation
     :param str fname: Path to yaml config file
+    :param bool for_snr: Only load settings related to S/N determination, skip everything else
 
-    :return: config (dict), excluded_dishes (list), source_coord (SkyCoord or None)
+    :return: config (dict), excluded_dishes (list, only if for_snr=False),
+             source_coord (SkyCoord or None, only if for_snr=False)
     """
 
     # read the file
@@ -29,6 +31,30 @@ def parse_yaml(fname):
     # read global settings
     assert 'global' in config.keys(), 'Global config missing'
 
+    # if for S/N determination, only load those settings
+    if for_snr:
+        for key in ('snrmin', 'path', 'cbs', 'neighbours'):
+            assert key in config['global'].keys(), f'Key missing: {key}'
+        snr_config = {}
+        snr_config['snrmin'] = config['global']['snrmin']
+        # check if cb and tab keys are present in path
+        # first ensure two digits are used (which user may or may not have added)
+        path = config['global']['path'].replace('{cb}', '{cb:02d}').replace('{tab}', '{tab:02d}')
+        assert '{cb:02d}' in path, '{cb} missing from path'
+        assert '{tab:02d}' in path, '{tab} missing from path'
+        snr_config['path'] = path
+
+        # check CB list is not empty
+        assert config['global']['cbs'], 'CB list cannot be empty'
+        # if neighbours is True, add neighbouring beams
+        if config['global']['neighbours']:
+            snr_config['cbs'] = get_neighbours(config['global']['cbs'])
+        else:
+            snr_config['cbs'] = config['global']['cbs']
+
+        return snr_config
+
+    # localisation mode
     # check if required keys are present
     for key in ('snrmin', 'ra', 'dec', 'size', 'resolution', 'cb_model', 'fmin_data', 'bandwidth'):
         assert key in config['global'].keys(), f'Key missing: {key}'
@@ -139,3 +165,4 @@ def parse_yaml(fname):
 
 if __name__ == '__main__':
     print(parse_yaml('example.yaml'))
+    print(parse_yaml('example_snr.yaml', for_snr=True))

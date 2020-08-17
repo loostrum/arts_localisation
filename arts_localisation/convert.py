@@ -309,3 +309,6 @@ def rotate_coordinate_grid(X, Y, angle, origin=None):
 
 def cb_index_to_pointing(cb, pointing_ra, pointing_dec):
     raise NotImplementedError
+
+def get_neighbours(cb):
+    raise NotImplementedError

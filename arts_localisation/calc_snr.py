@@ -6,6 +6,7 @@ import numpy as np
 from blimpy import Waterfall
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+plt.switch_backend('TkAgg')
 
 from data_tools import ARTSFilterbankReader, calc_snr_matched_filter
 
@@ -34,7 +35,7 @@ if __name__ == '__main__':
         snrs[sb] = snr
 
     fig, ax = plt.subplots()
-    ax.scatter(range(nsb), snrs)
+    ax.plot(range(nsb), snrs)
     ax.axhline(snrmin, ls='--', c='r')
     ax.set_xlabel('SB')
     ax.set_ylabel('S/N')

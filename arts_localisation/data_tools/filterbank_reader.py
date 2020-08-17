@@ -49,9 +49,11 @@ class ARTSFilterbankReader:
         # keep only time and freq axes, transpose to have frequency first
         return fil.data[:, 0, :].T
 
-    def read_tabs(self, startbin, chunksize):
+    def read_tabs(self, startbin, chunksize, tabs=None):
         tab_data = np.zeros((self.ntab, self.nfreq, chunksize))
-        for tab in tqdm(range(self.ntab), desc="Loading TAB data"):
+        if tabs is None:
+            tabs = range(self.ntab)
+        for tab in tqdm(tabs, desc="Loading TAB data"):
             tab_data[tab] = self.read_filterbank(tab, startbin, chunksize)
         self.tab_data = tab_data
         self.startbin = startbin
@@ -65,3 +67,13 @@ class ARTSFilterbankReader:
         sb_data = self.sb_generator.synthesize_beam(self.tab_data, sb)
         # return as spectra object
         return Spectra(self.freqs, self.tsamp, sb_data, starttime=self.startbin * self.tsamp, dm=0)
+
+    def load_single_sb(self, sb, startbin, chunksize):
+        # load the data of the required TABs
+        tabs = set(self.sb_generator.get_map(sb))
+        self.read_tabs(startbin, chunksize, tabs)
+        # generate the SB
+        sb = self.get_sb(sb)
+        # remove the TAB data to avoid issues when changing startbin/chunksize in other methods
+        self.tab_data = None
+        return sb

@@ -1,0 +1,548 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Core modules &#8212; ARTS Localisation 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Beam model modules" href="beam_models.html" />
+    <link rel="prev" title="Installation" href="install.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="core-modules">
+<h1>Core modules<a class="headerlink" href="#core-modules" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-arts_localisation.run_localisation">
+<span id="localisation-runner"></span><h2>Localisation runner<a class="headerlink" href="#module-arts_localisation.run_localisation" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="arts_localisation.run_localisation.main">
+<code class="sig-prename descclassname">arts_localisation.run_localisation.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.run_localisation.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.run_localisation.make_plot">
+<code class="sig-prename descclassname">arts_localisation.run_localisation.</code><code class="sig-name descname">make_plot</code><span class="sig-paren">(</span><em class="sig-param">chi2</em>, <em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">dof</em>, <em class="sig-param">title</em>, <em class="sig-param">conf_int</em>, <em class="sig-param">mode='radec'</em>, <em class="sig-param">sigma_max=3</em>, <em class="sig-param">freq=&lt;Quantity 1370. MHz&gt;</em>, <em class="sig-param">t_arr=None</em>, <em class="sig-param">loc=None</em>, <em class="sig-param">cb_pos=None</em>, <em class="sig-param">src_pos=None</em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.run_localisation.make_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create plot of localisation area</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>chi2</strong> – chi2 grid</p></li>
+<li><p><strong>X</strong> – RA or Az</p></li>
+<li><p><strong>Y</strong> – Dec or Alt</p></li>
+<li><p><strong>dof</strong> – degrees of freedom</p></li>
+<li><p><strong>title</strong> – plot title</p></li>
+<li><p><strong>conf_int</strong> – confidence interval for localisation area</p></li>
+<li><p><strong>mode</strong> – radec or altaz (default radec)</p></li>
+<li><p><strong>sigma_max</strong> – used to determine maximum value for colors in plot (default 3)</p></li>
+<li><p><strong>freq</strong> – central frequency (default 1370 MHz)</p></li>
+<li><p><strong>t_arr</strong> – burst arrival time (only required if mode is altaz)</p></li>
+<li><p><strong>loc</strong> – legend location (optional)</p></li>
+<li><p><strong>cb_pos</strong> – cb pointing (optional, tuple or list of tuples)</p></li>
+<li><p><strong>src_pos</strong> – source position (tuple)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>figure</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-arts_localisation.calc_snr">
+<span id="s-n-determination"></span><h2>S/N determination<a class="headerlink" href="#module-arts_localisation.calc_snr" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="arts_localisation.calc_snr.get_burst_window">
+<code class="sig-prename descclassname">arts_localisation.calc_snr.</code><code class="sig-name descname">get_burst_window</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">config</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.calc_snr.get_burst_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a single SB and determine the arrival time of a burst within window_load / window_zoom of the centre</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fil_reader</strong> (<a class="reference internal" href="data_tools.html#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader" title="arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader"><em>ARTSFilterbankReader</em></a>) – Filterbank reader</p></li>
+<li><p><strong>config</strong> – S/N configuration</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>startbin_wide, chunksize_wide, startbin_small, chunksize_small (all int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.calc_snr.main">
+<code class="sig-prename descclassname">arts_localisation.calc_snr.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.calc_snr.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-arts_localisation.config_parser">
+<span id="config-parser"></span><h2>Config parser<a class="headerlink" href="#module-arts_localisation.config_parser" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="arts_localisation.config_parser.load_config">
+<code class="sig-prename descclassname">arts_localisation.config_parser.</code><code class="sig-name descname">load_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">args</span></em>, <em class="sig-param"><span class="n">for_snr</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.config_parser.load_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load yaml config file and overwrite settings that are also given on command line</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>argparse.Namespace</em>) – Command line arguments</p></li>
+<li><p><strong>for_snr</strong> (<em>bool</em>) – Only load settings related to S/N determination, skip everything else</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>config (dict)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.config_parser.parse_yaml">
+<code class="sig-prename descclassname">arts_localisation.config_parser.</code><code class="sig-name descname">parse_yaml</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fname</span></em>, <em class="sig-param"><span class="n">for_snr</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.config_parser.parse_yaml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse a yaml file with settings for burst localisation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fname</strong> (<em>str</em>) – Path to yaml config file</p></li>
+<li><p><strong>for_snr</strong> (<em>bool</em>) – Load settings for S/N determination, else load localisation settings</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>config (dict)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-arts_localisation.tools">
+<span id="tools"></span><h2>Tools<a class="headerlink" href="#module-arts_localisation.tools" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="arts_localisation.tools.altaz_to_hadec">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">altaz_to_hadec</code><span class="sig-paren">(</span><em class="sig-param">alt</em>, <em class="sig-param">az</em>, <em class="sig-param">lat=&lt;Quantity 52.915184 deg&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.altaz_to_hadec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert Alt, Az to HA, Dec</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alt</strong> – altitude with unit</p></li>
+<li><p><strong>az</strong> – azimuth with unit</p></li>
+<li><p><strong>lat</strong> – Latitude with unit (default: WSRT)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>hour angle, declination</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.cb_index_to_pointing">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">cb_index_to_pointing</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cb</span></em>, <em class="sig-param"><span class="n">pointing_ra</span></em>, <em class="sig-param"><span class="n">pointing_dec</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.cb_index_to_pointing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get pointing of given CB based on telescope pointing. Assumes reference_beam = 0,
+i.e. the telescope pointing coincides with the phase center of CB00</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cb</strong> (<em>int/list</em>) – CB index</p></li>
+<li><p><strong>pointing_ra</strong> (<em>Quantity</em>) – Pointing right ascension</p></li>
+<li><p><strong>pointing_dec</strong> (<em>Quantity</em>) – Pointing Declination</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(RA, Dec) tuple of CB pointing, with unit</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.coord_to_offset">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">coord_to_offset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ra0</span></em>, <em class="sig-param"><span class="n">dec0</span></em>, <em class="sig-param"><span class="n">ra1</span></em>, <em class="sig-param"><span class="n">dec1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.coord_to_offset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert point (ra1, dec1) to projected offset
+from reference (ra0, dec0)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ra0</strong> – Reference RA or Az</p></li>
+<li><p><strong>dec0</strong> – Reference Dec or Alt</p></li>
+<li><p><strong>ra1</strong> – Target RA or Az</p></li>
+<li><p><strong>dec1</strong> – Target Dec or Alt</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(theta, phi) offset
+theta is offset in RA or Az
+phi is offset in Dec or Alt</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.get_neighbours">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">get_neighbours</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cbs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.get_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get neighbouring CBs of given CB(s)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cbs</strong> (<em>int/list</em>) – CB(s) to get neighbours for</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>flattened list of neighbours</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.hadec_to_altaz">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">hadec_to_altaz</code><span class="sig-paren">(</span><em class="sig-param">ha</em>, <em class="sig-param">dec</em>, <em class="sig-param">lat=&lt;Quantity 52.915184 deg&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.hadec_to_altaz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert HA, Dec to Alt, Az</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ha</strong> – hour angle with unit</p></li>
+<li><p><strong>dec</strong> – declination with unit</p></li>
+<li><p><strong>lat</strong> – Latitude with unit (default: WSRT)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>altitude, azimuth</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.hadec_to_par">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">hadec_to_par</code><span class="sig-paren">(</span><em class="sig-param">ha</em>, <em class="sig-param">dec</em>, <em class="sig-param">lat=&lt;Quantity 52.915184 deg&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.hadec_to_par" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert HA, Dec to parallactic angle</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ha</strong> – hour angle with unit</p></li>
+<li><p><strong>dec</strong> – declination with unit</p></li>
+<li><p><strong>lat</strong> – Latitude with unit (default: WSRT)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>parallactic angle</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.hadec_to_proj">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">hadec_to_proj</code><span class="sig-paren">(</span><em class="sig-param">ha</em>, <em class="sig-param">dec</em>, <em class="sig-param">lat=&lt;Quantity 52.915184 deg&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.hadec_to_proj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert HA, Dec to projection angle
+This is the E-W baseline projection angle</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ha</strong> – hour angle with unit</p></li>
+<li><p><strong>dec</strong> – declination with unit</p></li>
+<li><p><strong>lat</strong> – Latitude with unit (default: WSRT)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>projection angle</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.hadec_to_radec">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">hadec_to_radec</code><span class="sig-paren">(</span><em class="sig-param">ha</em>, <em class="sig-param">dec</em>, <em class="sig-param">t</em>, <em class="sig-param">lon=&lt;Quantity 6.60387 deg&gt;</em>, <em class="sig-param">apparent=True</em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.hadec_to_radec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert apparent HA, Dec to J2000 RA, Dec</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ha</strong> – hour angle with unit</p></li>
+<li><p><strong>dec</strong> – declination with unit</p></li>
+<li><p><strong>t</strong> – UT time (string or astropy.time.Time)</p></li>
+<li><p><strong>lon</strong> – Longitude with unit (default: WSRT)</p></li>
+<li><p><strong>apparent</strong> – Whether or not HA, Dec are apparent coordinates (default: True)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SkyCoord object of J2000 coordinates</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.limit">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">limit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span></em>, <em class="sig-param"><span class="n">minval</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">maxval</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.limit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Where val &gt; maxval, replace by maxval</p>
+<p>Where val &lt; minval, replace by minval</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>val</strong> – input value</p></li>
+<li><p><strong>minval</strong> – minimum value</p></li>
+<li><p><strong>maxval</strong> – maximum value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>limited value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.makedirs">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">makedirs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.makedirs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mimic os.makedirs, but do not error when directory already exists</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – path to recursively create</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.offset_to_coord">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">offset_to_coord</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ra0</span></em>, <em class="sig-param"><span class="n">dec0</span></em>, <em class="sig-param"><span class="n">theta</span></em>, <em class="sig-param"><span class="n">phi</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.offset_to_coord" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a projected offset (theta, phi) to
+coordinate with reference (ra0, dec0)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ra0</strong> – Reference RA or Az</p></li>
+<li><p><strong>dec0</strong> – Reference Dec or Alt</p></li>
+<li><p><strong>theta</strong> – RA or Az offset</p></li>
+<li><p><strong>phi</strong> – Dec or Alt offset</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(Ra, Dec) or (Az, Alt) of offset point</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.radec_to_hadec">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">radec_to_hadec</code><span class="sig-paren">(</span><em class="sig-param">ra</em>, <em class="sig-param">dec</em>, <em class="sig-param">t</em>, <em class="sig-param">lon=&lt;Quantity 6.60387 deg&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.radec_to_hadec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert J2000 RA, Dec to apparent HA, Dec</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ra</strong> – right ascension with unit</p></li>
+<li><p><strong>dec</strong> – declination with unit</p></li>
+<li><p><strong>t</strong> – UT time (string or astropy.time.Time)</p></li>
+<li><p><strong>lon</strong> – Longitude with unit (default: WSRT)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SkyCoord object of apparent HA, Dec coordinates</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="arts_localisation.tools.rotate_coordinate_grid">
+<code class="sig-prename descclassname">arts_localisation.tools.</code><code class="sig-name descname">rotate_coordinate_grid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">Y</span></em>, <em class="sig-param"><span class="n">angle</span></em>, <em class="sig-param"><span class="n">origin</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.rotate_coordinate_grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate input coordinate grid by given angle around given origin (default: center)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – input x coordinates</p></li>
+<li><p><strong>Y</strong> – input y coordinates</p></li>
+<li><p><strong>angle</strong> – rotation angle</p></li>
+<li><p><strong>origin</strong> – tuple with origin for rotation (default: center of XY grid)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>rotated X, Y</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-arts_localisation.constants">
+<span id="constants"></span><h2>Constants<a class="headerlink" href="#module-arts_localisation.constants" title="Permalink to this headline">¶</a></h2>
+<dl class="py data">
+<dt id="arts_localisation.constants.ARRAY_ITRF">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">ARRAY_ITRF</code><em class="property"> = &lt;Quantity [3828630.63486201,  443593.39226634, 5064922.99755   ] m&gt;</em><a class="headerlink" href="#arts_localisation.constants.ARRAY_ITRF" title="Permalink to this definition">¶</a></dt>
+<dd><p>ITRF WSRT reference position</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.BANDWIDTH">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">BANDWIDTH</code><em class="property"> = &lt;Quantity 300. MHz&gt;</em><a class="headerlink" href="#arts_localisation.constants.BANDWIDTH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bandwidth</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.CB_HPBW">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">CB_HPBW</code><em class="property"> = &lt;Quantity 28.0835088 arcmin&gt;</em><a class="headerlink" href="#arts_localisation.constants.CB_HPBW" title="Permalink to this definition">¶</a></dt>
+<dd><p>CB half-power width</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.CB_MODEL_FILE">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">CB_MODEL_FILE</code><em class="property"> = 'beam_models_190607.csv'</em><a class="headerlink" href="#arts_localisation.constants.CB_MODEL_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to fitted CB model parameters</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.CB_OFFSETS">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">CB_OFFSETS</code><em class="property"> = 'square_39p1.cb_offsets'</em><a class="headerlink" href="#arts_localisation.constants.CB_OFFSETS" title="Permalink to this definition">¶</a></dt>
+<dd><p>File with definition of CB offsets</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.DISH_A10">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">DISH_A10</code><em class="property"> = &lt;Quantity [[   0.,    0.,    0.],            [   0.,  144.,    0.],            [   0.,  288.,    0.],            [   0.,  432.,    0.],            [   0.,  576.,    0.],            [   0.,  720.,    0.],            [   0.,  864.,    0.],            [   0., 1008.,    0.],            [   0., 1152.,    0.],            [   0., 1296.,    0.]] m&gt;</em><a class="headerlink" href="#arts_localisation.constants.DISH_A10" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dish positions in Apertif-10 setup</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.DISH_A8">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">DISH_A8</code><em class="property"> = &lt;Quantity [[   0.,    0.,    0.],            [   0.,  144.,    0.],            [   0.,  288.,    0.],            [   0.,  432.,    0.],            [   0.,  576.,    0.],            [   0.,  720.,    0.],            [   0.,  864.,    0.],            [   0., 1008.,    0.]] m&gt;</em><a class="headerlink" href="#arts_localisation.constants.DISH_A8" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dish positions in Apertif-8 setup</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.DISH_MAXISHORT">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">DISH_MAXISHORT</code><em class="property"> = &lt;Quantity [[   0.,    0.,    0.],            [   0.,  144.,    0.],            [   0.,  288.,    0.],            [   0.,  432.,    0.],            [   0.,  576.,    0.],            [   0.,  720.,    0.],            [   0.,  864.,    0.],            [   0., 1008.,    0.],            [   0., 1044.,    0.],            [   0., 1098.,    0.],            [   0., 2340.,    0.],            [   0., 2412.,    0.]] m&gt;</em><a class="headerlink" href="#arts_localisation.constants.DISH_MAXISHORT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dish positions in Maxi-short setup</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.DISH_POS_ITRF">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">DISH_POS_ITRF</code><em class="property"> = &lt;Quantity [[3828729.99081359,  442735.17696417, 5064923.00829   ],            [3828713.43109885,  442878.2118934 , 5064923.00436   ],            [3828696.86994428,  443021.24917264, 5064923.00397   ],            [3828680.31391933,  443164.28596862, 5064923.00035   ],            [3828663.75159173,  443307.32138056, 5064923.00204   ],            [3828647.19342757,  443450.35604638, 5064923.0023    ],            [3828630.63486201,  443593.39226634, 5064922.99755   ],            [3828614.07606798,  443736.42941621, 5064923.        ],            [3828609.94224429,  443772.19450029, 5064922.99868   ],            [3828603.73202612,  443825.83321168, 5064922.99963   ],            [3828460.92418735,  445059.52053929, 5064922.99071   ],            [3828452.64716351,  445131.03744105, 5064922.98793   ]] m&gt;</em><a class="headerlink" href="#arts_localisation.constants.DISH_POS_ITRF" title="Permalink to this definition">¶</a></dt>
+<dd><p>ITRF positions of RT2 - RTD in maxi-short setup</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.DISH_SIZE">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">DISH_SIZE</code><em class="property"> = &lt;Quantity 25. m&gt;</em><a class="headerlink" href="#arts_localisation.constants.DISH_SIZE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dish diameter</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.NCB">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">NCB</code><em class="property"> = 40</em><a class="headerlink" href="#arts_localisation.constants.NCB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of compound beams</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.NSB">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">NSB</code><em class="property"> = 71</em><a class="headerlink" href="#arts_localisation.constants.NSB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of synthesised beams</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.NTAB">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">NTAB</code><em class="property"> = 12</em><a class="headerlink" href="#arts_localisation.constants.NTAB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of TABs</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.REF_FREQ">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">REF_FREQ</code><em class="property"> = &lt;Quantity 1770. MHz&gt;</em><a class="headerlink" href="#arts_localisation.constants.REF_FREQ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reference frequency for CB half-power width</p>
+</dd></dl>
+
+<dl class="py data">
+<dt id="arts_localisation.constants.WSRT_LOC">
+<code class="sig-prename descclassname">arts_localisation.constants.</code><code class="sig-name descname">WSRT_LOC</code><em class="property"> = &lt;EarthLocation (3828650.54968618, 443252.05024168, 5064870.28518566) m&gt;</em><a class="headerlink" href="#arts_localisation.constants.WSRT_LOC" title="Permalink to this definition">¶</a></dt>
+<dd><p>WSRT location</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">ARTS Localisation</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Core modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-arts_localisation.run_localisation">Localisation runner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-arts_localisation.calc_snr">S/N determination</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-arts_localisation.config_parser">Config parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-arts_localisation.tools">Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-arts_localisation.constants">Constants</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="beam_models.html">Beam model modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_tools.html">Data tool modules</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="install.html" title="previous chapter">Installation</a></li>
+      <li>Next: <a href="beam_models.html" title="next chapter">Beam model modules</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Leon Oostrum.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/_modules/core_modules.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

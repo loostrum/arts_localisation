@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Welcome to ARTS Localisation’s documentation! &#8212; ARTS Localisation 0.1 documentation</title>
+    <title>ARTS Localisation &#8212; ARTS Localisation 0.1 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -32,21 +32,26 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="welcome-to-arts-localisation-s-documentation">
-<h1>Welcome to ARTS Localisation’s documentation!<a class="headerlink" href="#welcome-to-arts-localisation-s-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="arts-localisation">
+<h1>ARTS Localisation<a class="headerlink" href="#arts-localisation" title="Permalink to this headline">¶</a></h1>
+<p>This project contains all necessary tools to localise transient bursts discovered with the Apertif Radio Transient
+System (ARTS). The localisation uses a chi squared method, comparing the S/N of a detected burst across beams to a model
+of the telescope response. The beam model includes a simulation of the ARTS tied-array beamformer and the
+generation of synthesised beams (SBs). The beam model and localisation method are described in more detail in my
+PhD thesis: <a class="reference external" href="http://hdl.handle.net/11245.1/abe5c8fa-1fdf-490b-ac0d-61e946f5791f">Fast Radio Bursts with Apertif</a>.</p>
 </div>
-<div class="section" id="workflow">
-<h1>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="localisation-overview">
+<h1>Localisation overview<a class="headerlink" href="#localisation-overview" title="Permalink to this headline">¶</a></h1>
 <p>In short, the localistion consists of the following steps:</p>
 <ol class="arabic simple">
 <li><p>Note in which CBs the FRB was detected.</p></li>
 <li><p>Save a snippet for the detection CBs, as well as for all surrounding CBs.</p></li>
-<li><p>Get S/N in all SBs of these CBs.</p></li>
-<li><p>Decide which CBs to use for localisation</p></li>
-<li><p>Create a configuration file for the localisation</p></li>
-<li><p>Run the localisation at coarse resolution</p></li>
+<li><p>Create a configuration file with the settings to use to S/N determination</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">arts_calc_snr</span></code></p></li>
+<li><p>Add localisation settings to the configuration file, using coarse resolution</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">arts_run_localisation</span></code></p></li>
 <li><p>Repeat the previous step with different settings until the entire uncertainty region is covered</p></li>
-<li><p>Run the localisation at high resolution</p></li>
+<li><p>Re-run the localisation at high resolution</p></li>
 </ol>
 </div>
 <div class="section" id="contents">
@@ -54,9 +59,24 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="_modules/install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="_modules/modules.html">Module overview</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="_modules/modules.html#module-arts_localisation.constants">Constants</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_modules/modules.html#converter-tools">Converter tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_modules/core_modules.html">Core modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="_modules/core_modules.html#module-arts_localisation.run_localisation">Localisation runner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_modules/core_modules.html#module-arts_localisation.calc_snr">S/N determination</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_modules/core_modules.html#module-arts_localisation.config_parser">Config parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_modules/core_modules.html#module-arts_localisation.tools">Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_modules/core_modules.html#module-arts_localisation.constants">Constants</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="_modules/beam_models.html">Beam model modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="_modules/beam_models.html#module-arts_localisation.beam_models.beamformer">Beamformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_modules/beam_models.html#module-arts_localisation.beam_models.compound_beam">Compound Beam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_modules/beam_models.html#module-arts_localisation.beam_models.sb_generator">Synthesised Beam Generator</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="_modules/data_tools.html">Data tool modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="_modules/data_tools.html#module-arts_localisation.data_tools.filterbank_reader">Filterbank Reader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_modules/data_tools.html#module-arts_localisation.data_tools.snr_tools">S/N calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_modules/data_tools.html#module-arts_localisation.data_tools.spectra">Spectra</a></li>
 </ul>
 </li>
 </ul>
@@ -90,7 +110,9 @@
 <h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="_modules/install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="_modules/modules.html">Module overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_modules/core_modules.html">Core modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_modules/beam_models.html">Beam model modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_modules/data_tools.html">Data tool modules</a></li>
 </ul>
 
 <div class="relations">

@@ -12,7 +12,7 @@
 #
 import os
 import sys
-from arts_localisation.__version__ import version
+from arts_localisation import __version__
 sys.path.insert(0, os.path.abspath('..'))
 
 
@@ -33,7 +33,7 @@ copyright = '2020, Leon Oostrum'
 author = 'Leon Oostrum'
 
 # The full version, including alpha/beta/rc tags
-release = version
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------

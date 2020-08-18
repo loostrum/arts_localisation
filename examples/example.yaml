@@ -1,45 +1,61 @@
 # Template configuration file for localisation
 
 
-# global settings
+# global settings, used both for S/N determination and for localisation
 global:
+    # S/N threshold to use
+    snrmin: 8
+
+    # minimum and maximum frequency to use, in MHz
+    # if set to values outside of the frequency range of the data, the full
+    # band will be used
+    fmin: 1300
+    #fmax:
+
+    # lowest frequency of data, in MHz.
+    # Usually 1219.70092773 MHz for Apertif (central freq ~1370 MHz)
+    fmin_data: 1219.70092773
+    # bandwidth of the data, in MHz. 300 MHz for Apertif
+    bandwidth: 300
+
+# settings only used for S/N determination
+snr:
+    # Note: These settings can be set on the command line when running the S/N calculation as well.
+    # Those would overwrite the values in this config file
+
+    # CB/SB of main detection, used to determine where in the file the burst is located
+    main_cb: 0
+    main_sb: 35
+    # Window size (seconds) when loading raw data, should be at least twice the DM delay across the band
+    window_load: 2.0
+    # Window size (seconds) when zooming in on pulse
+    window_zoom: 0.5
+    # path to filterbank snippets. Use {cb} and {tab} in place of CB and TAB index
+    filterbank: 'data/CB{cb}_10.0sec_dm0_t03610_sb-1_tab{tab}.fil'
+    # list of CBs to calculate S/N for.
+    cbs: [0]
+    # If neighbours = True, also calculate S/N for CBs surrounding those in the CB list
+    neighbours: False
+    # dispersion measure in pc/cm^3
+    dm: 350
+
+localisation:
+    # Note: These settings can be set on the command line when running the localisation as well.
+    # Those would overwrite the values in this config file
+
     # actual source position, if known. Values must be in decimal degrees
     #source_ra:
     #source_dec:
 
-    # note: The settings below this line can be set on the command line when running
-    # the localisation as well. Those would overwrite the values in this config file
-    #
-    # S/N threshold used in determining S/N at each SB
-    # This can also be set per burst, which takes precedence over this global value
-    snrmin: 8
-
     # centroid of localisation region, in decimal degrees
     ra: 180.0
     dec: 30.0
-
     # size of localisation region, in arcminutes
     size: 5.0
-
     # localisation resolution, in arcseconds
     resolution: 10.0
-
-
     # CB model type, one of gauss, airy, real
     cb_model: "gauss"
-
-    # minimum and maximum frequency to use for localisation, in MHz
-    # if set to values outside of the frequency range of the data, the full
-    # band will be used
-    fmin: 1300
-    
-    # lowest frequency of data, in MHz.
-    # Usually 1219.70092773 MHz for Apertif (central freq ~1370 MHz)
-    fmin_data: 1219.70092773
-
-    # bandwidth of the data, in MHz. 300 MHz for Apertif
-    bandwidth: 300
-
 
 # example burst, name can be anything
 burst00:
@@ -54,7 +70,7 @@ burst00:
     # during the observation was zero (which is the default).
     # If not, as is the case e.g. for drift scans, manually put in the RA, Dec in
     # the subsection for each CB
-    #pointing_ra: 
+    #pointing_ra:
     #pointing_dec:
 
     # reference CB, should the subsection name of one of the CBs
@@ -68,7 +84,7 @@ burst00:
         # these are optional if a telescope pointing is given
         ra: 180.1
         dec: 30.1
-        
+
         # Path to file with S/N of each SB. Should be full path or relative to this file
         # comment out to treat this as an upper limit beam
         snr_array: 'example_snr_array.txt'
@@ -76,8 +92,3 @@ burst00:
         # SEFD estimate for this CB in Jy (for CB center)
         # comment out to use default value
         sefd: 80
-    
-        # To overwite the global S/N threshold, change the value here
-        #snrmin:
-
-    

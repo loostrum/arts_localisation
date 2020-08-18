@@ -187,7 +187,7 @@ def parse_yaml(fname, for_snr=False):
                 # if the file still cannot be found, give a warning
                 if not os.path.isfile(snr_array_path):
                     logger.warning(f'Cannot find S/N array file {snr_array_path}')
-                conf_burst['snr_array'] = snr_array_path
+                conf_burst[beam]['snr_array'] = snr_array_path
             else:
                 logger.info("No S/N array found for {} of burst {}, assuming it "
                             "is an upper limit beam".format(beam, burst))

@@ -134,6 +134,7 @@ def main():
     group_overwrites.add_argument('--size', type=float, help='Localisation area size (arcmin)')
     group_overwrites.add_argument('--fmin', type=float, help='Ignore frequency below this value in MHz')
     group_overwrites.add_argument('--fmax', type=float, help='Ignore frequency below this value in MHz')
+    group_overwrites.add_argument('--snrmin', type=float, help='S/N threshold')
     group_overwrites.add_argument('--fmin_data', type=float, help='Lowest frequency of data')
     group_overwrites.add_argument('--bandwidth', type=float, help='Bandwidth of data')
     group_overwrites.add_argument('--cb_model', help='CB model type')
@@ -155,15 +156,15 @@ def main():
     output_prefix = os.path.join(args.output_folder, os.path.basename(args.config).replace('.yaml', ''))
 
     # Define global RA, Dec localisation area
-    grid_size = config['global']['size']  # in arcmin
-    grid_res = config['global']['resolution'] / 60  # converted from arcsec to arcmin
+    grid_size = config['size']  # in arcmin
+    grid_res = config['resolution'] / 60  # converted from arcsec to arcmin
     dracosdec = np.arange(-grid_size / 2, grid_size / 2 + grid_res, grid_res) * u.arcmin
     ddec = np.arange(-grid_size / 2, grid_size / 2 + grid_res, grid_res) * u.arcmin
 
     dRACOSDEC, dDEC = np.meshgrid(dracosdec, ddec)
 
-    DEC = config['global']['dec'] * u.deg + dDEC
-    RA = config['global']['ra'] * u.deg + dRACOSDEC / np.cos(DEC)
+    DEC = config['dec'] * u.deg + dDEC
+    RA = config['ra'] * u.deg + dRACOSDEC / np.cos(DEC)
 
     # store size
     numY, numX = RA.shape
@@ -210,9 +211,9 @@ def main():
             dDEC_loc = (DEC_loc - hadec_cb.dec)
 
             # generate the SB model with CB as phase center
-            sbp = SBPattern(hadec_cb.ra, hadec_cb.dec, dHACOSDEC_loc, dDEC_loc, fmin=config['global']['fmin'] * u.MHz,
-                            fmax=config['global']['fmax'] * u.MHz, min_freq=config['global']['fmin_data'] * u.MHz,
-                            cb_model=config['global']['cb_model'], cbnum=int(CB[2:]))
+            sbp = SBPattern(hadec_cb.ra, hadec_cb.dec, dHACOSDEC_loc, dDEC_loc, fmin=config['fmin'] * u.MHz,
+                            fmax=config['fmax'] * u.MHz, min_freq=config['fmin_data'] * u.MHz,
+                            cb_model=config['cb_model'], cbnum=int(CB[2:]))
             # get pattern integrated over frequency
             # TODO: spectral indices?
             sb_model = sbp.beam_pattern_sb_int
@@ -273,10 +274,10 @@ def main():
                 print(f"Adding {nnondet} non-detections")
                 # only select points where the modelled S/N is above the threshold
                 snr_model_nondet = snr_model[sb_non_det]
-                points = np.where(snr_model_nondet > config['global']['snrmin'])
+                points = np.where(snr_model_nondet > config['snrmin'])
                 # temporarily create an array holding the chi2 values to add per SB
                 chi2_to_add = np.zeros_like(snr_model_nondet)
-                chi2_to_add[points] += (snr_model_nondet[points] - config['global']['snrmin']) ** 2
+                chi2_to_add[points] += (snr_model_nondet[points] - config['snrmin']) ** 2
                 # sum over SBs and add
                 chi2[CB] += chi2_to_add.sum(axis=0)
 
@@ -300,7 +301,7 @@ def main():
         max_dchi2 = stats.chi2.ppf(args.conf_int, dof)
         dchi2_total = chi2_total - chi2_total.min()
         npix_below_max = (dchi2_total < max_dchi2).sum()
-        pix_area = ((config['global']['resolution'] * u.arcsec) ** 2)
+        pix_area = ((config['resolution'] * u.arcsec) ** 2)
         total_area = pix_area * npix_below_max
         print("Found {} pixels below within {}% confidence region".format(npix_below_max, args.conf_int * 100))
         print(f"Area of one pixel is {pix_area} ")
@@ -311,8 +312,8 @@ def main():
         coord_best = SkyCoord(RA[ind], DEC[ind])
 
         print("Best position: {}".format(coord_best.to_string('hmsdms')))
-        if config['global']['source_coord'] is not None:
-            coord_src = SkyCoord(*config['global']['source_coord'])
+        if config['source_coord'] is not None:
+            coord_src = SkyCoord(*config['source_coord'])
             print("Source position: {}".format(coord_src.to_string('hmsdms')))
             print("Separation: {}".format(coord_src.separation(coord_best).to(u.arcsec)))
 
@@ -340,7 +341,7 @@ def main():
                 print(summary)
 
         # plot
-        central_freq = int(np.round(config['global']['fmin_data'] + config['global']['bandwidth'] / 2)) * u.MHz
+        central_freq = int(np.round(config['fmin_data'] + config['bandwidth'] / 2)) * u.MHz
         if not args.noplot:
             # per CB
             for CB in burst_config['beams']:
@@ -365,3 +366,7 @@ def main():
                 fig.savefig(f'{output_prefix}_{burst}_total.pdf')
             else:
                 plt.show()
+
+
+if __name__ == '__main__':
+    main()

@@ -80,7 +80,8 @@ def main():
     else:
         logger.setLevel(logging.INFO)
     # set the CBs argument as a proper list
-    args.cbs = [int(val) for val in args.cbs.split(',')]
+    if args.cbs is not None:
+        args.cbs = [int(val) for val in args.cbs.split(',')]
 
     # load config for S/N determination
     config = load_config(args, for_snr=True)

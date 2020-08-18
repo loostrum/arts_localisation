@@ -6,7 +6,7 @@ import tqdm
 import numpy as np
 import astropy.units as u
 
-from .compound_beam import CompoundBeam
+from arts_localisation.beam_models.compound_beam import CompoundBeam
 from arts_localisation.constants import THETAMAX_CB, PHIMAX_CB, NTHETA_CB, NPHI_CB
 
 

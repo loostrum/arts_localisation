@@ -7,6 +7,15 @@ from scipy import correlate
 
 
 def calc_snr_amber(data, thresh=3):
+    """
+    Calculate peak S/N using the same method as AMBER:
+    Outliers are removed four times before calculating the S/N as peak - median / sigma
+    The result is scaled by 1.048 to account for the removed values
+
+    :param array data: timeseries data
+    :param float thresh: sigma threshold for outliers (Default: 3)
+    :return: peak S/N
+    """
     sig = np.std(data)
     dmax = data.max()
     dmed = np.median(data)
@@ -23,6 +32,14 @@ def calc_snr_amber(data, thresh=3):
 
 
 def calc_snr_matched_filter(data, widths=None):
+    """
+    Calculate S/N using several matched filter widths, then pick the highest S/N
+
+    :param array data: timeseries data
+    :param list widths: matched filters widhts to try
+                        (Default: [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500])
+    :return: highest S/N, corresponding matched filter width
+    """
     if widths is None:
         # all possible widths as used by AMBER
         widths = [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500]

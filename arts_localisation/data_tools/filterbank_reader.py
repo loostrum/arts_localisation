@@ -20,6 +20,14 @@ class ARTSFilterbankReaderError(Exception):
 
 class ARTSFilterbankReader:
     def __init__(self, fname, cb, ntab=NTAB, median_filter=True):
+        """
+        Filterbank reader for ARTS data, one file per TAB
+
+        :param str fname: path to filterbank files, with {cb:02d} and {tab:02d} for CB and TAB indices
+        :param int cb: CB index
+        :param int ntab: Number of TABs (Default: NTAB from constants)
+        :param bool median_filter: Enable median removal (Default: True)
+        """
         self.ntab = ntab
         self.median_filter = median_filter
         self.fnames = [fname.format(cb=cb, tab=tab) for tab in range(ntab)]
@@ -33,7 +41,13 @@ class ARTSFilterbankReader:
         # initialize the SB Generator for SC4
         self.sb_generator = SBGenerator.from_science_case(4)
 
-    def get_fil_params(self, tab):
+    def get_fil_params(self, tab=0):
+        """
+        Read filterbank parameters
+
+        :param int tab: TAB index (Default: 0)
+        :return: nfreq (int), freqs (array), nsamp (int), tsamp (float)
+        """
         fil = Waterfall(self.fnames[tab], load_data=False)
         # read data shape
         nsamp, _, nfreq = fil.file_shape
@@ -43,6 +57,14 @@ class ARTSFilterbankReader:
         return nfreq, freqs, nsamp, fil.header['tsamp']
 
     def read_filterbank(self, tab, startbin, chunksize):
+        """
+        Read a chunk of filterbank data
+
+        :param int tab: TAB index
+        :param int startbin: Index of first time sample to read
+        :param int chunksize: Number of time samples to read
+        :return: chunk of data with shape (nfreq, chunksize)
+        """
         fil = Waterfall(self.fnames[tab], load_data=False)
         # read chunk of data
         fil.read_data(None, None, startbin, startbin + chunksize)
@@ -53,6 +75,13 @@ class ARTSFilterbankReader:
         return data
 
     def read_tabs(self, startbin, chunksize, tabs=None):
+        """
+        Read TAB data
+
+        :param int startbin: Index of first time sample to read
+        :param int chunksize: Number of time samples to read
+        :param list tabs: which TABs to read (Default: all)
+        """
         tab_data = np.zeros((self.ntab, self.nfreq, chunksize))
         if tabs is None:
             tabs = range(self.ntab)
@@ -66,6 +95,12 @@ class ARTSFilterbankReader:
         self.times = np.arange(chunksize) * self.tsamp
 
     def get_sb(self, sb):
+        """
+        Construct an SB. TAB data must be read before calling this method
+
+        :param int sb: SB index
+        :return: Spectra object with SB data
+        """
         if self.tab_data is None:
             raise ARTSFilterbankReaderError(f"No TAB data available, run {__class__.__name__}.read_tabs first")
         # synthesize the beam
@@ -74,6 +109,15 @@ class ARTSFilterbankReader:
         return Spectra(self.freqs, self.tsamp, sb_data, starttime=self.startbin * self.tsamp, dm=0)
 
     def load_single_sb(self, sb, startbin, chunksize):
+        """
+        Convenience tool to read only a single SB and its associated TABs.
+        *Note*: Any internal TAB data is cleared after calling this method
+
+        :param int sb: SB index
+        :param int startbin: Index of first time sample to read
+        :param int chunksize: Number of time samples to read
+        :return: Spectra object with SB data
+        """
         # load the data of the required TABs
         tabs = set(self.sb_generator.get_map(sb))
         self.read_tabs(startbin, chunksize, tabs)

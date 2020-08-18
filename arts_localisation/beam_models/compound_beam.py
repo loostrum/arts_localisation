@@ -16,12 +16,15 @@ from arts_localisation.constants import CB_HPBW, REF_FREQ, DISH_SIZE, CB_MODEL_F
 
 def gauss_2d(xy, x_mean, x_sig, y_mean, y_sig, rho):
     """
-    xy: 2xN array of x, y values
-    x_mean: mean of x
-    x_sig: sigma of x
-    y_mean: mean of y
-    y_sig: sigma of y
-    rho: correlation between x and y
+    Construct a 2D Gaussian
+
+    :param array xy: 2xN array of x, y values
+    :param float x_mean: mean of x
+    :param float x_sig: sigma of x
+    :param float y_mean: mean of y
+    :param float y_sig: sigma of y
+    :param float rho: correlation between x and y
+    :return: An NxN array with the Gaussian distribution
     """
     x, y = xy
     a = -1 / (2 * (1 - rho ** 2))
@@ -77,23 +80,25 @@ class CompoundBeam:
     def beam_pattern(self, mode, cb=None):
         """
         Return beam pattern for given mode
-        :param mode: gauss, airy, real
-        :param cb: beam number (real beam)
+
+        :param str mode: gauss, airy, or real
+        :param int cb: beam number (only used for real beam)
         :return: beam pattern
         """
 
         if mode == 'gauss':
-            return self.__gaussian()
+            return self._gaussian()
         elif mode == 'real':
-            return self.__real(cb)
+            return self._real(cb)
         elif mode == 'airy':
-            return self.__airy()
+            return self._airy()
         else:
             raise ValueError("Mode should be gauss, real, or airy")
 
-    def __gaussian(self):
+    def _gaussian(self):
         """
         Gaussian beam pattern
+
         :return: beam pattern
         """
 
@@ -117,9 +122,10 @@ class CompoundBeam:
 
         return output_grid
 
-    def __airy(self):
+    def _airy(self):
         """
         Airy disk beam pattern
+
         :return: beam pattern
         """
         if self.grid:
@@ -145,11 +151,13 @@ class CompoundBeam:
 
         return out
 
-    def __real(self, cb, thresh=.5):
+    def _real(self, cb, thresh=.5):
         """
         Measured beam pattern
-        :param cb: beam number
-        :param thresh: max NaN fraction, reverts to default gaussian above this
+
+        :param int cb: beam number
+        :param flaot thresh: max NaN fraction, reverts to default gaussian above this
+                            (Default: 0.5)
         :return: beam pattern
         """
         n = 40

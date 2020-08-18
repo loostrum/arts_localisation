@@ -15,26 +15,27 @@ from arts_localisation.constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIS
 class SBPattern:
 
     def __init__(self, ha, dec, dha, ddec, sbs=None, load=False, fname=None, memmap_file=None, cb_model='gauss', cbnum=None,
-                 min_freq=1220 * u.MHz, fmin=1220 * u.MHz, fmax=1520 * u.MHz, nfreq=64):
+                 min_freq=1220 * u.MHz, fmin=1220 * u.MHz, fmax=1520 * u.MHz, nfreq=64, dish_mode='a8'):
         """
-        Generate Synthesized Beam pattern
-        :param ha: hour angle of phase center
-        :param dec: declination of phase center
-        :param dha: array of hour angle offset coords (without cos(dec) factor)
-        :param ddec: array of declination offset coords
-        :param sbs: array of SBs to generate [Default: all]
-        :param load: load beam pattern from disk instead of generating
-        :param fname: file containing beam pattern
-        :param memmap_file: file to use for memmap (Default: no memmap)
-        :param cb_model: CB model type to use (default: gauss)
-        :param cbnum: which CB to use for modelling (only relevant if cb_model is 'real')
-        :param min_freq: lowest frequency of data
-        :param fmin: minimum frequency to consider (Default 1220 MHz)
-        :param fmax: maximum frequency to consider (Default: 1520 MHz)
-        :param nfreq: number of frequency channels, should be multiple of nsub=32 (default:64)
+        Generate Synthesised Beam pattern.
+
+        :param Quantity ha: hour angle of phase center
+        :param Quantity dec: declination of phase center
+        :param array dha: array of hour angle offset coords (without cos(dec) factor), with unit
+        :param array ddec: array of declination offset coords, with unit
+        :param array sbs: array of SBs to generate [Default: all]
+        :param bool load: load beam pattern from disk instead of generating
+        :param str fname: file containing beam pattern
+        :param str memmap_file: file to use for memmap (Default: no memmap)
+        :param str cb_model: CB model type to use (default: gauss)
+        :param int cbnum: which CB to use for modelling (only relevant if cb_model is 'real')
+        :param Quantity min_freq: lowest frequency of data
+        :param Quantity: minimum frequency to consider (Default 1220 MHz)
+        :param Quantity: maximum frequency to consider (Default: 1520 MHz)
+        :param int nfreq: number of frequency channels, should be multiple of nsub=32 (default:64)
+        :param str dish_mode: Apertif setup (Default: a8, i.e. 8 equidistant dishes)
 
         """
-        dish_mode = 'a8'
         df = 300. * u.MHz / nfreq
 
         # fname is required when load is True
@@ -142,7 +143,8 @@ class SBPattern:
     def save(self, prefix):
         """
         Save on-sky SB and TAB maps
-        :param prefix: file name prefix
+
+        :param str prefix: file name prefix
         """
 
         fname_tab = f"models/tied-array_beam_pattern_{prefix}"
@@ -151,6 +153,12 @@ class SBPattern:
         np.save(fname_sb, self.beam_pattern_sb_int)
 
     def plot(self, show=True, tab=0):
+        """
+        Plot the generated pattern
+
+        :param bool show: Also show the plot
+        :param int tab: TAB to plot
+        """
         print("Plotting")
         # kwargs = {'vmin': .05, 'norm': LogNorm()}
         kwargs = {'vmin': .05}

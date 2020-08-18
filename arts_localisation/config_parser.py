@@ -23,6 +23,7 @@ REQUIRED_KEYS_LOC = ('ra', 'dec', 'size', 'resolution', 'cb_model')
 def parse_yaml(fname, for_snr=False):
     """
     Parse a yaml file with settings for burst localisation
+
     :param str fname: Path to yaml config file
     :param bool for_snr: Load settings for S/N determination, else load localisation settings
 

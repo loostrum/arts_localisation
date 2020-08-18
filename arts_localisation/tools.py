@@ -24,6 +24,7 @@ def limit(val, minval=-1, maxval=1):
     :param val: input value
     :param minval: minimum value
     :param maxval: maximum value
+    :return: limited value
     """
     # replace < minval
     m = val < minval
@@ -99,6 +100,7 @@ def hadec_to_par(ha, dec, lat=WSRT_LAT):
     :param ha: hour angle with unit
     :param dec: declination with unit
     :param lat: Latitude with unit (default: WSRT)
+    :return: parallactic angle
     """
     theta_par = np.arctan(np.cos(lat) * np.sin(ha)
                           / (np.sin(lat) * np.cos(dec)
@@ -114,6 +116,7 @@ def hadec_to_proj(ha, dec, lat=WSRT_LAT):
     :param ha: hour angle with unit
     :param dec: declination with unit
     :param lat: Latitude with unit (default: WSRT)
+    :return: projection angle
     """
 
     alt, az = hadec_to_altaz(ha, dec, lat)
@@ -130,6 +133,7 @@ def hadec_to_altaz(ha, dec, lat=WSRT_LAT):
     :param ha: hour angle with unit
     :param dec: declination with unit
     :param lat: Latitude with unit (default: WSRT)
+    :return: altitude, azimuth
     """
 
     sinalt = np.sin(dec) * np.sin(lat) + np.cos(dec) * np.cos(lat) * np.cos(ha)
@@ -156,6 +160,7 @@ def altaz_to_hadec(alt, az, lat=WSRT_LAT):
     :param alt: altitude with unit
     :param az: azimuth with unit
     :param lat: Latitude with unit (default: WSRT)
+    :return: hour angle, declination
     """
 
     sindec = np.cos(az) * np.cos(alt) * np.cos(lat) + np.sin(alt) * np.sin(lat)
@@ -284,6 +289,7 @@ def rotate_coordinate_grid(X, Y, angle, origin=None):
     :param Y: input y coordinates
     :param angle: rotation angle
     :param origin: tuple with origin for rotation (default: center of XY grid)
+    :return: rotated X, Y
     """
 
     assert X.shape == Y.shape
@@ -369,6 +375,7 @@ def get_neighbours(cbs):
 def makedirs(path):
     """
     Mimic os.makedirs, but do not error when directory already exists
+
     :param str path: path to recursively create
     """
     try:

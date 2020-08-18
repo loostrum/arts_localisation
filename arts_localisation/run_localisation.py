@@ -27,6 +27,7 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
               src_pos=None):
     """
     Create plot of localisation area
+
     :param chi2: chi2 grid
     :param X: RA or Az
     :param Y: Dec or Alt
@@ -40,6 +41,7 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
     :param loc: legend location (optional)
     :param cb_pos: cb pointing (optional, tuple or list of tuples)
     :param src_pos: source position (tuple)
+    :return: figure
     """
     if mode == 'altaz' and t_arr is None:
         print("t_arr is required in AltAz mode")

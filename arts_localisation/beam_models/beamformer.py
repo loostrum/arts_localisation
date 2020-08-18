@@ -13,6 +13,16 @@ from arts_localisation.constants import NTAB, WSRT_LON
 class BeamFormer:
 
     def __init__(self, dish_pos, freqs, ntab=NTAB, lon=WSRT_LON, ref_pos=None, itrf=True):
+        """
+        ARTS tied-array beamformer simulation
+
+        :param array dish_pos: dish positions with shape (ndish, 3), with unit
+        :param array freqs: Observing frequencies (with unit)
+        :param int ntab: Number of TABs (Default: NTAB from constants)
+        :param Quantity lon: longitude of observatory (Default: WSRT)
+        :param Quantity ref_pos: Observatory reference position relative to dish_pos (Default: None)
+        :param bool itrf: Dish positions and ref position are ITRF coordinates (Default: True)
+        """
         if not isinstance(freqs.value, np.ndarray):
             freqs = np.array([freqs.value]) * freqs.unit
         self.freqs = freqs
@@ -32,6 +42,15 @@ class BeamFormer:
 
     @staticmethod
     def _itrf_to_xyz(dish_pos, lon, ref_pos=None):
+        """
+        Convert ITRF to local XYZ coordinates
+
+        :param array dish_pos: dish positions with shape (ndish, 3), with unit
+        :param Quantity lon: longitude of observatory (Default: WSRT)
+        :param Quantity ref_pos: Observatory reference position relative to dish_pos (Default: None)
+
+        :return: XYZ positions of dishes
+        """
         # rotate by -longitude to get reference to local meridian instead of Greenwich mean meridian
         rot_matrix = np.array([[np.cos(-lon), -np.sin(-lon), 0],
                                [np.sin(-lon), np.cos(-lon), 0],
@@ -44,6 +63,13 @@ class BeamFormer:
         return dish_xyz - ref_xyz
 
     def _get_uvw(self, ha, dec):
+        """
+        Convert sky coordinates to uvw
+
+        :param Quantity ha: hour angle
+        :param Quantity dec: declination
+        :return: array of uvw with shape (ndish, nfreq, 3)
+        """
         rot_matrix = np.array([[np.sin(ha), np.cos(ha), 0],
                               [-np.sin(dec) * np.cos(ha), np.sin(dec) * np.sin(ha), np.cos(dec)],
                               [np.cos(dec) * np.cos(ha), -np.cos(dec) * np.sin(ha), np.sin(dec)]])
@@ -58,6 +84,14 @@ class BeamFormer:
         return uvw
 
     def set_coordinates_and_phases(self, grid_ha, grid_dec, ha0, dec0):
+        """
+        Calculate the geometric phases at each point in the coordinate grid, given a phase centre
+
+        :param array grid_ha: hour angle grid
+        :param array grid_dec: declination grid
+        :param ha0: hour angle of phase centre
+        :param dec0: declination of phase centre
+        """
         assert grid_ha.shape == grid_dec.shape
         self.shape = (self.freqs.shape[0], grid_ha.shape[0], grid_ha.shape[1])
 
@@ -81,11 +115,23 @@ class BeamFormer:
 
     @staticmethod
     @nb.njit('float64[:, :, :](float64[:, :, :, :])', parallel=True)
-    def phase_to_pbeam(phases):
+    def _phase_to_pbeam(phases):
+        """
+        Convert an array of phase offsets to a power beam
+
+        :param array phases: complex phase offsets
+        :return: power beam
+        """
         vbeam = np.exp(1j * 2 * np.pi * phases).sum(axis=0)
         return np.abs(vbeam) ** 2
 
     def beamform(self, tab=0):
+        """
+        Beamform a tied-array beam
+
+        :param int tab: tied-array beam index
+        :return: power beam
+        """
         # define TAB phase offsets
         dphi_tab = np.arange(self.ndish) * tab / self.ntab
 
@@ -93,7 +139,7 @@ class BeamFormer:
         dphi = self.dphi_g + dphi_tab[:, None, None, None]
 
         # create voltage beam and sum over dishes
-        pbeam = self.phase_to_pbeam(dphi)
+        pbeam = self._phase_to_pbeam(dphi)
         # scale by number of dished
         # squared because this is working on intensity beam
         pbeam /= self.ndish ** 2
@@ -104,8 +150,8 @@ class BeamFormer:
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-    import convert
-    from constants import DISH_ITRF, ARRAY_ITRF, WSRT_LON, WSRT_LAT
+    from arts_localisation import tools
+    from arts_localisation.constants import DISH_ITRF, ARRAY_ITRF, WSRT_LON
 
     print("Testing beamformer")
 
@@ -113,7 +159,7 @@ if __name__ == '__main__':
     print("Initializing coordinates")
     # due East, 45 deg above horizon
     # expect TABs parallel to horizon
-    ha0, dec0 = convert.altaz_to_hadec(45 * u.deg, 90 * u.deg)
+    ha0, dec0 = tools.altaz_to_hadec(45 * u.deg, 90 * u.deg)
 
     ddec = np.linspace(-50, 50, 1000) * u.arcmin
     dha = np.linspace(-50, 50, 2000) * u.arcmin
@@ -154,7 +200,7 @@ if __name__ == '__main__':
             txt = f'x={x:.4f}    y={y:.4f}'
         return txt
 
-    ALT, AZ = convert.hadec_to_altaz(HA, DEC)
+    ALT, AZ = tools.hadec_to_altaz(HA, DEC)
 
     fig, ax = plt.subplots(figsize=(9, 9))
     ax.pcolormesh(HA.to(u.deg), DEC.to(u.deg), power)

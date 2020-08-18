@@ -12,8 +12,10 @@ import scipy.signal
 # Adapted from psr_utils
 def rotate(arr, bins):
     """
-    rotate(arr, bins):
-        Return an array rotated by 'bins' places to the left
+    Return an array rotated by 'bins' places to the left
+
+    :param list arr: Input data
+    :param int bins: Number of bins to rotate by
     """
     bins = bins % len(arr)
     if bins == 0:
@@ -26,8 +28,11 @@ def rotate(arr, bins):
 def delay_from_DM(DM, freq_emitted):
     """
     Return the delay in seconds caused by dispersion, given
-    a Dispersion Measure (DM) in cm-3 pc, and the emitted
-    frequency (freq_emitted) of the pulsar in MHz.
+    a Dispersion Measure in cm-3 pc, and the emitted
+    frequency of the pulsar in MHz.
+
+    :param float DM: dispersion measure
+    :param float freq_emitted: frequency
     """
     if isinstance(freq_emitted, float):
         if freq_emitted > 0.0:
@@ -40,25 +45,24 @@ def delay_from_DM(DM, freq_emitted):
 
 
 class Spectra:
-    """A class to store spectra. This is mainly to provide
-        reusable functionality.
+    """
+    A class to store spectra. This is mainly to provide
+    reusable functionality.
     """
     def __init__(self, freqs, dt, data, starttime=0, dm=0):
-        """Spectra constructor.
+        """
+        Spectra constructor
 
-            Inputs:
-                freqs: Observing frequencies for each channel.
-                dt: Sample time (in seconds).
-                data: A 2D numpy array containing pulsar data.
-                        Axis 0 should contain channels. (e.g. data[0,:])
-                        Axis 1 should contain spectra. (e.g. data[:,0])
-                starttime: Start time (in seconds) of the spectra
-                        with respect to the start of the observation.
-                        (Default: 0).
-                dm: Dispersion measure (in pc/cm^3). (Default: 0)
-
-            Output:
-                spectra_obj: Spectrum object.
+        :param list freqs: Observing frequencies for each channel.
+        :param float dt: Sampling time (seconds)
+        :param array data: A 2D numpy array containing pulsar data.
+                           Axis 0 should contain channels. (e.g. data[0,:])
+                           Axis 1 should contain spectra. (e.g. data[:,0])
+        :param float starttime: Start time (in seconds) of the spectra
+                                with respect to the start of the observation.
+                                (Default: 0).
+        :param float dm: Dispersion measure (in pc/cm^3). (Default: 0)
+        :return: Spectra object
         """
         self.numchans, self.numspectra = data.shape
         assert len(freqs) == self.numchans
@@ -85,25 +89,21 @@ class Spectra:
         return self.data[:, specnum]
 
     def shift_channels(self, bins, padval=0):
-        """Shift each channel to the left by the corresponding
-            value in bins, an array.
+        """
+        Shift each channel to the left by the corresponding
+        value in bins, an array.
+        *** Shifting happens in-place ***
 
-            Inputs:
-                bins: An array containing the number of bins
-                    to shift each channel by.
-                padval: Value to use when shifting near the edge
-                    of a channel. This can be a numeric value,
-                    'median', 'mean', or 'rotate'.
+        :param array bins: An array containing the number of bins
+                           to shift each channel by.
+        :param float/str padval: Value to use when shifting near the edge
+                                 of a channel. This can be a numeric value,
+                                 'median', 'mean', or 'rotate'.
 
-                    The values 'median' and 'mean' refer to the
-                    median and mean of the channel. The value
-                    'rotate' takes values from one end of the
-                    channel and shifts them to the other.
-
-            Outputs:
-                None
-
-            *** Shifting happens in-place ***
+                                 The values 'median' and 'mean' refer to the
+                                 median and mean of the channel. The value
+                                 'rotate' takes values from one end of the
+                                 channel and shifts them to the other.
         """
         assert self.numchans == len(bins)
         for ii in range(self.numchans):
@@ -127,25 +127,21 @@ class Spectra:
                     chan[:-bins[ii]] = pad
 
     def subband(self, nsub, subdm=None, padval=0):
-        """Reduce the number of channels to 'nsub' by subbanding.
-            The channels within a subband are combined using the
-            DM 'subdm'. 'padval' is passed to the call to
-            'Spectra.shift_channels'.
+        """
+        Reduce the number of channels to 'nsub' by subbanding.
+        The channels within a subband are combined using the
+        DM 'subdm'. 'padval' is passed to the call to
+        'Spectra.shift_channels'.
+        *** Subbanding happens in-place ***
 
-            Inputs:
-                nsub: Number of subbands. Must be a factor of
-                    the number of channels.
-                subdm: The DM with which to combine channels within
-                    each subband (Default: don't shift channels
-                    within each subband)
-                padval: The padding value to use when shifting
-                    channels during dedispersion. See documentation
-                    of Spectra.shift_channels. (Default: 0)
-
-            Outputs:
-                None
-
-            *** Subbanding happens in-place ***
+        :param int nsub: Number of subbands. Must be a factor of
+                         the number of channels.
+        :param float subdm: The DM with which to combine channels within
+                            each subband (Default: don't shift channels
+                            within each subband)
+        :param float/str padval: The padding value to use when shifting
+                                 channels during dedispersion. See documentation
+                                 of Spectra.shift_channels. (Default: 0)
         """
         assert (self.numchans % nsub) == 0
         assert (subdm is None) or (subdm >= 0)
@@ -170,18 +166,17 @@ class Spectra:
         self.numchans = nsub
 
     def scaled(self, indep=False):
-        """Return a scaled version of the Spectra object.
-            When scaling subtract the median from each channel,
-            and divide by global std deviation (if indep==False), or
-            divide by std deviation of each row (if indep==True).
+        """
+        Return a scaled version of the Spectra object.
+        When scaling subtract the median from each channel,
+        and divide by global std deviation (if indep==False), or
+        divide by std deviation of each row (if indep==True).
 
-            Input:
-                indep: Boolean. If True, scale each row
-                    independantly (Default: False).
+        :param bool indep: If True, scale each row
+                           independently (Default: False).
 
-            Output:
-                scaled_spectra: A scaled version of the
-                    Spectra object.
+        :return: scaled_spectra: A scaled version of the
+                 Spectra object.
         """
         other = copy.deepcopy(self)
         if not indep:
@@ -195,18 +190,17 @@ class Spectra:
         return other
 
     def scaled2(self, indep=False):
-        """Return a scaled version of the Spectra object.
-            When scaling subtract the min from each channel,
-            and divide by global max (if indep==False), or
-            divide by max of each row (if indep==True).
+        """
+        Return a scaled version of the Spectra object.
+        When scaling subtract the min from each channel,
+        and divide by global max (if indep==False), or
+        divide by max of each row (if indep==True).
 
-            Input:
-                indep: Boolean. If True, scale each row
-                    independantly (Default: False).
+        :param bool indep: If True, scale each row
+                           independently (Default: False).
 
-            Output:
-                scaled_spectra: A scaled version of the
-                    Spectra object.
+        :return: scaled_spectra: A scaled version of the
+                 Spectra object.
         """
         other = copy.deepcopy(self)
         if not indep:
@@ -220,23 +214,22 @@ class Spectra:
         return other
 
     def masked(self, mask, maskval='median-mid80'):
-        """Replace masked data with 'maskval'. Returns
-            a masked copy of the Spectra object.
+        """
+        Replace masked data with 'maskval'. Returns
+        a masked copy of the Spectra object.
 
-            Inputs:
-                mask: An array of boolean values of the same size and shape
-                    as self.data. True represents an entry to be masked.
-                maskval: Value to use when masking. This can be a numeric
-                    value, 'median', 'mean', or 'median-mid80'.
+        :param array mask: An array of boolean values of the same size and shape
+                           as self.data. True represents an entry to be masked.
+        :param str maskval: Value to use when masking. This can be a numeric
+                            value, 'median', 'mean', or 'median-mid80'.
 
-                    The values 'median' and 'mean' refer to the median and
-                    mean of the channel, respectively. The value 'median-mid80'
-                    refers to the median of the channel after the top and bottom
-                    10% of the sorted channel is removed.
-                    (Default: 'median-mid80')
+                            The values 'median' and 'mean' refer to the median and
+                            mean of the channel, respectively. The value 'median-mid80'
+                            refers to the median of the channel after the top and bottom
+                            10% of the sorted channel is removed.
+                            (Default: 'median-mid80')
 
-            Output:
-                maskedspec: A masked version of the Spectra object.
+        :return: maskedspec: A masked version of the Spectra object.
         """
         assert self.data.shape == mask.shape
         maskvals = np.ones(self.numchans)
@@ -257,19 +250,15 @@ class Spectra:
         return self
 
     def dedisperse(self, dm=0, padval=0):
-        """Shift channels according to the delays predicted by
-            the given DM.
+        """
+        Shift channels according to the delays predicted by
+        the given DM.
+        *** Dedispersion happens in place ***
 
-            Inputs:
-                dm: The DM (in pc/cm^3) to use.
-                padval: The padding value to use when shifting
-                    channels during dedispersion. See documentation
-                    of Spectra.shift_channels. (Default: 0)
-
-            Outputs:
-                None
-
-            *** Dedispersion happens in place ***
+        :param float dm: The DM (in pc/cm^3) to use.
+        :param float/str padval: The padding value to use when shifting
+                                 channels during dedispersion. See documentation
+                                 of Spectra.shift_channels. (Default: 0)
         """
         assert dm >= 0
         ref_delay = delay_from_DM(dm - self.dm, np.max(self.freqs))
@@ -282,24 +271,19 @@ class Spectra:
         self.dm = dm
 
     def smooth(self, width=1, padval=0):
-        """Smooth each channel by convolving with a top hat
-            of given width. The height of the top had is
-            chosen shuch that RMS=1 after smoothing.
-            Overlap values are determined by 'padval'.
+        """
+        Smooth each channel by convolving with a top hat
+        of given width. The height of the top had is
+        chosen shuch that RMS=1 after smoothing.
+        Overlap values are determined by 'padval'.
+        This bit of code is taken from Scott Ransom's
+        PRESTO's single_pulse_search.py (line ~ 423).
+        *** Smoothing is done in place. ***
 
-            Inputs:
-                width: Number of bins to smooth by (Default: no smoothing)
-                padval: Padding value to use. Possible values are
-                    float-value, 'mean', 'median', 'wrap'.
-                    (Default: 0).
-
-            Ouputs:
-                None
-
-            This bit of code is taken from Scott Ransom's
-            PRESTO's single_pulse_search.py (line ~ 423).
-
-            *** Smoothing is done in place. ***
+        :param int width: Number of bins to smooth by (Default: no smoothing)
+        :param float/str padval: Padding value to use. Possible values are
+                                 float-value, 'mean', 'median', 'wrap'.
+                                 (Default: 0).
         """
         if width > 1:
             kernel = np.ones(width, dtype='float32') / np.sqrt(width)
@@ -325,17 +309,13 @@ class Spectra:
                 chan[:] = smoothed[width:-width]
 
     def trim(self, bins=0):
-        """Trim the end of the data by 'bins' spectra.
+        """
+        Trim the end of the data by 'bins' spectra.
+        *** Trimming is done in place ***
 
-            Input:
-                bins: Number of spectra to trim off the end of the observation.
-                    If bins is negative trim spectra off the beginning of the
-                    observation.
-
-            Outputs:
-                None
-
-            *** Trimming is irreversible ***
+        :param int bins: Number of spectra to trim off the end of the observation.
+                        If bins is negative trim spectra off the beginning of the
+                        observation.
         """
         assert bins < self.numspectra
         if bins == 0:
@@ -349,19 +329,15 @@ class Spectra:
             self.starttime = self.starttime + bins * self.dt
 
     def downsample(self, factor=1, trim=True):
-        """Downsample (in-place) the spectra by co-adding
-            'factor' adjacent bins.
+        """
+        Downsample the spectra by co-adding
+        'factor' adjacent bins.
+        *** Downsampling is done in place ***
 
-            Inputs:
-                factor: Reduce the number of spectra by this
-                    factor. Must be a factor of the number of
-                    spectra if 'trim' is False.
-                trim: Trim off excess bins.
-
-            Ouputs:
-                None
-
-            *** Downsampling is done in place ***
+        :param int factor: Reduce the number of spectra by this
+                           factor. Must be a factor of the number of
+                           spectra if 'trim' is False.
+        :param bool trim: Trim off excess bins.
         """
         assert trim or not (self.numspectra % factor)
         new_num_spectra = self.numspectra // factor

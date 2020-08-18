@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 def get_burst_window(**config):
     """
     Load a single SB and determine the arrival time of a burst within window_load / window_zoom of the centre
+
     :param ARTSFilterbankReader fil_reader: Filterbank reader
     :param config: S/N configuration
     :return: startbin_wide, chunksize_wide, startbin_small, chunksize_small (all int)

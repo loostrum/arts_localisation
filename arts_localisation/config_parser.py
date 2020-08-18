@@ -115,7 +115,7 @@ def parse_yaml(fname, for_snr=False):
         except KeyError:
             try:
                 tarr = Time(conf_burst['start'], format='isot', scale='utc') + \
-                       TimeDelta(conf_burst['toa'], format='sec')
+                    TimeDelta(conf_burst['toa'], format='sec')
             except Exception as e:
                 logger.error("Could not get arrival time for burst {} from either "
                              "tarr ot tsart + toa ({})".format(burst, e))

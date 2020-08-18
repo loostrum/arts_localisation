@@ -22,6 +22,21 @@ logger = logging.getLogger(__name__)
 plt.rcParams['axes.formatter.useoffset'] = False
 
 
+def nested_dict_values(d):
+    """
+    Get all values from a nested dictionary
+
+    :param dict d: dictionary
+    :return: generator for values
+    """
+
+    for value in d.values():
+        if isinstance(value, dict):
+            yield from nested_dict_values(value)
+        else:
+            yield value
+
+
 def make_plot(conf_ints, X, Y, title, conf_int, mode='radec', sigma_max=3,
               freq=1370 * u.MHz, t_arr=None, loc=None, cb_pos=None,
               src_pos=None):
@@ -168,12 +183,18 @@ def main():
     np.save(f'{output_prefix}_coord', np.array([RA, DEC]))
 
     # process each burst
+    chi2_all_bursts = np.zeros((numY, numX))
+    dof_all_bursts = np.zeros((numY, numX))
+    pointings_all = {}
+
+    # central freq, used for plotting
+    central_freq = int(np.round(config['fmin_data'] + config['bandwidth'] / 2)) * u.MHz
+
     for burst in config['bursts']:
         logging.info(f"Processing {burst}")
         burst_config = config[burst]
 
         # loop over CBs
-        nCB = len(burst_config['beams'])
         numsb_det = 0
         chi2 = {}
         tarr = {}
@@ -290,10 +311,16 @@ def main():
             # save region where S/N > ref_snr for non-ref SB
             np.save(f'{output_prefix}_{burst}_{CB}_snr_too_high', bad_ind)
 
+        # store pointings
+        pointings_all[burst] = pointings
+
         # chi2 of all CBs combined
         chi2_total = np.zeros((numY, numX))
         for value in chi2.values():
             chi2_total += value
+
+        # chi2 of all bursts combined
+        chi2_all_bursts += chi2_total
 
         # degrees of freedom = number of data points minus number of parameters
         # dofs array currently holds number of data points in each CB
@@ -301,6 +328,9 @@ def main():
         dof_total = np.zeros((numY, numX))
         for value in dofs.values():
             dof_total += value
+
+        # add to dof of all bursts combined and subtract one for reference SB
+        dof_all_bursts += dof_total - 1
         # subtract number of parameters (2) and one for reference SB
         dof_total -= 3
 
@@ -354,7 +384,6 @@ def main():
             print(f"Confidence interval at source (lower is better): {conf_int_at_source:.5f}")
 
         # plot
-        central_freq = int(np.round(config['fmin_data'] + config['bandwidth'] / 2)) * u.MHz
         if not args.noplot:
             # per CB
             for CB in burst_config['beams']:
@@ -365,14 +394,28 @@ def main():
                     fig.savefig(f'{output_prefix}_{burst}_{CB}.pdf')
 
             # total
-            title = r"Total"
-            fig = make_plot(conf_int_total, RA, DEC, title, args.conf_int, loc='lower right',
+            fig = make_plot(conf_int_total, RA, DEC, burst, args.conf_int, loc='lower right',
                             cb_pos=list(pointings.values()), freq=central_freq)
 
             if args.saveplot:
                 fig.savefig(f'{output_prefix}_{burst}_total.pdf')
-            else:
-                plt.show()
+
+    # result of all bursts combined
+    # first correct DoF for number of parameters
+    dof_all_bursts -= 2
+
+    # calculate combined confidence interval
+    dchi2_all_bursts = chi2_all_bursts - chi2_all_bursts.min()
+    conf_int_all_bursts = stats.chi2.cdf(dchi2_all_bursts, dof_all_bursts)
+    # where dof <= 0, conf_int is nan. These locations are "perfect", so set conf_int to 0
+    conf_int_all_bursts[np.isnan(conf_int_all_bursts)] = 0
+
+    fig = make_plot(conf_int_all_bursts, RA, DEC, 'Combined', args.conf_int, loc='lower right',
+                    cb_pos=list(nested_dict_values(pointings_all)), freq=central_freq)
+    if args.saveplot:
+        fig.savefig(f'{output_prefix}_combined_bursts.pdf')
+    else:
+        plt.show()
 
 
 if __name__ == '__main__':

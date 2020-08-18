@@ -55,7 +55,7 @@ NPOINT = 300
 
 #: Number of compound beams
 NCB = 40
-#: Number of TABs
+#: Number of tied-array beams
 NTAB = 12
 #: Number of synthesised beams
 NSB = 71

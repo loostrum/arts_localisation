@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import logging
 
 import yaml
@@ -134,8 +135,8 @@ def parse_yaml(fname, for_snr=False):
         # check for telescope pointing
         pointing_coord = None
         try:
-            pointing_ra = config['global']['pointing_ra']
-            pointing_dec = config['global']['pointing_dec']
+            pointing_ra = conf_burst['pointing_ra']
+            pointing_dec = conf_burst['pointing_dec']
             pointing_coord = (pointing_ra * u.deg, pointing_dec * u.deg)
             logger.info("Telescope pointing found. Only use this option if ref_beam == 0.")
         except KeyError:
@@ -167,7 +168,7 @@ def parse_yaml(fname, for_snr=False):
                 # telescope pointing must be set
                 if pointing_coord is None:
                     logger.error("No telescope pointing and no RA, Dec set for this CB")
-                    raise
+                    sys.exit(1)
                 # calculate ra, dec from CB offsets
                 cb_index = int(beam[2:])
                 cb_pointing = cb_index_to_pointing(cb_index, *pointing_coord)

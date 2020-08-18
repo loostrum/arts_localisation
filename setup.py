@@ -5,11 +5,13 @@ from setuptools import setup, find_packages
 
 
 with open(os.path.join('arts_localisation', '__version__.py')) as version_file:
-    version = version_file.read().strip()
+    version = {}
+    exec(version_file.read(), version)
+    project_version = version['__version__']
 
 
 setup(name='arts_localisation',
-      version=version,
+      version=project_version,
       description='Localisation of ARTS transients',
       url='http://github.com/loostrum/arts_localisation',
       author='Leon Oostrum',

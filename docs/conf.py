@@ -20,10 +20,9 @@ sys.path.insert(0, os.path.abspath('..'))
 autoclass_content = 'both'
 
 # what to show with autodoc
-autodoc_default_options = {
-    'members': None,
-    'show-inheritance': True
-    }
+autodoc_default_options = {'members': None,
+                           'show-inheritance': True
+                           }
 
 
 # -- Project information -----------------------------------------------------

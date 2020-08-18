@@ -45,6 +45,8 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
     """
     if mode == 'altaz' and t_arr is None:
         print("t_arr is required in AltAz mode")
+    X = X.to(u.deg).value
+    Y = Y.to(u.deg).value
     dchi2 = chi2 - chi2.min()
     # best pos = point with lowest (delta)chi2
     ind = np.unravel_index(np.argmin(dchi2), dchi2.shape)
@@ -71,7 +73,7 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
     cont = ax.contour(X, Y, dchi2, contour_values, colors=['#FF0000', '#C00000', '#800000'])
 
     # add best position
-    ax.plot(best_x.to(u.deg).value, best_y.to(u.deg).value, c='r', marker='.', ls='', ms=10,
+    ax.plot(best_x, best_y, c='r', marker='.', ls='', ms=10,
             label='Best position')
     # add source position if available
     if src_pos is not None:
@@ -349,7 +351,7 @@ def main():
         if not args.noplot:
             # per CB
             for CB in burst_config['beams']:
-                if burst == burst_config['reference_cb']:
+                if CB == burst_config['reference_cb']:
                     # one SB is not a free parameter; 2 params
                     dof = NSB - 1 - 2
                 else:

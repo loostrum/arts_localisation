@@ -12,9 +12,9 @@
 #
 import os
 import sys
+from arts_localisation.__version__ import version
 sys.path.insert(0, os.path.abspath('..'))
 
-from arts_localisation.__version__ import version
 
 # concat class and __init__ docstrings
 autoclass_content = 'both'

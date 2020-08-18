@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
+import os
 from setuptools import setup, find_packages
-from arts_localisation.__version__ import version
+
+
+with open(os.path.join('arts_localisation', '__version__.py')) as version_file:
+    version = version_file.read().strip()
 
 
 setup(name='arts_localisation',

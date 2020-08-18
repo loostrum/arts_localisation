@@ -14,11 +14,16 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
+from arts_localisation.__version__ import version
+
 # concat class and __init__ docstrings
 autoclass_content = 'both'
 
 # what to show with autodoc
-autodoc_default_flags = ['members', 'undoc-members', 'private-members', 'show-inheritance']
+autodoc_default_options = {
+    'members': None,
+    'show-inheritance': True
+    }
 
 
 # -- Project information -----------------------------------------------------
@@ -28,7 +33,7 @@ copyright = '2020, Leon Oostrum'
 author = 'Leon Oostrum'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = version
 
 
 # -- General configuration ---------------------------------------------------

@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+from arts_localisation.__version__ import version
 
 
 setup(name='arts_localisation',
-      version='0.1',
+      version=version,
       description='Localisation of ARTS transients',
       url='http://github.com/loostrum/arts_localisation',
       author='Leon Oostrum',

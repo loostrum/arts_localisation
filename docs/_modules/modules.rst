@@ -6,6 +6,6 @@ Constants
 ---------
 .. automodule:: arts_localisation.constants
 
-Converter tools
+Tools
 ---------------
-.. automodule:: arts_localisation.convert
+.. automodule:: arts_localisation.tools

@@ -185,7 +185,8 @@ def parse_yaml(fname, for_snr=False):
                     logger.debug('S/N array not found, trying to convert relative to absolute path')
                     snr_array_path = os.path.join(yaml_dir, snr_array_path)
                 # if the file still cannot be found, give a warning
-                logger.warning(f'Cannot find S/N array file {snr_array_path}')
+                if not os.path.isfile(snr_array_path):
+                    logger.warning(f'Cannot find S/N array file {snr_array_path}')
                 conf_burst['snr_array'] = snr_array_path
             else:
                 logger.info("No S/N array found for {} of burst {}, assuming it "

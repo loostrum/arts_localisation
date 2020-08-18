@@ -9,6 +9,7 @@ The following packages are required, but should be installed automatically when 
 
 * numpy
 * astropy
+* numba
 * pyyaml
 * scipy
 * matplotlib

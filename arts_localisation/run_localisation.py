@@ -128,15 +128,17 @@ def main():
     parser.add_argument('--verbose', action='store_true', help="Enable verbose logging")
 
     group_overwrites = parser.add_argument_group('Config overwrites', 'Settings to overwrite from yaml config')
-    group_overwrites.add_argument('--ra', type=float, help='Central RA (deg)')
-    group_overwrites.add_argument('--dec', type=float, help='Central Dec (deg)')
-    group_overwrites.add_argument('--resolution', type=float, help='Resolution (arcmin)')
-    group_overwrites.add_argument('--size', type=float, help='Localisation area size (arcmin)')
+    # global config:
+    group_overwrites.add_argument('--snrmin', type=float, help='S/N threshold')
     group_overwrites.add_argument('--fmin', type=float, help='Ignore frequency below this value in MHz')
     group_overwrites.add_argument('--fmax', type=float, help='Ignore frequency below this value in MHz')
-    group_overwrites.add_argument('--snrmin', type=float, help='S/N threshold')
     group_overwrites.add_argument('--fmin_data', type=float, help='Lowest frequency of data')
     group_overwrites.add_argument('--bandwidth', type=float, help='Bandwidth of data')
+    # localisation config:
+    group_overwrites.add_argument('--ra', type=float, help='Central RA (deg)')
+    group_overwrites.add_argument('--dec', type=float, help='Central Dec (deg)')
+    group_overwrites.add_argument('--size', type=float, help='Localisation area size (arcmin)')
+    group_overwrites.add_argument('--resolution', type=float, help='Resolution (arcmin)')
     group_overwrites.add_argument('--cb_model', help='CB model type')
 
     args = parser.parse_args()

@@ -58,7 +58,7 @@ def make_plot(conf_ints, X, Y, title, conf_int, mode='radec', sigma_max=3,
     # plot confidence interval
     img = ax.pcolormesh(X, Y, conf_ints, vmin=0, vmax=1)
     cbar = fig.colorbar(img, ax=ax)
-    cbar.set_label(r'$\Delta \chi^2$', rotation=270)
+    cbar.set_label('Confidence interval', rotation=270, labelpad=15)
 
     # add contours
     cont = ax.contour(X, Y, conf_ints, [conf_int], colors=['#FF0000', '#C00000', '#800000'])
@@ -321,10 +321,13 @@ def main():
             conf_ints[cb] = stats.chi2.cdf(this_dchi2, dof)
             # where dof <= 0, conf_int is nan. These locations are "perfect", so set conf_int to 0
             conf_ints[cb][np.isnan(conf_ints[cb])] = 0
+            # save the map
+            np.save(f'{output_prefix}_{burst}_{CB}_conf_int', conf_ints[cb])
         # repeat for total
         dchi2_total = chi2_total - chi2_total.min()
         conf_int_total = stats.chi2.cdf(dchi2_total, dof_total)
         conf_int_total[np.isnan(conf_int_total)] = 0
+        np.save(f'{output_prefix}_{burst}_total_conf_int', conf_int_total)
 
         # find size of localisation area within given confidence level
         npix_below_max = (conf_int_total < args.conf_int).sum()

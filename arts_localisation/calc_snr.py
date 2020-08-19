@@ -90,10 +90,6 @@ def main():
     # loop over bursts
     for burst in config['bursts']:
         logger.info(f'Processing burst {burst}')
-        output_file = f'{output_prefix}_{burst}_CB{cb:02d}_SNR.txt'
-        if os.path.isfile(output_file):
-            logger.warning(f"Skipping {burst} because output file already exists: {output_file}")
-            continue
 
         # find the burst window
         logger.info('Finding burst window in file')
@@ -112,6 +108,10 @@ def main():
         # Run S/N determination loop for each CB
         logger.info('Calculating S/N in each SB of given CBs')
         for i, cb in enumerate(tqdm(config[burst]['cbs'], desc='CB')):
+            output_file = f'{output_prefix}_{burst}_CB{cb:02d}_SNR.txt'
+            if os.path.isfile(output_file):
+                logger.warning(f"Skipping {burst} CB{cb:02d} because output file already exists: {output_file}")
+                continue
             # initialise the filterbank reader
             fil_reader = ARTSFilterbankReader(config[burst]['filterbank'], cb)
             # load all TABs around the burst

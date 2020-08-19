@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-#
-# Generate an SB model for several CBs near the same area on-sky
-# then combine posteriors
-import argparse
+
 import os
+import sys
+import argparse
 import logging
 
 import numpy as np
@@ -76,7 +75,7 @@ def make_plot(conf_ints, X, Y, title, conf_int, mode='radec', sigma_max=3,
     cbar.set_label('Confidence interval', rotation=270, labelpad=15)
 
     # add contours
-    cont = ax.contour(X, Y, conf_ints, [conf_int], colors=['#FF0000', '#C00000', '#800000'])
+    ax.contour(X, Y, conf_ints, [conf_int], colors=['#FF0000', '#C00000', '#800000'])
 
     # add best position
     ax.plot(best_x, best_y, c='r', marker='.', ls='', ms=10,
@@ -105,12 +104,16 @@ def make_plot(conf_ints, X, Y, title, conf_int, mode='radec', sigma_max=3,
                 label = 'CB center'
             else:
                 label = ''
-            ax.plot(x_cb.to(u.deg).value, y_cb.to(u.deg).value, c='k', marker='x', ls='', ms=10,
+            ax.plot(x_cb.to(u.deg).value, y_cb.to(u.deg).value, c='w', marker='x', ls='', ms=10,
                     label=label)
             # add CB
             cb_radius = (CB_HPBW * REF_FREQ / freq / 2)
-            patch = SphericalCircle((x_cb, y_cb), cb_radius, ec='k', fc='none', ls='-', alpha=.5)
+            patch = SphericalCircle((x_cb, y_cb), cb_radius, ec='w', fc='none', ls='-', alpha=.5)
             ax.add_patch(patch)
+
+    # limit to localisation region
+    ax.set_xlim(X[0, 0], X[-1, -1])
+    ax.set_ylim(Y[0, 0], Y[-1, -1])
 
     # add labels
     if mode == 'altaz':
@@ -131,16 +134,14 @@ def main():
     parser.add_argument('--conf_int', type=float, default=.9, help='Confidence interval for localisation region plot '
                                                                    '(Default: %(default)s)')
     parser.add_argument('--output_folder', help='Output folder '
-                                                '(Default: current directory)')
-    parser.add_argument('--noplot', action='store_true', help='Disable plotting')
-    parser.add_argument('--saveplot', action='store_true', help='Save plots')
+                                                '(Default: same directory as yaml config file)')
+    parser.add_argument('--show_plots', action='store_true', help='Show plots')
+    parser.add_argument('--save_plots', action='store_true', help='Save plots')
     parser.add_argument('--verbose', action='store_true', help="Enable verbose logging")
 
     group_overwrites = parser.add_argument_group('Config overwrites', 'Settings to overwrite from yaml config')
     # global config:
     group_overwrites.add_argument('--snrmin', type=float, help='S/N threshold')
-    group_overwrites.add_argument('--fmin', type=float, help='Ignore frequency below this value in MHz')
-    group_overwrites.add_argument('--fmax', type=float, help='Ignore frequency below this value in MHz')
     group_overwrites.add_argument('--fmin_data', type=float, help='Lowest frequency of data')
     group_overwrites.add_argument('--bandwidth', type=float, help='Bandwidth of data')
     # localisation config:
@@ -162,8 +163,10 @@ def main():
 
     # get output prefix from yaml file name and output folder
     if args.output_folder is None:
-        args.output_folder = os.getcwd()
+        # default output folder is same folder as .yaml file
+        args.output_folder = os.path.dirname(os.path.abspath(args.config))
     tools.makedirs(args.output_folder)
+    # output prefix also contains the yaml filename without extension
     output_prefix = os.path.join(args.output_folder, os.path.basename(args.config).replace('.yaml', ''))
 
     # Define global RA, Dec localisation area
@@ -229,8 +232,8 @@ def main():
             dDEC_loc = (DEC_loc - hadec_cb.dec)
 
             # generate the SB model with CB as phase center
-            sbp = SBPattern(hadec_cb.ra, hadec_cb.dec, dHACOSDEC_loc, dDEC_loc, fmin=config['fmin'] * u.MHz,
-                            fmax=config['fmax'] * u.MHz, min_freq=config['fmin_data'] * u.MHz,
+            sbp = SBPattern(hadec_cb.ra, hadec_cb.dec, dHACOSDEC_loc, dDEC_loc, fmin=burst_config['fmin'] * u.MHz,
+                            fmax=burst_config['fmax'] * u.MHz, min_freq=config['fmin_data'] * u.MHz,
                             cb_model=config['cb_model'], cbnum=int(CB[2:]))
             # get pattern integrated over frequency
             # TODO: spectral indices?
@@ -384,20 +387,20 @@ def main():
             print(f"Confidence interval at source (lower is better): {conf_int_at_source:.5f}")
 
         # plot
-        if not args.noplot:
+        if args.show_plots or args.save_plots:
             # per CB
             for CB in burst_config['beams']:
                 title = f"{CB}"
                 fig = make_plot(conf_ints[CB], RA, DEC, title, args.conf_int, t_arr=tarr,
                                 cb_pos=pointings[CB], freq=central_freq)
-                if args.saveplot:
+                if args.save_plots:
                     fig.savefig(f'{output_prefix}_{burst}_{CB}.pdf')
 
             # total
             fig = make_plot(conf_int_total, RA, DEC, burst, args.conf_int, loc='lower right',
                             cb_pos=list(pointings.values()), freq=central_freq)
 
-            if args.saveplot:
+            if args.save_plots:
                 fig.savefig(f'{output_prefix}_{burst}_total.pdf')
 
     # result of all bursts combined
@@ -410,11 +413,15 @@ def main():
     # where dof <= 0, conf_int is nan. These locations are "perfect", so set conf_int to 0
     conf_int_all_bursts[np.isnan(conf_int_all_bursts)] = 0
 
-    fig = make_plot(conf_int_all_bursts, RA, DEC, 'Combined', args.conf_int, loc='lower right',
-                    cb_pos=list(nested_dict_values(pointings_all)), freq=central_freq)
-    if args.saveplot:
+    # save final localisation region
+    np.save(f'{output_prefix}_localisation', [RA, DEC, conf_int_all_bursts])
+
+    if args.show_plots or args.save_plots:
+        fig = make_plot(conf_int_all_bursts, RA, DEC, 'Combined', args.conf_int, loc='lower right',
+                        cb_pos=list(nested_dict_values(pointings_all)), freq=central_freq)
+    if args.save_plots:
         fig.savefig(f'{output_prefix}_combined_bursts.pdf')
-    else:
+    if args.show_plots:
         plt.show()
 
 

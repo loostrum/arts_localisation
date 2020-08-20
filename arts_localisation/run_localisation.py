@@ -57,7 +57,7 @@ def make_plot(conf_ints, X, Y, title, conf_int, mode='radec', sigma_max=3,
     :return: figure
     """
     if mode == 'altaz' and t_arr is None:
-        print("t_arr is required in AltAz mode")
+        logger.info("t_arr is required in AltAz mode")
     X = X.to(u.deg).value
     Y = Y.to(u.deg).value
 
@@ -204,7 +204,7 @@ def main():
         pointings = {}
         dofs = {}
         for CB in burst_config['beams']:
-            print(f"Processing {CB}")
+            logger.info(f"Processing {CB}")
             beam_config = burst_config[CB]
 
             # get alt, az of pointing
@@ -217,8 +217,8 @@ def main():
             #     hadec_cb = SkyCoord(beam_config['ha']*u.deg, beam_config['dec']*u.deg)
             #     radec_cb = tools.hadec_to_radec(beam_config['ha']*u.deg, beam_config['dec']*u.deg, t)
             alt_cb, az_cb = tools.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)  # needed for SB position
-            print("Parallactic angle: {:.2f}".format(tools.hadec_to_par(hadec_cb.ra, hadec_cb.dec)))
-            print("AltAz SB rotation angle at center of CB: {:.2f}".format(tools.hadec_to_proj(hadec_cb.ra, hadec_cb.dec)))
+            logger.info("Parallactic angle: {:.2f}".format(tools.hadec_to_par(hadec_cb.ra, hadec_cb.dec)))
+            logger.info("AltAz SB rotation angle at center of CB: {:.2f}".format(tools.hadec_to_proj(hadec_cb.ra, hadec_cb.dec)))
             # save pointing
             pointings[CB] = radec_cb
 
@@ -245,7 +245,7 @@ def main():
                 sb_det, snr_det = data.T
                 sb_det = sb_det.astype(int)
             except KeyError:
-                print(f"No S/N array found for {burst}, assuming this is a non-detection beam")
+                logger.info(f"No S/N array found for {burst}, assuming this is a non-detection beam")
                 sb_det = np.array([])
                 snr_det = np.array([])
             numsb_det += len(sb_det)
@@ -262,7 +262,7 @@ def main():
                 ind = snr_det.argmax()
                 this_snr = snr_det[ind]
                 this_sb = sb_det[ind]
-                print(f"SB{this_sb:02d} SNR {this_snr}")
+                logger.info(f"SB{this_sb:02d} SNR {this_snr}")
             except ValueError:
                 # non-detection beam
                 this_snr = None

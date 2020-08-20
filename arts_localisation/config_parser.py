@@ -185,17 +185,23 @@ def parse_yaml(fname, for_snr=False):
             conf_burst['beams'] = beams
             for beam in beams:
                 # read keys in lowercase
-                keys = [key.lower() for key in conf_burst[beam].keys()]
+                try:
+                    keys = [key.lower() for key in conf_burst[beam].keys()]
+                except IndexError:
+                    # upper limit beam and all default parameters means there are no parameters left at all
+                    logger.debug(f'No parameters found for CB{beam:02d}')
+                    continue
 
                 # if ra, dec are given, use these
                 if 'ra' in keys and 'dec' in keys:
                     cb_pointing = (conf_burst[beam]['ra'] * u.deg, conf_burst[beam]['dec'] * u.deg)
                     # if pointing is also set, warn the user
                     if pointing_coord is not None:
-                        logger.warning("CB RA, Dec given, but telescope pointing is also set. Using CB RA, Dec")
+                        logger.warning(f"CB{beam:02d} RA, Dec given, "
+                                       f"but telescope pointing is also set. Using CB RA, Dec")
                 else:
                     # telescope pointing must be set
-                    assert pointing_coord is not None, 'No telescope pointing and no RA, Dec set for this CB'
+                    assert pointing_coord is not None, f'No telescope pointing and no RA, Dec set for CB{beam:02d}'
                     # calculate ra, dec from CB offsets
                     cb_index = int(beam[2:])
                     cb_pointing = cb_index_to_pointing(cb_index, *pointing_coord)

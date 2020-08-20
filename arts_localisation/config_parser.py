@@ -134,7 +134,7 @@ def parse_yaml(fname, for_snr=False):
             assert conf_burst['cbs'], 'CB list cannot be empty'
             # if neighbours is True, add neighbouring beams
             if conf_burst['neighbours']:
-                conf_burst['cbs'].append(get_neighbours(conf_burst['cbs']))
+                conf_burst['cbs'].extend(get_neighbours(conf_burst['cbs']))
 
         else:
             # localisation mode

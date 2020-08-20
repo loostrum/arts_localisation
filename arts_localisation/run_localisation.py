@@ -273,7 +273,7 @@ def main():
                 sefd = beam_config['sefd']
             except KeyError:
                 default_sefd = 100
-                print(f"No SEFD found, setting to {default_sefd}")
+                logger.info(f"No SEFD found, setting to {default_sefd}")
                 sefd = default_sefd
 
             # if this is the reference burst, store the sb model of the reference SB
@@ -288,14 +288,14 @@ def main():
             # detection
             ndet = len(sb_det)
             if ndet > 0:
-                print(f"Adding {ndet} detections")
+                logger.info(f"Adding {ndet} detections")
                 chi2[CB] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2, axis=0)
                 # add to DoF, this is the same for each grid point
                 dofs[CB] += len(sb_det)
             # non detection
             nnondet = len(sb_non_det)
             if nnondet > 0:
-                print(f"Adding {nnondet} non-detections")
+                logger.info(f"Adding {nnondet} non-detections")
                 # only select points where the modelled S/N is above the threshold
                 snr_model_nondet = snr_model[sb_non_det]
                 points = snr_model_nondet > config['snrmin']
@@ -366,25 +366,25 @@ def main():
         npix_below_max = (conf_int_total < args.conf_int).sum()
         pix_area = ((config['resolution'] * u.arcsec) ** 2)
         total_area = pix_area * npix_below_max
-        print("Found {} pixels below within {}% confidence region".format(npix_below_max, args.conf_int * 100))
-        print(f"Area of one pixel is {pix_area} ")
-        print("Localisation area is {:.2f} = {:.2f}".format(total_area, total_area.to(u.arcmin ** 2)))
+        logger.info("Found {} pixels below within {}% confidence region".format(npix_below_max, args.conf_int * 100))
+        logger.info(f"Area of one pixel is {pix_area} ")
+        logger.info("Localisation area is {:.2f} = {:.2f}".format(total_area, total_area.to(u.arcmin ** 2)))
 
         # find best position, which is at the point of the lowest confidence interval
         ind = np.unravel_index(np.argmin(conf_int_total), conf_int_total.shape)
         coord_best = SkyCoord(RA[ind], DEC[ind])
-        print("Best position: {}".format(coord_best.to_string('hmsdms')))
+        logger.info("Best position: {}".format(coord_best.to_string('hmsdms')))
 
         if config['source_coord'] is not None:
             coord_src = SkyCoord(*config['source_coord'])
-            print("Source position: {}".format(coord_src.to_string('hmsdms')))
-            print("Separation: {}".format(coord_src.separation(coord_best).to(u.arcsec)))
+            logger.info("Source position: {}".format(coord_src.to_string('hmsdms')))
+            logger.info("Separation: {}".format(coord_src.separation(coord_best).to(u.arcsec)))
 
             # find closest ra,dec to source
             dist = ((RA - coord_src.ra) * np.cos(DEC)) ** 2 + (DEC - coord_src.dec) ** 2
             ind = np.unravel_index(np.argmin(dist), RA.shape)
             conf_int_at_source = conf_int_total[ind]
-            print(f"Confidence interval at source (lower is better): {conf_int_at_source:.5f}")
+            logger.info(f"Confidence interval at source (lower is better): {conf_int_at_source:.5f}")
 
         # plot
         if args.show_plots or args.save_plots:

@@ -388,7 +388,7 @@ def main():
 
         # plot
         if args.show_plots or args.save_plots:
-            # per CB
+            # per CB, if there is more than one
             for CB in burst_config['beams']:
                 title = f"{CB}"
                 fig = make_plot(conf_ints[CB], RA, DEC, title, args.conf_int, t_arr=tarr,
@@ -396,9 +396,10 @@ def main():
                 if args.save_plots:
                     fig.savefig(f'{output_prefix}_{burst}_{CB}.pdf')
 
-            # total
-            fig = make_plot(conf_int_total, RA, DEC, burst, args.conf_int, loc='lower right',
-                            cb_pos=list(pointings.values()), freq=central_freq)
+            # total, if there is more than one CB
+            if len(burst_config['beams']) > 1:
+                fig = make_plot(conf_int_total, RA, DEC, burst, args.conf_int, loc='lower right',
+                                cb_pos=list(pointings.values()), freq=central_freq)
 
             if args.save_plots:
                 fig.savefig(f'{output_prefix}_{burst}_total.pdf')
@@ -417,10 +418,12 @@ def main():
     np.save(f'{output_prefix}_localisation', [RA, DEC, conf_int_all_bursts])
 
     if args.show_plots or args.save_plots:
-        fig = make_plot(conf_int_all_bursts, RA, DEC, 'Combined', args.conf_int, loc='lower right',
-                        cb_pos=list(nested_dict_values(pointings_all)), freq=central_freq)
-    if args.save_plots:
-        fig.savefig(f'{output_prefix}_combined_bursts.pdf')
+        # plot of all bursts combined, if there are multiple bursts
+        if len(config['bursts']) > 1:
+            fig = make_plot(conf_int_all_bursts, RA, DEC, 'Combined', args.conf_int, loc='lower right',
+                            cb_pos=list(nested_dict_values(pointings_all)), freq=central_freq)
+            if args.save_plots:
+                fig.savefig(f'{output_prefix}_combined_bursts.pdf')
     if args.show_plots:
         plt.show()
 

@@ -50,7 +50,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', required=True, help='Input yaml config')
     parser.add_argument('--output_folder', help='Output folder '
-                                                '(Default: same directory as yaml config file)')
+                                                '(Default: <yaml file folder>/snr)')
     parser.add_argument('--show_plots', action='store_true', help='Show plots')
     parser.add_argument('--save_plots', action='store_true', help='Save plots')
     parser.add_argument('--verbose', action='store_true', help="Enable verbose logging")
@@ -78,8 +78,8 @@ def main():
 
     # get output prefix from yaml file name and output folder
     if args.output_folder is None:
-        # default output folder is same folder as .yaml file
-        args.output_folder = os.path.dirname(os.path.abspath(args.config))
+        # default output folder is same folder as .yaml file plus "snr"
+        args.output_folder = os.path.join(os.path.dirname(os.path.abspath(args.config)), 'snr')
     tools.makedirs(args.output_folder)
     # output prefix also contains the yaml filename without extension
     output_prefix = os.path.join(args.output_folder, os.path.basename(args.config).replace('.yaml', ''))

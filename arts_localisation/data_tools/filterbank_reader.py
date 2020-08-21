@@ -40,6 +40,10 @@ class ARTSFilterbankReader:
 
         # initialize the SB Generator for SC4
         self.sb_generator = SBGenerator.from_science_case(4)
+        # set freq order for SB mapping
+        if np.all(np.diff(self.freqs) < 0):
+            logger.debug("Detected descending frequencies, reversing SB mapping")
+            self.sb_generator.reversed = True
 
     def get_fil_params(self, tab=0):
         """

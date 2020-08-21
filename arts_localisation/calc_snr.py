@@ -139,14 +139,12 @@ def main():
 
             # store S/N file
             if np.all(snr_all < config['snrmin']):
-                logger.warning(f'No S/N above threshold found for CB{cb:02d}, creating empty output file')
+                logger.warning(f'No S/N above threshold found for CB{cb:02d}')
 
             with open(output_file, 'w') as f:
                 f.write('#sb snr\n')
                 # format each line, keep only values above S/N threshold
                 for sb, snr in enumerate(snr_all):
-                    if snr < config['snrmin']:
-                        continue
                     f.write(f'{sb:02d} {snr:.2f}\n')
 
             # SB vs S/N plot

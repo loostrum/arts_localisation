@@ -108,7 +108,7 @@ def make_plot(conf_ints, X, Y, title, conf_int, mode='radec', sigma_max=3,
                     label=label)
             # add CB
             cb_radius = (CB_HPBW * REF_FREQ / freq / 2)
-            patch = SphericalCircle((x_cb, y_cb), cb_radius, ec='w', fc='none', ls='-', alpha=.5)
+            patch = SphericalCircle((x_cb, y_cb), cb_radius, ec='k', fc='none', ls='-', alpha=.5)
             ax.add_patch(patch)
 
     # limit to localisation region
@@ -157,6 +157,10 @@ def main():
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
+
+    # set matplotlib backend to non-interactive if only saving plots
+    if args.save_plots and not args.show_plots:
+        plt.switch_backend('pdf')
 
     # load config
     config = load_config(args)
@@ -244,6 +248,10 @@ def main():
                 data = np.loadtxt(beam_config['snr_array'], ndmin=2)
                 sb_det, snr_det = data.T
                 sb_det = sb_det.astype(int)
+                # delete values below S/N threshold
+                ind = snr_det < config['snrmin']
+                sb_det = sb_det[~ind]
+                snr_det = snr_det[~ind]
             except KeyError:
                 logger.info(f"No S/N array found for {burst}, assuming this is a non-detection beam")
                 sb_det = np.array([])

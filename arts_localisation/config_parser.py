@@ -190,6 +190,7 @@ def parse_yaml(fname, for_snr=False):
                 except AttributeError:
                     # upper limit beam and all default parameters means there are no parameters left at all
                     logger.debug(f'No parameters found for CB{beam}')
+                    conf_burst[beam] = {}
                     keys = []
 
                 # if ra, dec are given, use these

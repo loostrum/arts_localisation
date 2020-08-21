@@ -138,6 +138,9 @@ def main():
     parser.add_argument('--show_plots', action='store_true', help='Show plots')
     parser.add_argument('--save_plots', action='store_true', help='Save plots')
     parser.add_argument('--verbose', action='store_true', help="Enable verbose logging")
+    parser.add_argument('--store_intermediates', action='store_true', help='Store all intermediate data to '
+                                                                           '<yaml file folder>/intermediates. '
+                                                                           'Note: this may create very big output files')
 
     group_overwrites = parser.add_argument_group('Config overwrites', 'Settings to overwrite from yaml config')
     # global config:
@@ -172,6 +175,11 @@ def main():
     tools.makedirs(args.output_folder)
     # output prefix also contains the yaml filename without extension
     output_prefix = os.path.join(args.output_folder, os.path.basename(args.config).replace('.yaml', ''))
+
+    # set intermediates output folder and prefix
+    intermediates_folder = os.path.join(os.path.dirname(os.path.abspath(args.config)), 'intermediates')
+    tools.makedirs(intermediates_folder)
+    intermediates_prefix = os.path.join(intermediates_folder, os.path.basename(args.config).replace('.yaml', ''))
 
     # Define global RA, Dec localisation area
     grid_size = config['size']  # in arcmin
@@ -293,11 +301,26 @@ def main():
             # model of S/N relative to the reference beam
             snr_model = sb_model / reference_sb_model * ref_snr * ref_sefd / sefd
 
+            # store intermediates
+            if args.store_intermediates:
+                # SB model
+                np.save(f'{intermediates_prefix}_{burst}_{CB}_SB_pattern', sb_model)
+                # S/N model
+                np.save(f'{intermediates_prefix}_{burst}_{CB}_SNR_model', snr_model)
+
             # detection
             ndet = len(sb_det)
             if ndet > 0:
                 logger.info(f"Adding {ndet} detections")
-                chi2[CB] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2, axis=0)
+                # chi2 per SB
+                chi2_det = (snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2
+                # add sum over SBs to total chi2
+                chi2[CB] += chi2_det.sum(axis=0)
+                # store intermediates
+                if args.store_intermediates:
+                    # chi2 per SB
+                    np.save(f'{intermediates_prefix}_{burst}_{CB}_chi2_det', chi2_det)
+
                 # add to DoF, this is the same for each grid point
                 dofs[CB] += len(sb_det)
             # non detection
@@ -310,6 +333,10 @@ def main():
                 # temporarily create an array holding the chi2 values to add per SB
                 chi2_to_add = np.zeros_like(snr_model_nondet)
                 chi2_to_add[points] += (snr_model_nondet[points] - config['snrmin']) ** 2
+                # store intermediates
+                if args.store_intermediates:
+                    # chi2 per SB
+                    np.save(f'{intermediates_prefix}_{burst}_{CB}_chi2_nondet', chi2_det)
                 # sum over SBs and add
                 chi2[CB] += chi2_to_add.sum(axis=0)
                 # add number of non-detection beams with S/N > snrmin to DoF

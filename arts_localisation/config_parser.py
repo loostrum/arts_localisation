@@ -187,10 +187,10 @@ def parse_yaml(fname, for_snr=False):
                 # read keys in lowercase
                 try:
                     keys = [key.lower() for key in conf_burst[beam].keys()]
-                except IndexError:
+                except AttributeError:
                     # upper limit beam and all default parameters means there are no parameters left at all
-                    logger.debug(f'No parameters found for CB{beam:02d}')
-                    continue
+                    logger.debug(f'No parameters found for CB{beam}')
+                    keys = []
 
                 # if ra, dec are given, use these
                 if 'ra' in keys and 'dec' in keys:

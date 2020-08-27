@@ -9,7 +9,7 @@ import errno
 
 import numpy as np
 import astropy.units as u
-from astropy.coordinates import SkyCoord, ITRS, ICRS, SphericalRepresentation
+from astropy.coordinates import SkyCoord, SphericalRepresentation
 from astropy.time import Time
 
 from arts_localisation.constants import WSRT_LON, WSRT_LAT, NCB, CB_OFFSETS
@@ -50,11 +50,10 @@ def radec_to_hadec(ra, dec, t, lon=WSRT_LON):
     if isinstance(t, str):
         t = Time(t)
 
-    coord = SkyCoord(ra, dec, frame='icrs')
-    coord_itrs = coord.transform_to(ITRS(obstime=t))
-    ha = lon - coord_itrs.spherical.lon
+    coord = SkyCoord(ra, dec, frame='icrs', obstime=t)
+    ha = lon - coord.itrs.spherical.lon
     ha.wrap_at(12 * u.hourangle, inplace=True)
-    dec = coord_itrs.spherical.lat
+    dec = coord.itrs.spherical.lat
 
     return ha, dec
 
@@ -84,10 +83,9 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
     # create spherical representation of ITRS coordinates of given ha, dec
     itrs_spherical = SphericalRepresentation(lon - ha, dec, 1.)
     # create ITRS object, which requires cartesian input
-    coord_itrs = ITRS(itrs_spherical.to_cartesian(), obstime=obstime)
+    coord = SkyCoord(itrs_spherical.to_cartesian(), frame='itrs', obstime=obstime)
     # convert to J2000
-    coord = coord_itrs.transform_to(ICRS)
-    return coord
+    return coord.icrs
 
 
 def hadec_to_par(ha, dec, lat=WSRT_LAT):

@@ -6,6 +6,8 @@ import numpy as np
 import astropy.units as u
 from astropy.coordinates import EarthLocation
 
+#: Path to fitted CB model parameters
+CB_MODEL_FILE = 'beam_models_190607.csv'
 #: File with definition of CB offsets
 CB_OFFSETS = 'square_39p1.cb_offsets'
 #: CB half-power width
@@ -16,49 +18,17 @@ REF_FREQ = 1770 * u.MHz  # for then it matches the measured width at 1420
 DISH_SIZE = 25 * u.m
 #: Bandwidth
 BANDWIDTH = 300 * u.MHz
-
-#: Dish positions in Apertif-8 setup
-DISH_A8 = np.zeros((8, 3)) * u.m
-DISH_A8[:, 1] = np.arange(8) * 144 * u.m
-#: Dish positions in Apertif-10 setup
-DISH_A10 = np.zeros((10, 3)) * u.m
-DISH_A10[:, 1] = np.arange(10) * 144 * u.m
-#: Dish positions in Maxi-short setup
-DISH_MAXISHORT = np.zeros((12, 3)) * u.m
-DISH_MAXISHORT[:, 1] = np.concatenate([np.arange(8) * 144, np.array([36, 90, 1332, 1404]) + 7 * 144]) * u.m
-
-
-DISH = {'a8': DISH_A8, 'a10': DISH_A10, 'maxi-short': DISH_MAXISHORT}
-
-WSRT_LAT = 52.915184 * u.deg  # = 52:54:54.66
-WSRT_LON = 6.60387 * u.deg  # = 06:36:13.93
-WSRT_ALT = 16 * u.m
-#: WSRT location
-WSRT_LOC = EarthLocation.from_geodetic(WSRT_LON, WSRT_LAT, WSRT_ALT)
-
-#: Path to fitted CB model parameters
-CB_MODEL_FILE = 'beam_models_190607.csv'
-
-THETAMAX_CB = 130
-PHIMAX_CB = 100
-NTHETA_CB = 2601
-NPHI_CB = 2001
-
-THETAMAX_SB = 50
-PHIMAX_SB = 50
-NTHETA_SB = 10001
-NPHI_SB = 201
-
-# for 2D simulations
-MAXDIST = 30  # arcmin
-NPOINT = 300
-
 #: Number of compound beams
 NCB = 40
 #: Number of tied-array beams
 NTAB = 12
 #: Number of synthesised beams
 NSB = 71
+
+#: ITRF WSRT reference position
+ARRAY_ITRF = np.array([3828630.63486200943589211, 443593.39226634375518188, 5064922.99755000043660402]) * u.meter
+WSRT_LOC = EarthLocation.from_geocentric(*ARRAY_ITRF)
+WSRT_LON, WSRT_LAT, WSRT_ALT = WSRT_LOC.to_geodetic()
 
 #: ITRF positions of RT2 - RTD in maxi-short setup
 DISH_POS_ITRF = np.array([[3828729.99081358872354031, 442735.17696416645776480, 5064923.00829000025987625],
@@ -74,6 +44,4 @@ DISH_POS_ITRF = np.array([[3828729.99081358872354031, 442735.17696416645776480, 
                           [3828460.92418734729290009, 445059.52053928520763293, 5064922.99070999957621098],
                           [3828452.64716351125389338, 445131.03744105156511068, 5064922.98792999982833862]]) * u.meter
 
-#: ITRF WSRT reference position
-ARRAY_ITRF = np.array([3828630.63486200943589211, 443593.39226634375518188, 5064922.99755000043660402]) * u.meter
 DISH_ITRF = {'a8': DISH_POS_ITRF[:8], 'maxi-short': DISH_POS_ITRF}

@@ -11,7 +11,7 @@ import astropy.units as u
 from arts_localisation.beam_models.sb_generator import SBGenerator
 from arts_localisation.beam_models.beamformer import BeamFormer
 from arts_localisation.beam_models.compound_beam import CompoundBeam
-from arts_localisation.constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIST, NPOINT
+from arts_localisation.constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB
 
 
 logger = logging.getLogger(__name__)
@@ -243,8 +243,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # create HA, Dec arrays
-    ddec = np.linspace(-MAXDIST, MAXDIST, NPOINT) * u.arcmin
-    dha = (np.linspace(-MAXDIST, MAXDIST, NPOINT) * u.arcmin)
+    maxdist = 30  # arcmin
+    npoint = 100
+    ddec = np.linspace(-maxdist, maxdist, npoint) * u.arcmin
+    dha = (np.linspace(-maxdist, maxdist, npoint) * u.arcmin)
     dHA, dDEC = np.meshgrid(dha, ddec)
 
     if args.cb is not None:

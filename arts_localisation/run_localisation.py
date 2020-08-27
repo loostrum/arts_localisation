@@ -83,8 +83,8 @@ def make_plot(conf_ints, X, Y, title, conf_int, mode='radec', sigma_max=3,
     # add source position if available
     if src_pos is not None:
         if mode == 'altaz':
-            hadec_src = tools.radec_to_hadec(*src_pos, t_arr)
-            y_src, x_src = tools.hadec_to_altaz(hadec_src.ra, hadec_src.dec)
+            ha_src, dec_src = tools.radec_to_hadec(*src_pos, t_arr)
+            y_src, x_src = tools.hadec_to_altaz(ha_src, dec_src)
         else:
             x_src, y_src = src_pos
         ax.plot(x_src.to(u.deg).value, y_src.to(u.deg).value, c='cyan', marker='+', ls='', ms=10,
@@ -95,8 +95,8 @@ def make_plot(conf_ints, X, Y, title, conf_int, mode='radec', sigma_max=3,
             cb_pos = [cb_pos]
         for i, pos in enumerate(cb_pos):
             if mode == 'altaz':
-                hadec_cb = tools.radec_to_hadec(pos.ra, pos.dec, t_arr)
-                y_cb, x_cb = tools.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)
+                ha_cb, dec_cb = tools.radec_to_hadec(pos.ra, pos.dec, t_arr)
+                y_cb, x_cb = tools.hadec_to_altaz(ha_cb, dec_cb)
             else:
                 x_cb = pos.ra
                 y_cb = pos.dec
@@ -223,28 +223,26 @@ def main():
             # TODO: support HA
             # try:
             radec_cb = SkyCoord(*beam_config['pointing'])
-            hadec_cb = tools.radec_to_hadec(*beam_config['pointing'], burst_config['tarr'])
+            ha_cb, dec_cb = tools.radec_to_hadec(*beam_config['pointing'], burst_config['tarr'])
             # except KeyError:
             #     # assume ha was specified instead of ra
             #     hadec_cb = SkyCoord(beam_config['ha']*u.deg, beam_config['dec']*u.deg)
             #     radec_cb = tools.hadec_to_radec(beam_config['ha']*u.deg, beam_config['dec']*u.deg, t)
-            alt_cb, az_cb = tools.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)  # needed for SB position
-            logger.info("Parallactic angle: {:.2f}".format(tools.hadec_to_par(hadec_cb.ra, hadec_cb.dec)))
-            logger.info("AltAz SB rotation angle at center of CB: {:.2f}".format(tools.hadec_to_proj(hadec_cb.ra, hadec_cb.dec)))
+            alt_cb, az_cb = tools.hadec_to_altaz(ha_cb, dec_cb)  # needed for SB position
+            logger.info("Parallactic angle: {:.2f}".format(tools.hadec_to_par(ha_cb, dec_cb)))
+            logger.info("Projection angle {:.2f}".format(tools.hadec_to_proj(ha_cb, dec_cb)))
             # save pointing
             pointings[CB] = radec_cb
 
             # convert localisation coordinate grid to hadec
-            hadec_loc = tools.radec_to_hadec(RA, DEC, burst_config['tarr'])
-            HA_loc = hadec_loc.ra
-            DEC_loc = hadec_loc.dec
+            HA_loc, DEC_loc = tools.radec_to_hadec(RA, DEC, burst_config['tarr'])
             # calculate offsets from phase center
             # without cos(dec) factor for dHA
-            dHACOSDEC_loc = (HA_loc - hadec_cb.ra) * np.cos(DEC_loc)
-            dDEC_loc = (DEC_loc - hadec_cb.dec)
+            dHACOSDEC_loc = (HA_loc - ha_cb) * np.cos(DEC_loc)
+            dDEC_loc = (DEC_loc - dec_cb)
 
             # generate the SB model with CB as phase center
-            sbp = SBPattern(hadec_cb.ra, hadec_cb.dec, dHACOSDEC_loc, dDEC_loc, fmin=burst_config['fmin'] * u.MHz,
+            sbp = SBPattern(ha_cb, dec_cb, dHACOSDEC_loc, dDEC_loc, fmin=burst_config['fmin'] * u.MHz,
                             fmax=burst_config['fmax'] * u.MHz, min_freq=config['fmin_data'] * u.MHz,
                             cb_model=config['cb_model'], cbnum=int(CB[2:]))
             # get pattern integrated over frequency

@@ -38,7 +38,7 @@ def calc_snr_matched_filter(data, widths=None):
     :param array data: timeseries data
     :param list widths: matched filters widhts to try
                         (Default: [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500])
-    :return: highest S/N, corresponding matched filter width
+    :return: highest S/N (float), corresponding matched filter width (int)
     """
     if widths is None:
         # all possible widths as used by AMBER

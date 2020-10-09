@@ -206,7 +206,7 @@ def main():
     central_freq = int(np.round(config['fmin_data'] + config['bandwidth'] / 2)) * u.MHz
 
     for burst in config['bursts']:
-        logging.info(f"Processing {burst}")
+        logger.info(f"Processing {burst}")
         burst_config = config[burst]
 
         # loop over CBs
@@ -254,14 +254,19 @@ def main():
                 data = np.loadtxt(beam_config['snr_array'], ndmin=2)
                 sb_det, snr_det = data.T
                 sb_det = sb_det.astype(int)
-                # delete values below S/N threshold
-                ind = snr_det < config['snrmin']
-                sb_det = sb_det[~ind]
-                snr_det = snr_det[~ind]
+                # only keep values above S/N threshold
+                ind = snr_det >= config['snrmin']
+                sb_det = sb_det[ind]
+                snr_det = snr_det[ind]
             except KeyError:
                 logger.info(f"No S/N array found for {burst}, assuming this is a non-detection beam")
                 sb_det = np.array([])
                 snr_det = np.array([])
+            else:
+                if len(sb_det) == 0:
+                    logger.info(f"No SBs above S/N threshold found for {burst}")
+                    sb_det = np.array([])
+                    snr_det = np.array([])
             numsb_det += len(sb_det)
 
             # non detection beams
@@ -311,7 +316,7 @@ def main():
             if ndet > 0:
                 logger.info(f"Adding {ndet} detections")
                 # chi2 per SB
-                chi2_det = (snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2
+                chi2_det = (snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2 / snr_model[sb_det]
                 # add sum over SBs to total chi2
                 chi2[CB] += chi2_det.sum(axis=0)
                 # store intermediates
@@ -330,11 +335,11 @@ def main():
                 points = snr_model_nondet > config['snrmin']
                 # temporarily create an array holding the chi2 values to add per SB
                 chi2_to_add = np.zeros_like(snr_model_nondet)
-                chi2_to_add[points] += (snr_model_nondet[points] - config['snrmin']) ** 2
+                chi2_to_add[points] += (snr_model_nondet[points] - config['snrmin']) ** 2 / snr_model_nondet[points]
                 # store intermediates
                 if args.store_intermediates:
                     # chi2 per SB
-                    np.save(f'{intermediates_prefix}_{burst}_{CB}_chi2_nondet', chi2_det)
+                    np.save(f'{intermediates_prefix}_{burst}_{CB}_chi2_nondet', chi2_to_add)
                 # sum over SBs and add
                 chi2[CB] += chi2_to_add.sum(axis=0)
                 # add number of non-detection beams with S/N > snrmin to DoF
@@ -425,17 +430,18 @@ def main():
             for CB in burst_config['beams']:
                 title = f"{CB}"
                 fig = make_plot(conf_ints[CB], RA, DEC, title, args.conf_int, t_arr=tarr,
-                                cb_pos=pointings[CB], freq=central_freq)
+                                cb_pos=pointings[CB], freq=central_freq,
+                                src_pos=config['source_coord'])
                 if args.save_plots:
                     fig.savefig(f'{output_prefix}_{burst}_{CB}.pdf')
 
             # total, if there is more than one CB
             if len(burst_config['beams']) > 1:
                 fig = make_plot(conf_int_total, RA, DEC, burst, args.conf_int, loc='lower right',
-                                cb_pos=list(pointings.values()), freq=central_freq)
-
-            if args.save_plots:
-                fig.savefig(f'{output_prefix}_{burst}_total.pdf')
+                                cb_pos=list(pointings.values()), freq=central_freq,
+                                src_pos=config['source_coord'])
+                if args.save_plots:
+                    fig.savefig(f'{output_prefix}_{burst}_total.pdf')
 
     # result of all bursts combined
     # first correct DoF for number of parameters
@@ -454,7 +460,8 @@ def main():
         # plot of all bursts combined, if there are multiple bursts
         if len(config['bursts']) > 1:
             fig = make_plot(conf_int_all_bursts, RA, DEC, 'Combined', args.conf_int, loc='lower right',
-                            cb_pos=list(nested_dict_values(pointings_all)), freq=central_freq)
+                            cb_pos=list(nested_dict_values(pointings_all)), freq=central_freq,
+                            src_pos=config['source_coord'])
             if args.save_plots:
                 fig.savefig(f'{output_prefix}_combined_bursts.pdf')
     if args.show_plots:

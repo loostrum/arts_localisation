@@ -241,20 +241,22 @@ def load_config(args, for_snr=False):
     :param bool for_snr: Only load settings related to S/N determination, skip everything else
     :return: config (dict)
     """
+
     config = parse_yaml(args.config, for_snr)
     # overwrite parameters also given on command line
     if for_snr:
-        keys = REQUIRED_KEYS_SNR
+        keys = REQUIRED_KEYS_SNR + REQUIRED_KEYS_GLOBAL
     else:
-        keys = REQUIRED_KEYS_LOC
+        keys = REQUIRED_KEYS_LOC + REQUIRED_KEYS_GLOBAL
     for key in keys:
-        value = getattr(args, key)
+        try:
+            value = getattr(args, key)
+        except AttributeError:
+            value = None
         if value is not None:
             logger.debug(f"Overwriting {key} from settings with command line value")
-            if for_snr:
-                config[key] = value
-            else:
-                config['global'][key] = value
+            print(f"Overwriting {key} from settings with command line value")
+            config[key] = value
 
     return config
 

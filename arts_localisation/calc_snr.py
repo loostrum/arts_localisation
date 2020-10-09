@@ -105,7 +105,11 @@ def main():
             nrow = int(np.ceil(np.sqrt(ncb)))
             ncol = int(np.ceil(ncb / nrow))
             nplot_empty = nrow * ncol - ncb
-            fig, axes = plt.subplots(nrows=nrow, ncols=ncol, figsize=(16, 16 * int(np.round(ncol / nrow))),
+            if ncb > 1:
+                size = 16
+            else:
+                size = 8
+            fig, axes = plt.subplots(nrows=nrow, ncols=ncol, figsize=(size, size * int(np.round(ncol / nrow))),
                                      sharex=True, sharey=True, squeeze=False)
             axes = axes.flatten()
 
@@ -141,13 +145,9 @@ def main():
                 snr, width = calc_snr_matched_filter(ts, widths=range(1, config['width_max'] + 1))
                 snr_all[sb] = snr
 
-            # store S/N file
-            if np.all(snr_all < config['snrmin']):
-                logger.warning(f'No S/N above threshold found for CB{cb:02d}')
-
             with open(output_file, 'w') as f:
                 f.write('#sb snr\n')
-                # format each line, keep only values above S/N threshold
+                # format each line as sb, snr
                 for sb, snr in enumerate(snr_all):
                     f.write(f'{sb:02d} {snr:.2f}\n')
 
@@ -156,7 +156,9 @@ def main():
                 logger.info(f'Adding {burst} S/N to plot')
                 ax = axes[i]
                 ax.plot(range(NSB), snr_all, c='k', marker='o')
-                ax.axhline(config['snrmin'], label='threshold')
+                # Add line S/N threshold if the value is available
+                if 'snrmin' in config.keys():
+                    ax.axhline(config['snrmin'], label='threshold')
                 ax.set_xlim(0, NSB)
                 ax.set_xlabel('SB index')
                 ax.set_ylabel('S/N')

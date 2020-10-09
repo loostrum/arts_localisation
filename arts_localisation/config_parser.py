@@ -9,7 +9,7 @@ import numpy as np
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 
-from arts_localisation.tools import cb_index_to_pointing, get_neighbours
+from arts_localisation.tools import cb_index_to_pointing, get_neighbours, hadec_to_radec
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ REQUIRED_KEYS_GLOBAL = ('snrmin', 'fmin_data', 'bandwidth')
 
 REQUIRED_KEYS_SNR = ('dm', 'window_load', 'window_zoom', 'width_max')
 REQUIRED_KEYS_SNR_BURST = ('main_sb', 'main_cb', 'filterbank', 'cbs', 'neighbours')
-REQUIRED_KEYS_LOC = ('ra', 'dec', 'size', 'resolution', 'cb_model')
+REQUIRED_KEYS_LOC = ('dec', 'size', 'resolution', 'cb_model')
 
 
 def parse_yaml(fname, for_snr=False):
@@ -68,6 +68,9 @@ def parse_yaml(fname, for_snr=False):
         # check if required keys are present
         for key in REQUIRED_KEYS_LOC:
             assert key in conf_loc.keys(), f'Localisation section key missing: {key}'
+        # check if ha or ra is present
+        if not ('ha' in conf_loc.keys() or 'ra' in conf_loc.keys()):
+            raise AssertionError(f'Localisation key missing: ra or ha')
 
         # check for known source coordinates
         source_coord = None
@@ -163,9 +166,17 @@ def parse_yaml(fname, for_snr=False):
             # check for telescope pointing
             pointing_coord = None
             try:
-                pointing_ra = conf_burst['pointing_ra']
                 pointing_dec = conf_burst['pointing_dec']
-                pointing_coord = (pointing_ra * u.deg, pointing_dec * u.deg)
+                try:
+                    pointing_ra = conf_burst['pointing_ra']
+                    pointing_coord = (pointing_ra * u.deg, pointing_dec * u.deg)
+                except KeyError:
+                    # Assume hour angle was given instead of right ascension
+                    pointing_ha = conf_burst['pointing_ha']
+                    # convert to RADEC
+                    pointing = hadec_to_radec(pointing_ha * u.deg, pointing_dec * u.deg, tarr)
+                    pointing_coord = (pointing.ra, pointing.dec)
+
                 logger.info("Telescope pointing found. Only use this option if ref_beam == 0.")
             except KeyError:
                 logging.debug("No telescope pointing found")
@@ -194,8 +205,15 @@ def parse_yaml(fname, for_snr=False):
                     keys = []
 
                 # if ra, dec are given, use these
-                if 'ra' in keys and 'dec' in keys:
-                    cb_pointing = (conf_burst[beam]['ra'] * u.deg, conf_burst[beam]['dec'] * u.deg)
+                if 'dec' in keys:
+                    try:
+                        # Try RADEC
+                        cb_pointing = (conf_burst[beam]['ra'] * u.deg, conf_burst[beam]['dec'] * u.deg)
+                    except KeyError:
+                        # Try HADEC
+                        pointing = hadec_to_radec((conf_burst[beam]['ha'] * u.deg, conf_burst[beam]['dec'] * u.deg),
+                                                  t=tarr)
+                        cb_pointing = (pointing.ra, pointing.dec)
                     # if pointing is also set, warn the user
                     if pointing_coord is not None:
                         logger.warning(f"CB{beam:02d} RA, Dec given, "

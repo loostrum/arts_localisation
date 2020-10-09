@@ -74,16 +74,10 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
     if isinstance(t, str):
         t = Time(t)
 
-    # set observing epoch
-    if apparent:
-        obstime = t
-    else:
-        obstime = None  # Defaults to J2000
-
     # create spherical representation of ITRS coordinates of given ha, dec
     itrs_spherical = SphericalRepresentation(lon - ha, dec, 1.)
     # create ITRS object, which requires cartesian input
-    coord = SkyCoord(itrs_spherical.to_cartesian(), frame='itrs', obstime=obstime)
+    coord = SkyCoord(itrs_spherical.to_cartesian(), frame='itrs', obstime=t)
     # convert to J2000
     return coord.icrs
 

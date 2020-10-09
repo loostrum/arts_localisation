@@ -106,12 +106,17 @@ class BeamFormer:
         # init geometric phases per dish
         dphi_shape = (self.ndish, self.freqs.shape[0], grid_ha.shape[0], grid_ha.shape[1])
         self.dphi_g = np.zeros(dphi_shape)
+
+        # get l,m coordinates
+        l = np.sin(dra) * np.cos(grid_dec)
+        m = np.cos(dec0) * np.sin(grid_dec) - np.sin(dec0) * np.cos(grid_dec) * np.cos(dra)
         # loop over baselines
         for i, baseline in enumerate(uvw):
             uu, vv, ww = baseline.T
             # u,v,w have shape (nfreq)
             # store phase offset with respect to phase center
-            self.dphi_g[i] = (uu[:, None, None] * np.sin(dra) * np.cos(grid_dec) + vv[:, None, None] * np.sin(ddec)).to(1).value
+            # self.dphi_g[i] = (uu[:, None, None] * np.sin(dra) * np.cos(grid_dec) + vv[:, None, None] * np.sin(ddec)).to(1).value
+            self.dphi_g[i] = (uu[:, None, None] * l + vv[:, None, None] * m).to(1).value
 
     @staticmethod
     @nb.njit('float64[:, :, :](float64[:, :, :, :])', parallel=True)

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import os
-import sys
 import logging
 import argparse
 
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def get_burst_window(burst, **config):
     """
-    Load a single SB and determine the arrival time of a burst within window_load / window_zoom of the centre
+    Load a single SB and determine the arrival time of a burst within window_load and window_zoom of the centre
 
     :param str burst: Name of the burst key in the config
     :param config: S/N configuration
@@ -29,7 +28,12 @@ def get_burst_window(burst, **config):
     fil_reader = ARTSFilterbankReader(config[burst]['filterbank'], config[burst]['main_cb'])
     # load the file
     chunksize_wide = int(config['window_load'] / fil_reader.tsamp)
-    startbin_wide = int(.5 * (fil_reader.nsamp - chunksize_wide))
+    try:
+        samp_arr = config[burst]['toa_filterbank'] / fil_reader.tsamp
+    except KeyError:
+        logger.debug('Could not read toa_filterbank from config, assuming burst occurs in centre of filterbank data')
+        samp_arr = .5 * fil_reader.nsamp
+    startbin_wide = int(samp_arr - .5 * chunksize_wide)
     sb = fil_reader.load_single_sb(config[burst]['main_sb'], startbin_wide, chunksize_wide)
     # dedisperse and create timeseries
     sb.dedisperse(config['dm'])
@@ -41,7 +45,7 @@ def get_burst_window(burst, **config):
     startbin_wide -= int(ind_max - .5 * chunksize_wide)
     # calculate the required parameters for the zoomed window
     chunksize_small = int(config['window_zoom'] / fil_reader.tsamp)
-    # startbin_small is relative to startbin_wide
+    # startbin_small is relative to chunksize_small
     startbin_small = int(.5 * (chunksize_wide - chunksize_small))
     return startbin_wide, chunksize_wide, startbin_small, chunksize_small
 

@@ -1,5 +1,5 @@
-Tutorial
-========
+Tutorials
+=========
 
 In short, the localisation consists of the following steps:
 
@@ -12,15 +12,10 @@ In short, the localisation consists of the following steps:
 #. Repeat the previous step with different settings until the entire uncertainty region is covered
 #. Re-run the localisation at high resolution
 
-Two examples are provided:
+
+The below tutorials go through these steps with examples:
 
 .. toctree::
-    :maxdepth: 1
+   :maxdepth: 1
 
-    tutorial_repeater/intro
-    tutorial_oneoff/intro
-
-
-
-
-
+   tutorial_repeater/intro

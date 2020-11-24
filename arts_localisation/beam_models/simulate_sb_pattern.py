@@ -20,7 +20,8 @@ logger = logging.getLogger(__name__)
 class SBPattern:
 
     def __init__(self, ha, dec, dha, ddec, sbs=None, load=False, fname=None, memmap_file=None, cb_model='gauss', cbnum=None,
-                 min_freq=1220 * u.MHz, fmin=1220 * u.MHz, fmax=1520 * u.MHz, nfreq=64, dish_mode='a8'):
+                 min_freq=1220 * u.MHz, fmin=1220 * u.MHz, fmax=1520 * u.MHz, nfreq=64, dish_mode='a8',
+                 no_pbar=False):
         """
         Generate Synthesised Beam pattern.
 
@@ -39,9 +40,11 @@ class SBPattern:
         :param Quantity: maximum frequency to consider (Default: 1520 MHz)
         :param int nfreq: number of frequency channels, should be multiple of nsub=32 (default:64)
         :param str dish_mode: Apertif setup (Default: a8, i.e. 8 equidistant dishes)
+        :param bool no_pbar: disable progress bar (Default: False)
 
         """
         df = 300. * u.MHz / nfreq
+        self.no_pbar = no_pbar
 
         # fname is required when load is True
         if load and fname is None:
@@ -104,7 +107,7 @@ class SBPattern:
             # get TAB pattern for each tab, freq, ha, dec (image order: dec, then ha)
             beam_pattern_tab = np.zeros((NTAB, nfreq, numDEC, numHA), dtype=np.float32)
 
-            for tab in tqdm.tqdm(range(NTAB)):
+            for tab in tqdm.tqdm(range(NTAB), disable=self.no_pbar):
                 # run TAB beamformer
                 tab_fringes = bf.beamform(tab)
                 # zero out bad freqs
@@ -120,7 +123,7 @@ class SBPattern:
                 beam_pattern_sb = np.memmap(memmap_file + '_full_sb.dat', dtype=np.float, mode='w+', shape=shape)
             else:
                 beam_pattern_sb = np.zeros(shape, dtype=np.float32)
-            for sb in tqdm.tqdm(sbs):
+            for sb in tqdm.tqdm(sbs, disable=self.no_pbar):
                 # apply 2D primary beam and store
                 beam = sb_gen.synthesize_beam(beam_pattern_tab, sb)
                 beam_pattern_sb[sb] = primary_beam * beam

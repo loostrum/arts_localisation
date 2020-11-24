@@ -58,7 +58,7 @@ def radec_to_hadec(ra, dec, t, lon=WSRT_LON):
     return ha, dec
 
 
-def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
+def hadec_to_radec(ha, dec, t, lon=WSRT_LON):
     """
     Convert apparent HA, Dec to J2000 RA, Dec
 
@@ -66,7 +66,6 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
     :param dec: declination with unit
     :param t: UT time (string or astropy.time.Time)
     :param lon: Longitude with unit (default: WSRT)
-    :param apparent: Whether or not HA, Dec are apparent coordinates (default: True)
     :return: SkyCoord object of J2000 coordinates
     """
 
@@ -99,8 +98,7 @@ def hadec_to_par(ha, dec, lat=WSRT_LAT):
 
 def hadec_to_proj(ha, dec, lat=WSRT_LAT):
     """
-    Convert HA, Dec to projection angle
-    This is the E-W baseline projection angle
+    Convert HA, Dec to E-W baseline projection angle
 
     :param ha: hour angle with unit
     :param dec: declination with unit
@@ -234,7 +232,9 @@ def coord_to_offset(ra0, dec0, ra1, dec1):
     :param ra1: Target RA or Az
     :param dec1: Target Dec or Alt
     :return: (theta, phi) offset
+
               theta is offset in RA or Az
+
               phi is offset in Dec or Alt
     """
     # convert target radec into offset
@@ -341,6 +341,7 @@ def get_neighbours(cbs):
     :return: flattened list of neighbours
     """
     # list of neighbours for all CBs, ordered per CB row
+    # nth element of the list contants a list of neighbours of CB n
     # TODO: double check this list
     all_neighbours = [[17, 18, 23, 24],
                       [2, 8], [1, 3, 8, 9], [2, 4, 9, 10], [3, 5, 10, 11], [4, 6, 11, 12], [5, 7, 12, 13], [6, 13, 14],

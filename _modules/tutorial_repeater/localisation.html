@@ -1,0 +1,330 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Localisation &mdash; ARTS Localisation 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="API reference" href="../api.html" />
+    <link rel="prev" title="Update configuration file for localisation" href="localisation_config.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> ARTS Localisation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorial.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="intro.html">Repeater localisation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="snr_config.html">Configuration file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snr.html">S/N measurement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="localisation_config.html">Update configuration file for localisation</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Localisation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ARTS Localisation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../tutorial.html">Tutorials</a> &raquo;</li>
+        
+          <li><a href="intro.html">Repeater localisation</a> &raquo;</li>
+        
+      <li>Localisation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/_modules/tutorial_repeater/localisation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="localisation">
+<h1>Localisation<a class="headerlink" href="#localisation" title="Permalink to this headline">¶</a></h1>
+<p>Finally, we can run the actual localisation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">arts_run_localisation</span> <span class="o">--</span><span class="n">config</span> <span class="n">R3</span><span class="o">.</span><span class="n">yaml</span> <span class="o">--</span><span class="n">output_folder</span> <span class="n">localisation_lowres</span> <span class="o">--</span><span class="n">save_plots</span> <span class="o">--</span><span class="n">verbose</span>
+</pre></div>
+</div>
+<p>The script generates a beam model for each SB, and compares the S/N according to the model to the measured S/N.
+For SBs with a S/N below the threshold, the modelled S/N is only included if it is above the threshold. The differences
+between the measured and modelled S/N are combined using a Chi-squared statistic. This results in a Chi-squared value
+at each localisation grid point, with potentially a different number of degrees of freedom for each grid point as the
+number of non-detection SBs in the model may vary over the localisation grid.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Any burst/CB combination for which an output file already exists is skipped</p>
+<p>It is possible to overwrite settings from the config file. Run <code class="docutils literal notranslate"><span class="pre">arts_run_localisation</span> <span class="pre">-h</span></code> for an overview of all options</p>
+</div>
+<p>Let’s see the output of the localisation script:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>(py36) leon@zeus:R3$ ls localisation_lowres/
+R3_20200511_3610_CB00_chi2.npy          R3_20200527_3437_CB00_chi2.npy          R3_20200528_2063_CB00_chi2.npy          R3_combined_bursts.pdf
+R3_20200511_3610_CB00_conf_int.npy      R3_20200527_3437_CB00_conf_int.npy      R3_20200528_2063_CB00_conf_int.npy      R3_coord.npy
+R3_20200511_3610_CB00.pdf               R3_20200527_3437_CB00.pdf               R3_20200528_2063_CB00.pdf               R3_localisation.npy
+R3_20200511_3610_CB00_snr_too_high.npy  R3_20200527_3437_CB00_snr_too_high.npy  R3_20200528_2063_CB00_snr_too_high.npy
+R3_20200511_3610_total_conf_int.npy     R3_20200527_3437_total_conf_int.npy     R3_20200528_2063_total_conf_int.npy
+</pre></div>
+</div>
+<p>For each CB, these files are created:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">*_chi2.npy</span></code>: contains the Chi-squared values at each grid point, one file per CB.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*_conf_int.npy</span></code>: contains the confidence interval at each grid point (i.e. a combination of the Chi-squared values and degrees of freedom).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*snr_too_high.npy</span></code>: contains the grid points where the modelled S/N is highest in an SB that is <em>not</em> the main detection SB. By default, this array is not actually used during the localisation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*total_conf_int.npy</span></code>: contains the Chi-squared values of one burst, all CBs combined.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*.pdf</span></code>: A visualisation of the confidence intervals for this burst.</p></li>
+</ul>
+<p>Additionally, these files a created once:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">R3_coord.npy</span></code>: The RA, Dec coordinate grid corresponding to the localisation grid points.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">R3_localisation.npy</span></code>: The confidence interval of all bursts combined. This file also includes the coordinate grid.
+Load with something like <code class="docutils literal notranslate"><span class="pre">RA,</span> <span class="pre">DEC,</span> <span class="pre">conf_int</span> <span class="pre">=</span> <span class="pre">np.load('R3_localisation')</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">R3_combined_bursts.pdf</span></code>: A visualisation of the confidence intervals of all bursts combined.</p></li>
+</ul>
+<p>The burst figures look like this (click on a figure to make it bigger):</p>
+<a class="reference internal image-reference" href="../../_images/R3_20200511_3610_CB00_lowres.png"><img alt="Localisation region of the 20200511_3610 burst" src="../../_images/R3_20200511_3610_CB00_lowres.png" style="width: 300px;" /></a>
+<a class="reference internal image-reference" href="../../_images/R3_20200527_3437_CB00_lowres.png"><img alt="Localisation region of the 20200527_3437 burst" src="../../_images/R3_20200527_3437_CB00_lowres.png" style="width: 300px;" /></a>
+<a class="reference internal image-reference" href="../../_images/R3_20200528_2063_CB00_lowres.png"><img alt="Localisation region of the 20200528_2063 burst" src="../../_images/R3_20200528_2063_CB00_lowres.png" style="width: 300px;" /></a>
+<a class="reference internal image-reference" href="../../_images/R3_combined_bursts_lowres.png"><img alt="Localisation region of all bursts combined" src="../../_images/R3_combined_bursts_lowres.png" style="width: 300px;" /></a>
+<p>Note that a lower value is better in this case. By default, a 90% confidence interval is used for these figures.
+This region is then given by all points with a value &lt;= 0.10.
+From especially the lower left plot, it is clear that the resolution is not high enough for proper localisation:
+Along the major axis of the SB (from lower left to upper right in this case), there are gaps where the burst has a very
+low probability, even though a single burst in a single CB can only be very coarsely localized along this axis.
+For a single-CB detection, it may be very hard to do better. One could run a smaller localisation grid several times,
+centred on different coordinates, and then combine the results. However, in this case we have multiple bursts.
+While the combined results does not make sense yet (because the resolution is too low), we can estimate the real
+burst position by overlapping the 3 individual burst figures: it must be near the centre.</p>
+<p>In general, some experience is required to interpret these plots. For example, if the resolution is too low the result
+may not even include a region that overlaps with the main detection SB. Currently, it is up to the user to recognize
+and handle these issues.</p>
+<p>We can now re-run the localisation at a higher resolution. The grid size is reduced to 10 arcminutes (from 35), which
+allows us to increase the resolution to ~2 arcsec without a significant change in memory/computing load.
+The localisation section of the config file now looks like this:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">localisation</span><span class="p">:</span>
+    <span class="nt">source_ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
+    <span class="nt">source_dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
+
+    <span class="nt">ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
+    <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
+
+    <span class="c1">#size: 35</span>
+    <span class="c1">#resolution: 10</span>
+    <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+    <span class="nt">resolution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
+
+    <span class="nt">cb_model</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gauss</span>
+</pre></div>
+</div>
+<p>Now the localisation can be executed again. The files are saved to a different folder, so the original, low-resolution output is not lost:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">arts_run_localisation</span> <span class="o">--</span><span class="n">config</span> <span class="n">R3</span><span class="o">.</span><span class="n">yaml</span> <span class="o">--</span><span class="n">output_folder</span> <span class="n">localisation_highres</span> <span class="o">--</span><span class="n">save_plots</span> <span class="o">--</span><span class="n">verbose</span>
+</pre></div>
+</div>
+<p>The figures now look like this (click on a figure to make it bigger):</p>
+<a class="reference internal image-reference" href="../../_images/R3_20200511_3610_CB00_highres.png"><img alt="Localisation region of the 20200511_3610 burst" src="../../_images/R3_20200511_3610_CB00_highres.png" style="width: 300px;" /></a>
+<a class="reference internal image-reference" href="../../_images/R3_20200527_3437_CB00_highres.png"><img alt="Localisation region of the 20200527_3437 burst" src="../../_images/R3_20200527_3437_CB00_highres.png" style="width: 300px;" /></a>
+<a class="reference internal image-reference" href="../../_images/R3_20200528_2063_CB00_highres.png"><img alt="Localisation region of the 20200528_2063 burst" src="../../_images/R3_20200528_2063_CB00_highres.png" style="width: 300px;" /></a>
+<a class="reference internal image-reference" href="../../_images/R3_combined_bursts_highres.png"><img alt="Localisation region of all bursts combined" src="../../_images/R3_combined_bursts_highres.png" style="width: 300px;" /></a>
+<p>The figures now show clear, continuous localisation regions (although multiple regions are
+still allowed for some bursts), and there is a final localisation region near the center of the CB.
+The final localisation region is quite small, so let’s zoom in one more time and again increase the resolution.</p>
+<p>This time, the grid size is 1 arcminute and the resolution 0.1 arcsecond.</p>
+<p>The output is as follows (click on a figure to make it bigger):</p>
+<a class="reference internal image-reference" href="../../_images/R3_20200511_3610_CB00_highestres.png"><img alt="Localisation region of the 20200511_3610 burst" src="../../_images/R3_20200511_3610_CB00_highestres.png" style="width: 300px;" /></a>
+<a class="reference internal image-reference" href="../../_images/R3_20200527_3437_CB00_highestres.png"><img alt="Localisation region of the 20200527_3437 burst" src="../../_images/R3_20200527_3437_CB00_highestres.png" style="width: 300px;" /></a>
+<a class="reference internal image-reference" href="../../_images/R3_20200528_2063_CB00_highestres.png"><img alt="Localisation region of the 20200528_2063 burst" src="../../_images/R3_20200528_2063_CB00_highestres.png" style="width: 300px;" /></a>
+<a class="reference internal image-reference" href="../../_images/R3_combined_bursts_highestres.png"><img alt="Localisation region of all bursts combined" src="../../_images/R3_combined_bursts_highestres.png" style="width: 300px;" /></a>
+<p>Now we can finally see the combined localisation region. The script prints some information about the localisation result:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>INFO:arts_localisation.run_localisation:Localisation area is 1317.59 arcsec2 = 0.37 arcmin2
+INFO:arts_localisation.run_localisation:Best position: 01h58m05.6619s +65d42m49.9s
+INFO:arts_localisation.run_localisation:Source position: 01h58m00.7992s +65d43m00.3s
+INFO:arts_localisation.run_localisation:Separation: 31.749951562365375 arcsec
+INFO:arts_localisation.run_localisation:Confidence interval at source (lower is better): 0.00009
+</pre></div>
+</div>
+<p>In this case, the final best position is 30 arcseconds from the known source position. The probability across a large
+part of the localisation region is relatively constant: the real source position is also a very good fit at at 0.00009,
+i.e. it would only be excluded if we would choose a 99.991% or higher confidence level.
+For reference, the 0.37 square-arcminute localisation region corresponds to a circular region with a radius of 20 arcseconds.</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../api.html" class="btn btn-neutral float-right" title="API reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="localisation_config.html" class="btn btn-neutral float-left" title="Update configuration file for localisation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Leon Oostrum
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

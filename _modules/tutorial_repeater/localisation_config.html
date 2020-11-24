@@ -1,0 +1,369 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Update configuration file for localisation &mdash; ARTS Localisation 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Localisation" href="localisation.html" />
+    <link rel="prev" title="S/N measurement" href="snr.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> ARTS Localisation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorial.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="intro.html">Repeater localisation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="snr_config.html">Configuration file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snr.html">S/N measurement</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Update configuration file for localisation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="localisation.html">Localisation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ARTS Localisation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../tutorial.html">Tutorials</a> &raquo;</li>
+        
+          <li><a href="intro.html">Repeater localisation</a> &raquo;</li>
+        
+      <li>Update configuration file for localisation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/_modules/tutorial_repeater/localisation_config.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="update-configuration-file-for-localisation">
+<h1>Update configuration file for localisation<a class="headerlink" href="#update-configuration-file-for-localisation" title="Permalink to this headline">¶</a></h1>
+<p>A few sections need to be add to the configuration file to be able to run the localisation.</p>
+<p>First, a new <code class="docutils literal notranslate"><span class="pre">localisation</span></code> section should be added containing:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ra</span></code>: right ascension of centre of localisation grid (decimal degrees).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dec</span></code>: declination of centre of localisation grid (decimal degrees).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">size</span></code>: size of one side of the (square) localisation grid (arcmin).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">resolution</span></code>: resolution of the localisation grid (arcsec).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cb_model</span></code>: type of CB model to use, options are gauss, airy, or real.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">source_ra</span></code>: right ascension of the source (decimal degrees). Optional; only used for visualization</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">source_dec</span></code>: declination of the source (decimal degrees). Optional; only used for visualization</p></li>
+</ol>
+<p>Initially, we centre the localisation grid on the centre of the CB, which in this example happens to coincide
+with the real source position.
+The grid size is chosen to be 35 arcminutes, which covers the CB roughly out to its
+half-power width. The resolution is set to 10 arcseconds. This is roughly half the half-power with of a single SB.
+A higher resolution is needed for accurate localisation, but cannot be used in combination with a large grid size.
+The limitation here is memory usage, and potentially speed: With the settings chosen here, the beam model
+is calculated for roughly 270 million points, requiring roughly 2GB of memory just to hold those data.
+Clearly, increasing the resolution to 1 arcsecond is not feasible: that would require 200GB of memory.
+Instead, the localisation is first run at lower resolution, then again after zooming in on the are of interest.
+The lowered grid size then allows for a higher resolution.
+Finally, we set the <code class="docutils literal notranslate"><span class="pre">cb_model</span></code> to Gaussian (the used model has little effect on the result), and put in the known
+coordinates of FRB 180916.J0158+65.</p>
+<p>Next, more parameters need to be added to the section of each burst:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">tstart</span></code> and <code class="docutils literal notranslate"><span class="pre">toa</span></code> <strong>or</strong> <code class="docutils literal notranslate"><span class="pre">tarr</span></code>: start time of observation (ISOT format) plus arrival time within observation (s), or just burst arrival time (ISOT).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reference_cb</span></code>: subsection name of the CB to use as reference point (actually, the SB with highest S/N within
+that CB is used as reference). This is typically the same CB as the <code class="docutils literal notranslate"><span class="pre">main_cb</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pointing_ra</span></code>: right ascension of the telescope pointing (decimal degrees). Optional; Instead, the pointing of each CB can be given separately</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pointing_dec</span></code>: declination of the telescope pointing (decimal degrees). Optional; Instead, the pointing of each CB can be given separately</p></li>
+</ol>
+<p>For this example, the <code class="docutils literal notranslate"><span class="pre">tstart</span></code> + <code class="docutils literal notranslate"><span class="pre">toa</span></code> combination is used. The reference CB is always CB00. Only one CB is used,
+so we do not use the pointing settings, but put in the CB pointing in the specific subsections (see below).</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Do <strong>not</strong> use the start time as noted in the filterbank header and/or parameterset: The real start time is synced to a
+1.024 s interval upon observation start, slightly shifting the intended start time as needed. This change is not
+reflected in the filterbank header nor parameterset. To get the real start time, look at the start packet value
+in the observation log, e.g.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>oostrum@arts041:~$ grep &#39;Start packet&#39; /home/arts/observations/log/20200511/2020-05-11-07:36:22.R3/fill_ringbuffer_i.00
+Start packet = 1241548892456250
+</pre></div>
+</div>
+<p>The start packet is the unix time stamp of the start time in units of native Apertif time samples, i.e. one second
+equals 781250 samples.
+The value can be converted to ISOT format with e.g. astropy:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Time</span><span class="p">(</span><span class="mi">1241548892456250</span> <span class="o">/</span> <span class="mf">781250.</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;unix&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">isot</span>
+<span class="go">2020-05-11T07:36:22.344</span>
+</pre></div>
+</div>
+</div>
+<p>Then, a subsection needs to be added for each CB. The names of these sections do not matter, but do make sure that
+the <code class="docutils literal notranslate"><span class="pre">reference_cb</span></code> value matches the subsection name of the CB with the main detection. The subsections should contain:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ra</span></code>: right ascension of this CB (not required if <code class="docutils literal notranslate"><span class="pre">pointing_ra</span></code> is given)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dec</span></code>: declination of this CB (not required if <code class="docutils literal notranslate"><span class="pre">pointing_dec</span></code> is given)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">snr_array</span></code>: path to file containing S/N in each SB, as output by <cite>arts_calc_snr</cite></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sefd</span></code>: system-equivalent flux density of this CB (Jy). One value is used to scale the sensitivity of the
+entire CB (i.e. no frequency dependence). Typically this value is extracted from drift scan results. If not given, a value of 85 Jy is used.</p></li>
+</ol>
+<p>We put in the CB coordinates as given in the filterbank header. The S/N array files contain the name of the burst and CB,
+so they can easily be linked to the correct burst/CB within the configuration file. The SEFDs were taken from the drift scans taken closest
+in time to the burst detections.</p>
+<p>After adding these sections, the complete configuration file looks like this:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global</span><span class="p">:</span>
+    <span class="nt">fmin_data</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1219.70092773</span>
+    <span class="nt">bandwidth</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">300</span>
+    <span class="nt">snrmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">6</span>
+
+<span class="nt">snr</span><span class="p">:</span>
+    <span class="nt">window_load</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.0</span>
+    <span class="nt">window_zoom</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.5</span>
+    <span class="nt">dm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">349.2</span>
+    <span class="nt">width_max</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100</span>
+
+<span class="nt">localisation</span><span class="p">:</span>
+    <span class="nt">source_ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
+    <span class="nt">source_dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
+
+    <span class="nt">ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
+    <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
+
+    <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
+    <span class="nt">resolution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+    <span class="nt">cb_model</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gauss</span>
+
+<span class="s">&#39;20200511_3610&#39;</span><span class="p p-Indicator">:</span>
+    <span class="nt">fmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1350</span>
+    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t03610_sb-1_tab{tab}.fil&#39;</span>
+    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span>
+    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
+
+    <span class="nt">tstart</span><span class="p">:</span> <span class="s">&quot;2020-05-11T07:36:22.0&quot;</span>
+    <span class="nt">toa</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3610.84</span>
+    <span class="nt">reference_cb</span><span class="p">:</span> <span class="s">&#39;CB00&#39;</span>
+
+    <span class="nt">CB00</span><span class="p">:</span>
+        <span class="nt">ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
+        <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
+        <span class="nt">snr_array</span><span class="p">:</span> <span class="s">&#39;snr/R3_20200511_3610_CB00_SNR.txt&#39;</span>
+        <span class="nt">sefd</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+
+<span class="s">&#39;20200528_2063&#39;</span><span class="p p-Indicator">:</span>
+    <span class="nt">fmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1350</span>
+    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t02063_sb-1_tab{tab}.fil&#39;</span>
+    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span>
+    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
+
+    <span class="nt">tstart</span><span class="p">:</span> <span class="s">&quot;2020-05-28T05:13:48&quot;</span>
+    <span class="nt">toa</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2063.73</span>
+    <span class="nt">reference_cb</span><span class="p">:</span> <span class="s">&#39;CB00&#39;</span>
+
+    <span class="nt">CB00</span><span class="p">:</span>
+        <span class="nt">ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
+        <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
+        <span class="nt">snr_array</span><span class="p">:</span> <span class="s">&#39;snr/R3_20200528_2063_CB00_SNR.txt&#39;</span>
+        <span class="nt">sefd</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+
+<span class="s">&#39;20200527_3437&#39;</span><span class="p p-Indicator">:</span>
+    <span class="nt">fmax</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1450</span>
+    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t03437_sb-1_tab{tab}.fil&#39;</span>
+    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span>
+    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
+
+    <span class="nt">tstart</span><span class="p">:</span> <span class="s">&quot;2020-05-27T13:37:55&quot;</span>
+    <span class="nt">toa</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3437.12</span>
+    <span class="nt">reference_cb</span><span class="p">:</span> <span class="s">&#39;CB00&#39;</span>
+
+    <span class="nt">CB00</span><span class="p">:</span>
+        <span class="nt">ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
+        <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
+        <span class="nt">snr_array</span><span class="p">:</span> <span class="s">&#39;snr/R3_20200527_3437_CB00_SNR.txt&#39;</span>
+        <span class="nt">sefd</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="localisation.html" class="btn btn-neutral float-right" title="Localisation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="snr.html" class="btn btn-neutral float-left" title="S/N measurement" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Leon Oostrum
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

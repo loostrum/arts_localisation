@@ -1,0 +1,319 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Configuration file &mdash; ARTS Localisation 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="S/N measurement" href="snr.html" />
+    <link rel="prev" title="Repeater localisation" href="intro.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> ARTS Localisation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorial.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="intro.html">Repeater localisation</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Configuration file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snr.html">S/N measurement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="localisation_config.html">Update configuration file for localisation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="localisation.html">Localisation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ARTS Localisation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../tutorial.html">Tutorials</a> &raquo;</li>
+        
+          <li><a href="intro.html">Repeater localisation</a> &raquo;</li>
+        
+      <li>Configuration file</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/_modules/tutorial_repeater/snr_config.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="configuration-file">
+<h1>Configuration file<a class="headerlink" href="#configuration-file" title="Permalink to this headline">¶</a></h1>
+<p>The first step is to create a YAML-format configuration file containing the relevant observation parameters and settings for
+S/N determination.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">global</span></code> section of the configuration file contains general information about the data:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fmin_data</span></code>: lowest frequency of the data (MHz).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bandwidth</span></code>: bandwidth of the data (MHz).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fmin</span></code>: lowest frequency to use (MHz).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fmax</span></code>: highest frequency to use (MHz).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">snrmin</span></code>: S/N threshold.</p></li>
+</ol>
+<p>These data values can be read from the filterbank files, using e.g. PRESTO’s <cite>readfile</cite>.
+All data below/above <code class="docutils literal notranslate"><span class="pre">fmin</span></code>/<code class="docutils literal notranslate"><span class="pre">fmax</span></code> will be ignored.
+These values can also be set per burst. In this example we will do the latter, so the <code class="docutils literal notranslate"><span class="pre">fmin</span></code> and
+<code class="docutils literal notranslate"><span class="pre">fmax</span></code> settings are ignored.
+<code class="docutils literal notranslate"><span class="pre">snrmin</span></code> sets the S/N threshold to actually use in the localisation; any beams where the measured S/N is lower
+are ignored. It is a global setting, because the S/N calculation also uses it, but only for visualization.
+Here the S/N threshold is set to 6, which was chosen based on the output diagnostic plots of the S/N calculation.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">snr</span></code> section contains the global settings specific to S/N determination:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">window_load</span></code>: chunk of data to load, must be at least twice the dispersion delay (s).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">window_zoom</span></code>: chunk of data to keep after dedispersion (s).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dm</span></code>: dispersion measure (pc/cc).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">width_max</span></code>: maximum boxcar width used in S/N calculation.</p></li>
+</ol>
+<p>The DM of R3 is roughly 350 pc/cc. This corresponds to a ~700 ms delay across the Apertif band. Therefore we
+set the load window to 2 seconds. The zoom window is set to 0.5 seconds. The value of the latter doesn’t matter
+that much, as long as it is much wider than the (dedispsersed) pulse itself. The maximum boxcar width is set
+to 100, corresponding to 8 ms. The bursts used in this example are all more narrow than that.</p>
+<p>Now we need to create a section for each burst. The names of these sections can be anything.
+Here I use the burst arrival date and arrival
+time within the observation as name.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the burst name contains only digits and underscores, it must be quoted</p>
+</div>
+<p>For each burst, we then need to add these settings:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">filterbank</span></code>: path to filterbank file, replace CB index by {cb} and TAB index by {tab}.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cbs</span></code>: list of CBs to determine S/N for.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">neighbours</span></code>: Whether or not to calculate the S/N for the neighbours of the CBs in the CB list as well.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">toa_filterbank</span></code>: Rough arrival time of the burst within the filterbank file (s). Optional; If not present, the burst is assumed to be in the centre of the file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">main_cb</span></code>: CB of main detection (used to determine exact burst arrival time in filterbank data).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">main_sb</span></code>: SB of main detection (used to determine exact burst arrival time in filterbank data).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fmin</span></code>: as in global section, but only for this burst.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fmax</span></code>: as in global section, but only for this burst.</p></li>
+</ol>
+<p>As only CB00 data are available, the CB list is simply <code class="docutils literal notranslate"><span class="pre">[0]</span></code> and neighbours should be set to <code class="docutils literal notranslate"><span class="pre">False</span></code>.
+We are using filterbank snippets, where the burst is always near the centre, so we do not have to set <code class="docutils literal notranslate"><span class="pre">toa_filterbank</span></code>.
+The bursts were detected in the pointing centre, i.e. in SB35 of CB00. These values are set for <code class="docutils literal notranslate"><span class="pre">main_sb</span></code> and <code class="docutils literal notranslate"><span class="pre">main_cb</span></code>.
+The <code class="docutils literal notranslate"><span class="pre">fmin</span></code> and <code class="docutils literal notranslate"><span class="pre">fmax</span></code> values were not set globally, so if we need to select a limited frequency range we should do
+so here. Each burst was inspected by eye to select the frequency range.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">fmin</span></code> and <code class="docutils literal notranslate"><span class="pre">fmax</span></code> are never set, all frequencies are used.</p>
+</div>
+<p>After these steps, the configuration file looks like this:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global</span><span class="p">:</span>
+    <span class="nt">fmin_data</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1219.70092773</span>
+    <span class="nt">bandwidth</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">300</span>
+    <span class="nt">snrmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">6</span>
+
+<span class="nt">snr</span><span class="p">:</span>
+    <span class="nt">window_load</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.0</span>
+    <span class="nt">window_zoom</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.5</span>
+    <span class="nt">dm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">349.2</span>
+    <span class="nt">width_max</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100</span>
+
+<span class="s">&#39;20200511_3610&#39;</span><span class="p p-Indicator">:</span>
+    <span class="nt">fmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1350</span>
+    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t03610_sb-1_tab{tab}.fil&#39;</span>
+    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span>
+    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
+
+<span class="s">&#39;20200528_2063&#39;</span><span class="p p-Indicator">:</span>
+    <span class="nt">fmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1350</span>
+    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t02063_sb-1_tab{tab}.fil&#39;</span>
+    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span>
+    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
+
+<span class="s">&#39;20200527_3437&#39;</span><span class="p p-Indicator">:</span>
+    <span class="nt">fmax</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1450</span>
+    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t03437_sb-1_tab{tab}.fil&#39;</span>
+    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span>
+    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="snr.html" class="btn btn-neutral float-right" title="S/N measurement" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="intro.html" class="btn btn-neutral float-left" title="Repeater localisation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Leon Oostrum
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

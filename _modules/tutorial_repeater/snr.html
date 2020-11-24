@@ -1,0 +1,262 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>S/N measurement &mdash; ARTS Localisation 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Update configuration file for localisation" href="localisation_config.html" />
+    <link rel="prev" title="Configuration file" href="snr_config.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> ARTS Localisation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorial.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="intro.html">Repeater localisation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="snr_config.html">Configuration file</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">S/N measurement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="localisation_config.html">Update configuration file for localisation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="localisation.html">Localisation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ARTS Localisation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../tutorial.html">Tutorials</a> &raquo;</li>
+        
+          <li><a href="intro.html">Repeater localisation</a> &raquo;</li>
+        
+      <li>S/N measurement</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/_modules/tutorial_repeater/snr.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="s-n-measurement">
+<h1>S/N measurement<a class="headerlink" href="#s-n-measurement" title="Permalink to this headline">¶</a></h1>
+<p>The configuration file now contains all information needed to measure the S/N in each synthesised beam (SB)
+of each CB of each burst. The following command executes the S/N calculation and creates some diagnostic plots:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">arts_calc_snr</span> <span class="o">--</span><span class="n">config</span> <span class="n">R3</span><span class="o">.</span><span class="n">yaml</span> <span class="o">--</span><span class="n">output_folder</span> <span class="n">snr</span> <span class="o">--</span><span class="n">save_plots</span> <span class="o">--</span><span class="n">verbose</span>
+</pre></div>
+</div>
+<p>The script loops over all bursts and CBs. First it determines the exact burst arrival time in the given CB/SB pair for each burst,
+then it creates all SBs from the TABs and calculates the S/N using a matched filter. For each CB of each burst,
+a text file is created containing the S/N in each SB. The S/N threshold set in the global
+section of the configuration file is only used for visualisation, the script outputs the S/N in each SB,
+even if it is below the threshold. The S/N determination can take quite some time, depending on the number of
+beams. This example took 2.5 minutes on a high-end PC with the data on an SSD.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Any burst/CB combination for which an output file already exists is skipped</p>
+<p>It is possible to overwrite settings from the config file. Run <code class="docutils literal notranslate"><span class="pre">arts_calc_snr</span> <span class="pre">-h</span></code> for an overview of all options</p>
+</div>
+<p>Let’s see what output the script produced:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(py36) leon@zeus:R3$ ls snr
+R3_20200511_3610_CB00_SNR.txt  R3_snr_20200511_3610_CB00_SNR.txt  R3_snr_20200528_2063_CB00_SNR.txt
+R3_20200511_3610_SNR.pdf       R3_snr_20200511_3610_SNR.pdf       R3_snr_20200528_2063_SNR.pdf
+R3_20200528_2063_CB00_SNR.txt  R3_snr_20200527_3437_CB00_SNR.txt
+R3_20200528_2063_SNR.pdf       R3_snr_20200527_3437_SNR.pdf
+</pre></div>
+</div>
+<p>There is a text file for each CB of each burst, and a pdf for each burst (multiple CBs would be combined into one figure).
+As expected, the S/N is highest in the central SB, SB35:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(py36) leon@zeus:R3$ sort -n -k 2 -r  snr/R3_20200511_3610_CB00_SNR.txt  | head -1
+35 26.09
+</pre></div>
+</div>
+<p>The full array of SB vs S/N is shown in the figure:</p>
+<a class="reference internal image-reference" href="../../_images/R3_20200511_3610_SNR.png"><img alt="S/N of the 20200511_3600 burst" src="../../_images/R3_20200511_3610_SNR.png" style="width: 600px;" /></a>
+<p>Clearly, there is a periodicity in the S/N array. This is because the 71 SBs are generated from only 12 unique TABs.
+For any broadband astrophysical signal, a periodicity of 12 SBs is expected in the S/N array. The S/N threshold seems
+ok: It is below most clear detections, and above the noise level.</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="localisation_config.html" class="btn btn-neutral float-right" title="Update configuration file for localisation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="snr_config.html" class="btn btn-neutral float-left" title="Configuration file" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Leon Oostrum
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

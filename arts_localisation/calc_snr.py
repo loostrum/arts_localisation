@@ -59,7 +59,7 @@ def main():
     parser.add_argument('--save_plots', action='store_true', help='Save plots')
     parser.add_argument('--verbose', action='store_true', help="Enable verbose logging")
 
-    group_overwrites = parser.add_argument_group('config overwrites', 'These arguments overwrite the values set'
+    group_overwrites = parser.add_argument_group('config overwrites', 'These arguments overwrite the values set '
                                                                       'in the .yaml config file')
     # global config:
     group_overwrites.add_argument('--snrmin', type=float, help='S/N threshold')

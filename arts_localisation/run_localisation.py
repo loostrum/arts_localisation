@@ -291,7 +291,7 @@ def main():
             try:
                 sefd = beam_config['sefd']
             except KeyError:
-                default_sefd = 100
+                default_sefd = 85
                 logger.info(f"No SEFD found, setting to {default_sefd}")
                 sefd = default_sefd
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import logging
 
 import yaml
@@ -69,8 +68,17 @@ def parse_yaml(fname, for_snr=False):
         for key in REQUIRED_KEYS_LOC:
             assert key in conf_loc.keys(), f'Localisation section key missing: {key}'
         # check if ha or ra is present
-        if not ('ha' in conf_loc.keys() or 'ra' in conf_loc.keys()):
-            raise AssertionError(f'Localisation key missing: ra or ha')
+        assert 'ha' in conf_loc.keys() or 'ra' in conf_loc.keys(), f'Localisation key missing: ra or ha'
+        # if ha is given, convert to J2000 ra, dec
+        if 'ha' in conf_loc.keys():
+            logger.info("Detected HADEC reference frame, converting to RADEC")
+            # time must be set as well to convert to RA, Dec
+            assert 'time' in conf_loc.keys(), 'Localisation key missing in HADEC mode: time'
+            radec = hadec_to_radec(conf_loc['ha'] * u.deg, conf_loc['dec'] * u.deg, conf_loc['time'])
+            # replace the HA,Dec by RA,Dec
+            del conf_loc['ha']
+            conf_loc['ra'] = radec.ra.deg
+            conf_loc['dec'] = radec.dec.deg
 
         # check for known source coordinates
         source_coord = None
@@ -211,7 +219,7 @@ def parse_yaml(fname, for_snr=False):
                         cb_pointing = (conf_burst[beam]['ra'] * u.deg, conf_burst[beam]['dec'] * u.deg)
                     except KeyError:
                         # Try HADEC
-                        pointing = hadec_to_radec((conf_burst[beam]['ha'] * u.deg, conf_burst[beam]['dec'] * u.deg),
+                        pointing = hadec_to_radec(conf_burst[beam]['ha'] * u.deg, conf_burst[beam]['dec'] * u.deg,
                                                   t=tarr)
                         cb_pointing = (pointing.ra, pointing.dec)
                     # if pointing is also set, warn the user

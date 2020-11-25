@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Repeater localisation &mdash; ARTS Localisation 0.1 documentation</title>
+  <title>Configuration file &mdash; ARTS Localisation 0.1 documentation</title>
   
 
   
@@ -36,8 +36,8 @@
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Configuration file" href="snr_config.html" />
-    <link rel="prev" title="Tutorials" href="../tutorial.html" /> 
+    <link rel="next" title="S/N measurement" href="snr.html" />
+    <link rel="prev" title="One-off drift scan localisation" href="intro.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -85,14 +85,14 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorial.html">Tutorials</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Repeater localisation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="snr_config.html">Configuration file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial_repeater/intro.html">Repeater localisation</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="intro.html">One-off drift scan localisation</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Configuration file</a></li>
 <li class="toctree-l3"><a class="reference internal" href="snr.html">S/N measurement</a></li>
 <li class="toctree-l3"><a class="reference internal" href="localisation_config.html">Update configuration file for localisation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="localisation.html">Localisation</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorial_driftscan/intro.html">One-off drift scan localisation</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API reference</a></li>
@@ -144,13 +144,15 @@
         
           <li><a href="../tutorial.html">Tutorials</a> &raquo;</li>
         
-      <li>Repeater localisation</li>
+          <li><a href="intro.html">One-off drift scan localisation</a> &raquo;</li>
+        
+      <li>Configuration file</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../../_sources/_modules/tutorial_repeater/intro.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/_modules/tutorial_driftscan/snr_config.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -163,36 +165,32 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="repeater-localisation">
-<h1>Repeater localisation<a class="headerlink" href="#repeater-localisation" title="Permalink to this headline">¶</a></h1>
-<p>We are going to localize the repeating FRB 180916.J0158+65 (also known as R3) using 3 bursts.
-The telescope was directly pointed at the source, so the detections happened in compound beam zero (CB00).
-For this tutorial, we are not going to use the neighbouring beams. Let’s first look at the available data:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(py36) leon@zeus:R3$ ls data
-CB00_10.0sec_dm0_t02063_sb-1_tab00.fil  CB00_10.0sec_dm0_t03437_sb-1_tab00.fil  CB00_10.0sec_dm0_t03610_sb-1_tab00.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab01.fil  CB00_10.0sec_dm0_t03437_sb-1_tab01.fil  CB00_10.0sec_dm0_t03610_sb-1_tab01.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab02.fil  CB00_10.0sec_dm0_t03437_sb-1_tab02.fil  CB00_10.0sec_dm0_t03610_sb-1_tab02.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab03.fil  CB00_10.0sec_dm0_t03437_sb-1_tab03.fil  CB00_10.0sec_dm0_t03610_sb-1_tab03.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab04.fil  CB00_10.0sec_dm0_t03437_sb-1_tab04.fil  CB00_10.0sec_dm0_t03610_sb-1_tab04.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab05.fil  CB00_10.0sec_dm0_t03437_sb-1_tab05.fil  CB00_10.0sec_dm0_t03610_sb-1_tab05.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab06.fil  CB00_10.0sec_dm0_t03437_sb-1_tab06.fil  CB00_10.0sec_dm0_t03610_sb-1_tab06.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab07.fil  CB00_10.0sec_dm0_t03437_sb-1_tab07.fil  CB00_10.0sec_dm0_t03610_sb-1_tab07.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab08.fil  CB00_10.0sec_dm0_t03437_sb-1_tab08.fil  CB00_10.0sec_dm0_t03610_sb-1_tab08.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab09.fil  CB00_10.0sec_dm0_t03437_sb-1_tab09.fil  CB00_10.0sec_dm0_t03610_sb-1_tab09.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab10.fil  CB00_10.0sec_dm0_t03437_sb-1_tab10.fil  CB00_10.0sec_dm0_t03610_sb-1_tab10.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab11.fil  CB00_10.0sec_dm0_t03437_sb-1_tab11.fil  CB00_10.0sec_dm0_t03610_sb-1_tab11.fil
+  <div class="section" id="configuration-file">
+<h1>Configuration file<a class="headerlink" href="#configuration-file" title="Permalink to this headline">¶</a></h1>
+<p>The first step is to create a YAML-format configuration file containing the relevant observation parameters and settings for
+S/N determination. This process is identical to the <a class="reference internal" href="../tutorial_repeater/intro.html#repeater-localisation"><span class="std std-ref">Repeater localisation</span></a> tutorial.
+FRB 190709 was detected in SB36 of CB10 at a DM of 663.1 pc/cc. After a first run with a S/N threshold of 6, the
+threshold was lowered to 5 based on the output figure (see next step)</p>
+<p>The configuration file looks like this:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global</span><span class="p">:</span>
+    <span class="nt">fmin_data</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1219.70092773</span>
+    <span class="nt">bandwidth</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">300</span>
+    <span class="nt">snrmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+
+<span class="nt">snr</span><span class="p">:</span>
+    <span class="nt">window_load</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.0</span>
+    <span class="nt">window_zoom</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.5</span>
+    <span class="nt">dm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">663.1</span>
+    <span class="nt">width_max</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100</span>
+
+<span class="nt">burst00</span><span class="p">:</span>
+    <span class="nt">fmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1300</span>
+    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t0657_sb-1_tab{tab}.fil&#39;</span>
+    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">10</span><span class="p p-Indicator">]</span>
+    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">36</span>
 </pre></div>
-</div>
-<p>There are 36 files in total: 12 tied-array beams (TABs) for each of the 3 bursts. Indeed, we only have data for CB00.</p>
-<p>Click on one of the below links to go directly to that step, or simply click “Next” in the bottom right
-corner to go to the next step.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="snr_config.html">Configuration file</a></li>
-<li class="toctree-l1"><a class="reference internal" href="snr.html">S/N measurement</a></li>
-<li class="toctree-l1"><a class="reference internal" href="localisation_config.html">Update configuration file for localisation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="localisation.html">Localisation</a></li>
-</ul>
 </div>
 </div>
 
@@ -204,10 +202,10 @@ corner to go to the next step.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="snr_config.html" class="btn btn-neutral float-right" title="Configuration file" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="snr.html" class="btn btn-neutral float-right" title="S/N measurement" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../tutorial.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="intro.html" class="btn btn-neutral float-left" title="One-off drift scan localisation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

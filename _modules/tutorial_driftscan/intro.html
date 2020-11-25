@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Repeater localisation &mdash; ARTS Localisation 0.1 documentation</title>
+  <title>One-off drift scan localisation &mdash; ARTS Localisation 0.1 documentation</title>
   
 
   
@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Configuration file" href="snr_config.html" />
-    <link rel="prev" title="Tutorials" href="../tutorial.html" /> 
+    <link rel="prev" title="Localisation" href="../tutorial_repeater/localisation.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -85,14 +85,14 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorial.html">Tutorials</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Repeater localisation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial_repeater/intro.html">Repeater localisation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">One-off drift scan localisation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="snr_config.html">Configuration file</a></li>
 <li class="toctree-l3"><a class="reference internal" href="snr.html">S/N measurement</a></li>
 <li class="toctree-l3"><a class="reference internal" href="localisation_config.html">Update configuration file for localisation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="localisation.html">Localisation</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorial_driftscan/intro.html">One-off drift scan localisation</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API reference</a></li>
@@ -144,13 +144,13 @@
         
           <li><a href="../tutorial.html">Tutorials</a> &raquo;</li>
         
-      <li>Repeater localisation</li>
+      <li>One-off drift scan localisation</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../../_sources/_modules/tutorial_repeater/intro.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/_modules/tutorial_driftscan/intro.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -163,27 +163,23 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="repeater-localisation">
-<h1>Repeater localisation<a class="headerlink" href="#repeater-localisation" title="Permalink to this headline">¶</a></h1>
-<p>We are going to localize the repeating FRB 180916.J0158+65 (also known as R3) using 3 bursts.
-The telescope was directly pointed at the source, so the detections happened in compound beam zero (CB00).
-For this tutorial, we are not going to use the neighbouring beams. Let’s first look at the available data:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(py36) leon@zeus:R3$ ls data
-CB00_10.0sec_dm0_t02063_sb-1_tab00.fil  CB00_10.0sec_dm0_t03437_sb-1_tab00.fil  CB00_10.0sec_dm0_t03610_sb-1_tab00.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab01.fil  CB00_10.0sec_dm0_t03437_sb-1_tab01.fil  CB00_10.0sec_dm0_t03610_sb-1_tab01.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab02.fil  CB00_10.0sec_dm0_t03437_sb-1_tab02.fil  CB00_10.0sec_dm0_t03610_sb-1_tab02.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab03.fil  CB00_10.0sec_dm0_t03437_sb-1_tab03.fil  CB00_10.0sec_dm0_t03610_sb-1_tab03.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab04.fil  CB00_10.0sec_dm0_t03437_sb-1_tab04.fil  CB00_10.0sec_dm0_t03610_sb-1_tab04.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab05.fil  CB00_10.0sec_dm0_t03437_sb-1_tab05.fil  CB00_10.0sec_dm0_t03610_sb-1_tab05.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab06.fil  CB00_10.0sec_dm0_t03437_sb-1_tab06.fil  CB00_10.0sec_dm0_t03610_sb-1_tab06.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab07.fil  CB00_10.0sec_dm0_t03437_sb-1_tab07.fil  CB00_10.0sec_dm0_t03610_sb-1_tab07.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab08.fil  CB00_10.0sec_dm0_t03437_sb-1_tab08.fil  CB00_10.0sec_dm0_t03610_sb-1_tab08.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab09.fil  CB00_10.0sec_dm0_t03437_sb-1_tab09.fil  CB00_10.0sec_dm0_t03610_sb-1_tab09.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab10.fil  CB00_10.0sec_dm0_t03437_sb-1_tab10.fil  CB00_10.0sec_dm0_t03610_sb-1_tab10.fil
-CB00_10.0sec_dm0_t02063_sb-1_tab11.fil  CB00_10.0sec_dm0_t03437_sb-1_tab11.fil  CB00_10.0sec_dm0_t03610_sb-1_tab11.fil
+  <div class="section" id="one-off-drift-scan-localisation">
+<h1>One-off drift scan localisation<a class="headerlink" href="#one-off-drift-scan-localisation" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial assumes the user is familiar with the localisation process. For a tutorial covering all steps,
+refer to <a class="reference internal" href="../tutorial_repeater/intro.html#repeater-localisation"><span class="std std-ref">Repeater localisation</span></a>.</p>
+<p>In this tutorial, we will localize the first-ever FRB detected by ARTS, FRB 190709. This burst was detected during a
+drift scan of a calibration source. This means the telescope were not tracking one (RA, Dec) point, but stationary and
+effectively “tracking” a single (HA, Dec) point, where HA and Dec are the <em>local</em> hour angle and declination, respectively.</p>
+<p>FRB 190709 was detected in CB10. The available data are thus the 12 TABs of CB10:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(py36) leon@zeus:FRB190709$ ls data
+CB10_10.0sec_dm0_t0657_sb-1_tab00.fil  CB10_10.0sec_dm0_t0657_sb-1_tab06.fil
+CB10_10.0sec_dm0_t0657_sb-1_tab01.fil  CB10_10.0sec_dm0_t0657_sb-1_tab07.fil
+CB10_10.0sec_dm0_t0657_sb-1_tab02.fil  CB10_10.0sec_dm0_t0657_sb-1_tab08.fil
+CB10_10.0sec_dm0_t0657_sb-1_tab03.fil  CB10_10.0sec_dm0_t0657_sb-1_tab09.fil
+CB10_10.0sec_dm0_t0657_sb-1_tab04.fil  CB10_10.0sec_dm0_t0657_sb-1_tab10.fil
+CB10_10.0sec_dm0_t0657_sb-1_tab05.fil  CB10_10.0sec_dm0_t0657_sb-1_tab11.fil
 </pre></div>
 </div>
-<p>There are 36 files in total: 12 tied-array beams (TABs) for each of the 3 bursts. Indeed, we only have data for CB00.</p>
 <p>Click on one of the below links to go directly to that step, or simply click “Next” in the bottom right
 corner to go to the next step.</p>
 <div class="toctree-wrapper compound">
@@ -207,7 +203,7 @@ corner to go to the next step.</p>
         <a href="snr_config.html" class="btn btn-neutral float-right" title="Configuration file" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../tutorial.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../tutorial_repeater/localisation.html" class="btn btn-neutral float-left" title="Localisation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

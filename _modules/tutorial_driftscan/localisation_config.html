@@ -1,0 +1,291 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Update configuration file for localisation &mdash; ARTS Localisation 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Localisation" href="localisation.html" />
+    <link rel="prev" title="S/N measurement" href="snr.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> ARTS Localisation
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorial.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../tutorial_repeater/intro.html">Repeater localisation</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="intro.html">One-off drift scan localisation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="snr_config.html">Configuration file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snr.html">S/N measurement</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Update configuration file for localisation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="localisation.html">Localisation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ARTS Localisation</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../tutorial.html">Tutorials</a> &raquo;</li>
+        
+          <li><a href="intro.html">One-off drift scan localisation</a> &raquo;</li>
+        
+      <li>Update configuration file for localisation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/_modules/tutorial_driftscan/localisation_config.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="update-configuration-file-for-localisation">
+<h1>Update configuration file for localisation<a class="headerlink" href="#update-configuration-file-for-localisation" title="Permalink to this headline">¶</a></h1>
+<p>Updating the localisation file for localisation is mostly the same as for the
+<a class="reference internal" href="../tutorial_repeater/intro.html#repeater-localisation"><span class="std std-ref">Repeater localisation</span></a> tutorial. The main difference is that
+FRB 190709 was found in a drift scan, so we need to specify the HA and Dec, instead of RA and Dec.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The filterbank header always lists the pointing as RA and Dec. The RA field really contains the HA in case
+of a drift scan. The Dec is then the <em>local</em> Dec.</p>
+</div>
+<p>The scripts automatically convert HA and Dec into J2000 RA and Dec. Both the localisation grid and
+CB/telescope pointing coordinates can be given in the HADEC frame. For CB/telescope pointing this works out of the box:
+the burst arrival time is used to convert HADEC to RADEC. In the case of the localisation grid, however, this
+is not the case. There might be several bursts with different arrival times, so the code does not know which time to use.
+Therefore, the user has to manually put in the timestamp to use for converting the localisation grid HADEC to RADEC.
+In this case, we of course want this timestamp to coincide with the burst arrival time.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To calculate the burst arrival time from the observation start time and arrival time of the burst within the observation,
+use something like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span><span class="p">,</span> <span class="n">TimeDelta</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">Time</span><span class="p">(</span><span class="s1">&#39;2019-07-09T05:02:24.064&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">TimeDelta</span><span class="p">(</span><span class="mf">657.977</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;sec&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">isot</span>
+<span class="go">&#39;2019-07-09T05:13:22.041&#39;</span>
+</pre></div>
+</div>
+</div>
+<p>The final configuration file looks like this:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global</span><span class="p">:</span>
+    <span class="nt">fmin_data</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1219.70092773</span>
+    <span class="nt">bandwidth</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">300</span>
+    <span class="nt">snrmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+
+<span class="nt">snr</span><span class="p">:</span>
+    <span class="nt">window_load</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.0</span>
+    <span class="nt">window_zoom</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.5</span>
+    <span class="nt">dm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">663.1</span>
+    <span class="nt">width_max</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100</span>
+
+<span class="nt">localisation</span><span class="p">:</span>
+    <span class="nt">ha</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">-12.52167</span>
+    <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">31.95253</span>
+    <span class="nt">time</span><span class="p">:</span> <span class="s">&#39;2019-07-09T05:13:22.041&#39;</span>
+
+    <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
+    <span class="nt">resolution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+    <span class="nt">cb_model</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gauss</span>
+
+<span class="nt">burst00</span><span class="p">:</span>
+    <span class="nt">fmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1300</span>
+    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t0657_sb-1_tab{tab}.fil&#39;</span>
+    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">10</span><span class="p p-Indicator">]</span>
+    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">36</span>
+
+    <span class="nt">tstart</span><span class="p">:</span> <span class="s">&#39;2019-07-09T05:02:24.064&#39;</span>
+    <span class="nt">toa</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">657.977</span>
+    <span class="nt">reference_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CB10</span>
+
+    <span class="nt">CB10</span><span class="p">:</span>
+        <span class="nt">ha</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">-12.52167</span>
+        <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">31.95253</span>
+        <span class="nt">snr_array</span><span class="p">:</span> <span class="s">&#39;snr/FRB190709_burst00_CB10_SNR.txt&#39;</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="localisation.html" class="btn btn-neutral float-right" title="Localisation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="snr.html" class="btn btn-neutral float-left" title="S/N measurement" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Leon Oostrum
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

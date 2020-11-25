@@ -1,6 +1,6 @@
 Repeater localisation
 --------------------------------
-As a first example, we are going to look at the localisation of repeating FRB 180916.J0158+65 (also known as R3) using 3 bursts.
+We are going to localize the repeating FRB 180916.J0158+65 (also known as R3) using 3 bursts.
 The telescope was directly pointed at the source, so the detections happened in compound beam zero (CB00).
 For this example, we are not going to use the neighbouring beams. Let's first look at the available data::
 

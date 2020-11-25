@@ -156,3 +156,91 @@ In this case, the final best position is 30 arcseconds from the known source pos
 part of the localisation region is relatively constant: the real source position is also a very good fit at at 0.00009,
 i.e. it would only be excluded if we would choose a 99.991% or higher confidence level.
 For reference, the 0.37 square-arcminute localisation region corresponds to a circular region with a radius of 20 arcseconds.
+
+Using `HiPS <http://aladin.u-strasbg.fr/hips/>`_, the localisation contour can be overplotted on a nice background image
+of a survey of choice. Here `DSS2 <https://archive.eso.org/dss/dss>`_ is used. The host galaxy of R3 is visible
+in this figure, covering about half of the localisation region.
+
+.. image:: ../../_images/R3_localisation_highestres.png
+    :width: 600
+    :alt: Localisation of all bursts combined with DSS2 background
+
+This is the code used to generate the final localisation figure::
+
+    #!/usr/bin/env python3
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from hips import make_sky_image, WCSGeometry
+    from astropy.coordinates import SkyCoord
+    import astropy.units as u
+
+    plt.rcParams['figure.figsize'] = (11, 7.5)
+    plt.rcParams['font.size'] = 18
+    plt.rcParams['lines.linewidth'] = 3
+    plt.rcParams['xtick.labelsize'] = 18
+    plt.rcParams['ytick.labelsize'] = 18
+    plt.rcParams['axes.labelsize'] = 18
+    plt.rcParams['axes.titlesize'] = 18
+    plt.rcParams['legend.fontsize'] = 17
+
+    if __name__ == '__main__':
+        # plot 90% contour
+        conf_int = .9
+        # path to localisation file
+        fname = 'localisation_highestres/R3_localisation.npy'
+        # output figure name
+        figname = 'R3_localisation_highestres.pdf'
+        # real position of R3
+        ra_src = 29.50333 * u.deg
+        dec_src = 65.71675 * u.deg
+        # HiPS survey to show in the background of the figure
+        # a list is available at http://aladin.u-strasbg.fr/hips/list
+        survey = 'CDS/P/DSS2/color'
+
+        # load main localisation file
+        RA, DEC, loc_region = np.load(fname)
+        # add units
+        RA = RA * u.deg
+        DEC = DEC * u.deg
+
+        # find best position
+        ind = np.unravel_index(np.argmin(loc_region), loc_region.shape)
+        ra_best = RA[ind]
+        dec_best = DEC[ind]
+        best_pos = SkyCoord(ra_best, dec_best)
+
+        # create sky image
+        skydir = SkyCoord(RA.mean(), DEC.mean())
+        # calculate FoV of localisation grid (easiest from Dec, as RA has a cos(Dec) scaling,
+        # and the localisation region is square anyway)
+        fov = np.amax(DEC) - np.amin(DEC)
+        geometry = WCSGeometry.create(skydir=skydir, width=500,
+                                      height=500, coordsys='icrs',
+                                      projection='AIT', fov=fov)
+        result = make_sky_image(geometry, survey, 'jpg')
+        wcs = result.geometry.wcs
+        image = result.image
+
+        # plot image and contour
+        fig = plt.figure()
+        ax = plt.subplot(projection=wcs)
+        ax.imshow(image, origin='lower')
+        # avoid automatic rescaling of x/y limits
+        ax.set_autoscale_on(False)
+        ax.contour(RA, DEC, loc_region, [conf_int], colors=['r'],
+                   transform=ax.get_transform('icrs'))
+
+        # add points
+        ax.plot(ra_best, dec_best, color='r', marker='.', ls='', ms=10,
+                label='Best position', transform=ax.get_transform('icrs'))
+        ax.plot(ra_src, dec_src, color='cyan', marker='+', ls='', ms=10,
+                label='Source position', transform=ax.get_transform('icrs'))
+
+        ax.legend()
+        ax.set_xlabel('Right ascension')
+        ax.set_ylabel('Declination')
+        ax.coords[0].set_major_formatter('hh:mm:ss.s')
+        ax.coords[1].set_major_formatter('dd:mm:ss.s')
+
+        plt.savefig(figname, bbox_inches='tight')

@@ -269,6 +269,90 @@ INFO:arts_localisation.run_localisation:Confidence interval at source (lower is 
 part of the localisation region is relatively constant: the real source position is also a very good fit at at 0.00009,
 i.e. it would only be excluded if we would choose a 99.991% or higher confidence level.
 For reference, the 0.37 square-arcminute localisation region corresponds to a circular region with a radius of 20 arcseconds.</p>
+<p>Using <a class="reference external" href="http://aladin.u-strasbg.fr/hips/">HiPS</a>, the localisation contour can be overplotted on a nice background image
+of a survey of choice. Here <a class="reference external" href="https://archive.eso.org/dss/dss">DSS2</a> is used. The host galaxy of R3 is visible
+in this figure, covering about half of the localisation region.</p>
+<a class="reference internal image-reference" href="../../_images/R3_localisation_highestres.png"><img alt="Localisation of all bursts combined with DSS2 background" src="../../_images/R3_localisation_highestres.png" style="width: 600px;" /></a>
+<p>This is the code used to generate the final localisation figure:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">hips</span> <span class="kn">import</span> <span class="n">make_sky_image</span><span class="p">,</span> <span class="n">WCSGeometry</span>
+<span class="kn">from</span> <span class="nn">astropy.coordinates</span> <span class="kn">import</span> <span class="n">SkyCoord</span>
+<span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;figure.figsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mf">7.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;font.size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;lines.linewidth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;xtick.labelsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;ytick.labelsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;axes.labelsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;axes.titlesize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;legend.fontsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">17</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1"># plot 90% contour</span>
+    <span class="n">conf_int</span> <span class="o">=</span> <span class="o">.</span><span class="mi">9</span>
+    <span class="c1"># path to localisation file</span>
+    <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;localisation_highestres/R3_localisation.npy&#39;</span>
+    <span class="c1"># output figure name</span>
+    <span class="n">figname</span> <span class="o">=</span> <span class="s1">&#39;R3_localisation_highestres.pdf&#39;</span>
+    <span class="c1"># real position of R3</span>
+    <span class="n">ra_src</span> <span class="o">=</span> <span class="mf">29.50333</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">deg</span>
+    <span class="n">dec_src</span> <span class="o">=</span> <span class="mf">65.71675</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">deg</span>
+    <span class="c1"># HiPS survey to show in the background of the figure</span>
+    <span class="c1"># a list is available at http://aladin.u-strasbg.fr/hips/list</span>
+    <span class="n">survey</span> <span class="o">=</span> <span class="s1">&#39;CDS/P/DSS2/color&#39;</span>
+
+    <span class="c1"># load main localisation file</span>
+    <span class="n">RA</span><span class="p">,</span> <span class="n">DEC</span><span class="p">,</span> <span class="n">loc_region</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+    <span class="c1"># add units</span>
+    <span class="n">RA</span> <span class="o">=</span> <span class="n">RA</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">deg</span>
+    <span class="n">DEC</span> <span class="o">=</span> <span class="n">DEC</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">deg</span>
+
+    <span class="c1"># find best position</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">loc_region</span><span class="p">),</span> <span class="n">loc_region</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">ra_best</span> <span class="o">=</span> <span class="n">RA</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+    <span class="n">dec_best</span> <span class="o">=</span> <span class="n">DEC</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+    <span class="n">best_pos</span> <span class="o">=</span> <span class="n">SkyCoord</span><span class="p">(</span><span class="n">ra_best</span><span class="p">,</span> <span class="n">dec_best</span><span class="p">)</span>
+
+    <span class="c1"># create sky image</span>
+    <span class="n">skydir</span> <span class="o">=</span> <span class="n">SkyCoord</span><span class="p">(</span><span class="n">RA</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">DEC</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+    <span class="c1"># calculate FoV of localisation grid (easiest from Dec, as RA has a cos(Dec) scaling,</span>
+    <span class="c1"># and the localisation region is square anyway)</span>
+    <span class="n">fov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">DEC</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">DEC</span><span class="p">)</span>
+    <span class="n">geometry</span> <span class="o">=</span> <span class="n">WCSGeometry</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">skydir</span><span class="o">=</span><span class="n">skydir</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+                                  <span class="n">height</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">coordsys</span><span class="o">=</span><span class="s1">&#39;icrs&#39;</span><span class="p">,</span>
+                                  <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;AIT&#39;</span><span class="p">,</span> <span class="n">fov</span><span class="o">=</span><span class="n">fov</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">make_sky_image</span><span class="p">(</span><span class="n">geometry</span><span class="p">,</span> <span class="n">survey</span><span class="p">,</span> <span class="s1">&#39;jpg&#39;</span><span class="p">)</span>
+    <span class="n">wcs</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">wcs</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">image</span>
+
+    <span class="c1"># plot image and contour</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="n">wcs</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">)</span>
+    <span class="c1"># avoid automatic rescaling of x/y limits</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_autoscale_on</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">RA</span><span class="p">,</span> <span class="n">DEC</span><span class="p">,</span> <span class="n">loc_region</span><span class="p">,</span> <span class="p">[</span><span class="n">conf_int</span><span class="p">],</span> <span class="n">colors</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">],</span>
+               <span class="n">transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">get_transform</span><span class="p">(</span><span class="s1">&#39;icrs&#39;</span><span class="p">))</span>
+
+    <span class="c1"># add points</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ra_best</span><span class="p">,</span> <span class="n">dec_best</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Best position&#39;</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">get_transform</span><span class="p">(</span><span class="s1">&#39;icrs&#39;</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ra_src</span><span class="p">,</span> <span class="n">dec_src</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;cyan&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Source position&#39;</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">get_transform</span><span class="p">(</span><span class="s1">&#39;icrs&#39;</span><span class="p">))</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Right ascension&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Declination&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="s1">&#39;hh:mm:ss.s&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="s1">&#39;dd:mm:ss.s&#39;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">figname</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 
 

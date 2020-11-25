@@ -218,16 +218,9 @@ def main():
             logger.info(f"Processing {CB}")
             beam_config = burst_config[CB]
 
-            # get alt, az of pointing
-            # TODO: support HA
-            # try:
+            # get pointing
             radec_cb = SkyCoord(*beam_config['pointing'])
             ha_cb, dec_cb = tools.radec_to_hadec(*beam_config['pointing'], burst_config['tarr'])
-            # except KeyError:
-            #     # assume ha was specified instead of ra
-            #     hadec_cb = SkyCoord(beam_config['ha']*u.deg, beam_config['dec']*u.deg)
-            #     radec_cb = tools.hadec_to_radec(beam_config['ha']*u.deg, beam_config['dec']*u.deg, t)
-            alt_cb, az_cb = tools.hadec_to_altaz(ha_cb, dec_cb)  # needed for SB position
             logger.info("Parallactic angle: {:.2f}".format(tools.hadec_to_par(ha_cb, dec_cb)))
             logger.info("Projection angle {:.2f}".format(tools.hadec_to_proj(ha_cb, dec_cb)))
             # save pointing

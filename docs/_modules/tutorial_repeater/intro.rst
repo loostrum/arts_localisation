@@ -2,7 +2,7 @@ Repeater localisation
 --------------------------------
 We are going to localize the repeating FRB 180916.J0158+65 (also known as R3) using 3 bursts.
 The telescope was directly pointed at the source, so the detections happened in compound beam zero (CB00).
-For this example, we are not going to use the neighbouring beams. Let's first look at the available data::
+For this tutorial, we are not going to use the neighbouring beams. Let's first look at the available data::
 
     (py36) leon@zeus:R3$ ls data
     CB00_10.0sec_dm0_t02063_sb-1_tab00.fil  CB00_10.0sec_dm0_t03437_sb-1_tab00.fil  CB00_10.0sec_dm0_t03610_sb-1_tab00.fil

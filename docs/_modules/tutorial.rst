@@ -19,3 +19,4 @@ The below tutorials go through these steps with examples:
    :maxdepth: 1
 
    tutorial_repeater/intro
+   tutorial_driftscan/intro

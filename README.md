@@ -1,4 +1,4 @@
 # ARTS Localisation
-[![Build Status](https://travis-ci.com/loostrum/arts_localisation.svg?branch=master)](https://travis-ci.com/loostrum/arts_localisation)
+![CI](https://github.com/loostrum/arts_localisation/workflows/CI/badge.svg)
 
 Localisation of ARTS transients

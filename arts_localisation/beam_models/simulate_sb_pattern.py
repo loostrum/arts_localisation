@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
+
 import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,7 +11,10 @@ import astropy.units as u
 from arts_localisation.beam_models.sb_generator import SBGenerator
 from arts_localisation.beam_models.beamformer import BeamFormer
 from arts_localisation.beam_models.compound_beam import CompoundBeam
-from arts_localisation.constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB, MAXDIST, NPOINT
+from arts_localisation.constants import DISH_ITRF, ARRAY_ITRF, NTAB, NSB
+
+
+logger = logging.getLogger(__name__)
 
 
 class SBPattern:
@@ -90,12 +95,12 @@ class SBPattern:
 
             # CB pattern
             if cbnum is not None:
-                print(f"Generating CB{cbnum:02d}")
+                logger.info(f"Generating CB{cbnum:02d}")
             else:
-                print("Generating CB")
+                logger.info("Generating CB")
             primary_beam = cb.beam_pattern(cb_model, cb=cbnum)
 
-            print("Generating TABs")
+            logger.info("Generating TABs")
             # get TAB pattern for each tab, freq, ha, dec (image order: dec, then ha)
             beam_pattern_tab = np.zeros((NTAB, nfreq, numDEC, numHA), dtype=np.float32)
 
@@ -109,7 +114,7 @@ class SBPattern:
                 # store to output grid
                 beam_pattern_tab[tab] = intensity.astype(np.float32)
 
-            print("Generating requested SBs")
+            logger.info("Generating requested SBs")
             shape = (NSB, nfreq, numDEC, numHA)
             if memmap_file is not None:
                 beam_pattern_sb = np.memmap(memmap_file + '_full_sb.dat', dtype=np.float, mode='w+', shape=shape)
@@ -123,7 +128,7 @@ class SBPattern:
             self.beam_pattern_tab = beam_pattern_tab
 
             # integrate SB pattern over frequency
-            print("Integrating SB pattern over frequency")
+            logger.info("Integrating SB pattern over frequency")
             shape = (NSB, numDEC, numHA)
             if memmap_file is not None:
                 self.beam_pattern_sb_int = np.memmap(memmap_file + '_sb.dat', dtype=float, mode='w+', shape=shape)
@@ -159,7 +164,7 @@ class SBPattern:
         :param bool show: Also show the plot
         :param int tab: TAB to plot
         """
-        print("Plotting")
+        logger.info("Plotting")
         # kwargs = {'vmin': .05, 'norm': LogNorm()}
         kwargs = {'vmin': .05}
 
@@ -189,7 +194,7 @@ class SBPattern:
             fig.tight_layout()
             fig.suptitle(f'TAB{tab:02d}')
         else:
-            print("TAB data not available - not plotting")
+            logger.info("TAB data not available - not plotting")
 
         # SB
         if self.beam_pattern_sb_int is not None:
@@ -212,7 +217,7 @@ class SBPattern:
             fig.tight_layout()
             fig.suptitle('On-sky pattern summed over frequency')
         else:
-            print("SB data not available - not plotting")
+            logger.info("SB data not available - not plotting")
 
         if show:
             plt.show()
@@ -238,8 +243,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # create HA, Dec arrays
-    ddec = np.linspace(-MAXDIST, MAXDIST, NPOINT) * u.arcmin
-    dha = (np.linspace(-MAXDIST, MAXDIST, NPOINT) * u.arcmin)
+    maxdist = 30  # arcmin
+    npoint = 100
+    ddec = np.linspace(-maxdist, maxdist, npoint) * u.arcmin
+    dha = (np.linspace(-maxdist, maxdist, npoint) * u.arcmin)
     dHA, dDEC = np.meshgrid(dha, ddec)
 
     if args.cb is not None:

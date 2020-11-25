@@ -142,8 +142,7 @@ class CompoundBeam:
             angle = np.sqrt(self.phi ** 2 + self.theta ** 2)
         else:
             angle = np.sqrt(self.phi[..., None] ** 2 + self.theta ** 2)
-
-        arg = k[..., None] * a * np.sin(angle)[None, ...]
+        arg = k[..., None, None] * a * np.sin(angle)[None, ...]
         arg = arg.to(1).value
 
         out = 2 * j1(arg) / arg

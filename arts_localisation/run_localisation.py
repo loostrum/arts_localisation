@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-#
-# Generate an SB model for several CBs near the same area on-sky
-# then combine posteriors
-import argparse
+
 import os
+import argparse
 import logging
 
 import numpy as np
@@ -22,18 +20,32 @@ logger = logging.getLogger(__name__)
 plt.rcParams['axes.formatter.useoffset'] = False
 
 
-def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
+def nested_dict_values(d):
+    """
+    Get all values from a nested dictionary
+
+    :param dict d: dictionary
+    :return: generator for values
+    """
+
+    for value in d.values():
+        if isinstance(value, dict):
+            yield from nested_dict_values(value)
+        else:
+            yield value
+
+
+def make_plot(conf_ints, X, Y, title, conf_int, mode='radec', sigma_max=3,
               freq=1370 * u.MHz, t_arr=None, loc=None, cb_pos=None,
               src_pos=None):
     """
     Create plot of localisation area
 
-    :param chi2: chi2 grid
+    :param conf_ints: confidence interval grid
     :param X: RA or Az
     :param Y: Dec or Alt
-    :param dof: degrees of freedom
     :param title: plot title
-    :param conf_int: confidence interval for localisation area
+    :param conf_int: confidence interval to plot
     :param mode: radec or altaz (default radec)
     :param sigma_max: used to determine maximum value for colors in plot (default 3)
     :param freq: central frequency (default 1370 MHz)
@@ -44,40 +56,34 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
     :return: figure
     """
     if mode == 'altaz' and t_arr is None:
-        print("t_arr is required in AltAz mode")
-    dchi2 = chi2 - chi2.min()
-    # best pos = point with lowest (delta)chi2
-    ind = np.unravel_index(np.argmin(dchi2), dchi2.shape)
+        logger.info("t_arr is required in AltAz mode")
+    X = X.to(u.deg).value
+    Y = Y.to(u.deg).value
+
+    # best pos = point with lowest confidence interval
+    ind = np.unravel_index(np.argmin(conf_ints), conf_ints.shape)
     best_x = X[ind]
     best_y = Y[ind]
 
     # init figure
     fig, ax = plt.subplots()
 
-    # calculate dchi2 value corresponding to conf_int for contour
-    dchi2_value = stats.chi2.ppf(conf_int, dof)
-    contour_values = [dchi2_value]
-
-    # set vmax to sigma_max
-    conf_int_max = stats.chi2.cdf(sigma_max**2, 1)
-    vmax = stats.chi2.ppf(conf_int_max, dof)
-
-    # plot delta chi 2
-    img = ax.pcolormesh(X, Y, dchi2, vmax=vmax)
+    # plot confidence interval
+    img = ax.pcolormesh(X, Y, conf_ints, vmin=0, vmax=1)
     cbar = fig.colorbar(img, ax=ax)
-    cbar.set_label(r'$\Delta \chi^2$', rotation=270)
+    cbar.set_label('Confidence interval', rotation=270, labelpad=15)
 
     # add contours
-    cont = ax.contour(X, Y, dchi2, contour_values, colors=['#FF0000', '#C00000', '#800000'])
+    ax.contour(X, Y, conf_ints, [conf_int], colors=['#FF0000', '#C00000', '#800000'])
 
     # add best position
-    ax.plot(best_x.to(u.deg).value, best_y.to(u.deg).value, c='r', marker='.', ls='', ms=10,
+    ax.plot(best_x, best_y, c='r', marker='.', ls='', ms=10,
             label='Best position')
     # add source position if available
     if src_pos is not None:
         if mode == 'altaz':
-            hadec_src = tools.radec_to_hadec(*src_pos, t_arr)
-            y_src, x_src = tools.hadec_to_altaz(hadec_src.ra, hadec_src.dec)
+            ha_src, dec_src = tools.radec_to_hadec(*src_pos, t_arr)
+            y_src, x_src = tools.hadec_to_altaz(ha_src, dec_src)
         else:
             x_src, y_src = src_pos
         ax.plot(x_src.to(u.deg).value, y_src.to(u.deg).value, c='cyan', marker='+', ls='', ms=10,
@@ -88,8 +94,8 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
             cb_pos = [cb_pos]
         for i, pos in enumerate(cb_pos):
             if mode == 'altaz':
-                hadec_cb = tools.radec_to_hadec(pos.ra, pos.dec, t_arr)
-                y_cb, x_cb = tools.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)
+                ha_cb, dec_cb = tools.radec_to_hadec(pos.ra, pos.dec, t_arr)
+                y_cb, x_cb = tools.hadec_to_altaz(ha_cb, dec_cb)
             else:
                 x_cb = pos.ra
                 y_cb = pos.dec
@@ -97,12 +103,16 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
                 label = 'CB center'
             else:
                 label = ''
-            ax.plot(x_cb.to(u.deg).value, y_cb.to(u.deg).value, c='k', marker='x', ls='', ms=10,
+            ax.plot(x_cb.to(u.deg).value, y_cb.to(u.deg).value, c='w', marker='x', ls='', ms=10,
                     label=label)
             # add CB
             cb_radius = (CB_HPBW * REF_FREQ / freq / 2)
             patch = SphericalCircle((x_cb, y_cb), cb_radius, ec='k', fc='none', ls='-', alpha=.5)
             ax.add_patch(patch)
+
+    # limit to localisation region
+    ax.set_xlim(X[0, 0], X[-1, -1])
+    ax.set_ylim(Y[0, 0], Y[-1, -1])
 
     # add labels
     if mode == 'altaz':
@@ -120,20 +130,20 @@ def make_plot(chi2, X, Y, dof, title, conf_int, mode='radec', sigma_max=3,
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', required=True, help='Input yaml config')
-    parser.add_argument('--conf_int', type=float, default=.9, help='Confidence interval for localisation region '
+    parser.add_argument('--conf_int', type=float, default=.9, help='Confidence interval for localisation region plot '
                                                                    '(Default: %(default)s)')
     parser.add_argument('--output_folder', help='Output folder '
-                                                '(Default: current directory)')
-    parser.add_argument('--noplot', action='store_true', help='Disable plotting')
-    parser.add_argument('--saveplot', action='store_true', help='Save plots')
-    parser.add_argument('--outfile', help='Output file for summary')
+                                                '(Default: <yaml file folder>/localisation)')
+    parser.add_argument('--show_plots', action='store_true', help='Show plots')
+    parser.add_argument('--save_plots', action='store_true', help='Save plots')
     parser.add_argument('--verbose', action='store_true', help="Enable verbose logging")
+    parser.add_argument('--store_intermediates', action='store_true', help='Store all intermediate data to '
+                                                                           '<yaml file folder>/intermediates. '
+                                                                           'Note: this may create very big output files')
 
     group_overwrites = parser.add_argument_group('Config overwrites', 'Settings to overwrite from yaml config')
     # global config:
     group_overwrites.add_argument('--snrmin', type=float, help='S/N threshold')
-    group_overwrites.add_argument('--fmin', type=float, help='Ignore frequency below this value in MHz')
-    group_overwrites.add_argument('--fmax', type=float, help='Ignore frequency below this value in MHz')
     group_overwrites.add_argument('--fmin_data', type=float, help='Lowest frequency of data')
     group_overwrites.add_argument('--bandwidth', type=float, help='Bandwidth of data')
     # localisation config:
@@ -150,14 +160,25 @@ def main():
     else:
         logger.setLevel(logging.INFO)
 
+    # set matplotlib backend to non-interactive if only saving plots
+    if args.save_plots and not args.show_plots:
+        plt.switch_backend('pdf')
+
     # load config
     config = load_config(args)
 
     # get output prefix from yaml file name and output folder
     if args.output_folder is None:
-        args.output_folder = os.getcwd()
+        # default output folder is same folder as .yaml file plus "localisation"
+        args.output_folder = os.path.join(os.path.dirname(os.path.abspath(args.config)), 'localisation')
     tools.makedirs(args.output_folder)
+    # output prefix also contains the yaml filename without extension
     output_prefix = os.path.join(args.output_folder, os.path.basename(args.config).replace('.yaml', ''))
+
+    # set intermediates output folder and prefix
+    intermediates_folder = os.path.join(os.path.dirname(os.path.abspath(args.config)), 'intermediates')
+    tools.makedirs(intermediates_folder)
+    intermediates_prefix = os.path.join(intermediates_folder, os.path.basename(args.config).replace('.yaml', ''))
 
     # Define global RA, Dec localisation area
     grid_size = config['size']  # in arcmin
@@ -176,47 +197,52 @@ def main():
     np.save(f'{output_prefix}_coord', np.array([RA, DEC]))
 
     # process each burst
+    chi2_all_bursts = np.zeros((numY, numX))
+    dof_all_bursts = np.zeros((numY, numX))
+    pointings_all = {}
+
+    # central freq, used for plotting
+    central_freq = int(np.round(config['fmin_data'] + config['bandwidth'] / 2)) * u.MHz
+
     for burst in config['bursts']:
-        logging.info(f"Processing {burst}")
+        logger.info(f"Processing {burst}")
         burst_config = config[burst]
 
         # loop over CBs
-        nCB = len(burst_config['beams'])
         numsb_det = 0
         chi2 = {}
         tarr = {}
         pointings = {}
+        dofs = {}
         for CB in burst_config['beams']:
-            print(f"Processing {CB}")
+            logger.info(f"Processing {CB}")
             beam_config = burst_config[CB]
 
             # get alt, az of pointing
             # TODO: support HA
             # try:
             radec_cb = SkyCoord(*beam_config['pointing'])
-            hadec_cb = tools.radec_to_hadec(*beam_config['pointing'], burst_config['tarr'])
+            ha_cb, dec_cb = tools.radec_to_hadec(*beam_config['pointing'], burst_config['tarr'])
             # except KeyError:
             #     # assume ha was specified instead of ra
             #     hadec_cb = SkyCoord(beam_config['ha']*u.deg, beam_config['dec']*u.deg)
             #     radec_cb = tools.hadec_to_radec(beam_config['ha']*u.deg, beam_config['dec']*u.deg, t)
-            alt_cb, az_cb = tools.hadec_to_altaz(hadec_cb.ra, hadec_cb.dec)  # needed for SB position
-            print("Parallactic angle: {:.2f}".format(tools.hadec_to_par(hadec_cb.ra, hadec_cb.dec)))
-            print("AltAz SB rotation angle at center of CB: {:.2f}".format(tools.hadec_to_proj(hadec_cb.ra, hadec_cb.dec)))
+            alt_cb, az_cb = tools.hadec_to_altaz(ha_cb, dec_cb)  # needed for SB position
+            logger.info("Parallactic angle: {:.2f}".format(tools.hadec_to_par(ha_cb, dec_cb)))
+            logger.info("Projection angle {:.2f}".format(tools.hadec_to_proj(ha_cb, dec_cb)))
             # save pointing
             pointings[CB] = radec_cb
 
             # convert localisation coordinate grid to hadec
-            hadec_loc = tools.radec_to_hadec(RA, DEC, burst_config['tarr'])
-            HA_loc = hadec_loc.ra
-            DEC_loc = hadec_loc.dec
+            HA_loc, DEC_loc = tools.radec_to_hadec(RA, DEC, burst_config['tarr'])
             # calculate offsets from phase center
             # without cos(dec) factor for dHA
-            dHACOSDEC_loc = (HA_loc - hadec_cb.ra) * np.cos(DEC_loc)
-            dDEC_loc = (DEC_loc - hadec_cb.dec)
+            dHACOSDEC_loc = (HA_loc - ha_cb) * np.cos(DEC_loc)
+            dDEC_loc = (DEC_loc - dec_cb)
 
             # generate the SB model with CB as phase center
-            sbp = SBPattern(hadec_cb.ra, hadec_cb.dec, dHACOSDEC_loc, dDEC_loc, fmin=config['fmin'] * u.MHz,
-                            fmax=config['fmax'] * u.MHz, min_freq=config['fmin_data'] * u.MHz,
+            sbp = SBPattern(ha_cb, dec_cb, dHACOSDEC_loc, dDEC_loc, fmin=burst_config['fmin'] * u.MHz,
+                            fmax=burst_config['fmax'] * u.MHz, min_freq=config['fmin_data'] * u.MHz,
                             cb_model=config['cb_model'], cbnum=int(CB[2:]))
             # get pattern integrated over frequency
             # TODO: spectral indices?
@@ -227,24 +253,34 @@ def main():
                 data = np.loadtxt(beam_config['snr_array'], ndmin=2)
                 sb_det, snr_det = data.T
                 sb_det = sb_det.astype(int)
+                # only keep values above S/N threshold
+                ind = snr_det >= config['snrmin']
+                sb_det = sb_det[ind]
+                snr_det = snr_det[ind]
             except KeyError:
-                print(f"No S/N array found for {burst}, assuming this is a non-detection beam")
+                logger.info(f"No S/N array found for {burst}, assuming this is a non-detection beam")
                 sb_det = np.array([])
                 snr_det = np.array([])
+            else:
+                if len(sb_det) == 0:
+                    logger.info(f"No SBs above S/N threshold found for {burst}")
+                    sb_det = np.array([])
+                    snr_det = np.array([])
             numsb_det += len(sb_det)
 
             # non detection beams
             sb_non_det = np.array([sb for sb in range(NSB) if sb not in sb_det])
 
-            # init chi2 array
+            # init chi2 array and DoF array
             chi2[CB] = np.zeros((numY, numX))
+            dofs[CB] = np.zeros((numY, numX))
 
             # find SB with highest S/N
             try:
                 ind = snr_det.argmax()
                 this_snr = snr_det[ind]
                 this_sb = sb_det[ind]
-                print(f"SB{this_sb:02d} SNR {this_snr}")
+                logger.info(f"SB{this_sb:02d} SNR {this_snr}")
             except ValueError:
                 # non-detection beam
                 this_snr = None
@@ -254,8 +290,8 @@ def main():
             try:
                 sefd = beam_config['sefd']
             except KeyError:
-                default_sefd = 100
-                print(f"No SEFD found, setting to {default_sefd}")
+                default_sefd = 85
+                logger.info(f"No SEFD found, setting to {default_sefd}")
                 sefd = default_sefd
 
             # if this is the reference burst, store the sb model of the reference SB
@@ -267,23 +303,46 @@ def main():
             # model of S/N relative to the reference beam
             snr_model = sb_model / reference_sb_model * ref_snr * ref_sefd / sefd
 
+            # store intermediates
+            if args.store_intermediates:
+                # SB model
+                np.save(f'{intermediates_prefix}_{burst}_{CB}_SB_pattern', sb_model)
+                # S/N model
+                np.save(f'{intermediates_prefix}_{burst}_{CB}_SNR_model', snr_model)
+
             # detection
             ndet = len(sb_det)
             if ndet > 0:
-                print(f"Adding {ndet} detections")
-                chi2[CB] += np.sum((snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2, axis=0)
+                logger.info(f"Adding {ndet} detections")
+                # chi2 per SB
+                chi2_det = (snr_model[sb_det] - snr_det[..., np.newaxis, np.newaxis]) ** 2 / snr_model[sb_det]
+                # add sum over SBs to total chi2
+                chi2[CB] += chi2_det.sum(axis=0)
+                # store intermediates
+                if args.store_intermediates:
+                    # chi2 per SB
+                    np.save(f'{intermediates_prefix}_{burst}_{CB}_chi2_det', chi2_det)
+
+                # add to DoF, this is the same for each grid point
+                dofs[CB] += len(sb_det)
             # non detection
             nnondet = len(sb_non_det)
             if nnondet > 0:
-                print(f"Adding {nnondet} non-detections")
+                logger.info(f"Adding {nnondet} non-detections")
                 # only select points where the modelled S/N is above the threshold
                 snr_model_nondet = snr_model[sb_non_det]
-                points = np.where(snr_model_nondet > config['snrmin'])
+                points = snr_model_nondet > config['snrmin']
                 # temporarily create an array holding the chi2 values to add per SB
                 chi2_to_add = np.zeros_like(snr_model_nondet)
-                chi2_to_add[points] += (snr_model_nondet[points] - config['snrmin']) ** 2
+                chi2_to_add[points] += (snr_model_nondet[points] - config['snrmin']) ** 2 / snr_model_nondet[points]
+                # store intermediates
+                if args.store_intermediates:
+                    # chi2 per SB
+                    np.save(f'{intermediates_prefix}_{burst}_{CB}_chi2_nondet', chi2_to_add)
                 # sum over SBs and add
                 chi2[CB] += chi2_to_add.sum(axis=0)
+                # add number of non-detection beams with S/N > snrmin to DoF
+                dofs[CB] += points.sum(axis=0)
 
             # # reference SB has highest S/N: modelled S/N should never be higher than reference
             bad_ind = np.any(sb_model > reference_sb_model, axis=0)
@@ -292,84 +351,120 @@ def main():
             # save region where S/N > ref_snr for non-ref SB
             np.save(f'{output_prefix}_{burst}_{CB}_snr_too_high', bad_ind)
 
+        # store pointings
+        pointings_all[burst] = pointings
+
         # chi2 of all CBs combined
         chi2_total = np.zeros((numY, numX))
         for value in chi2.values():
             chi2_total += value
 
+        # chi2 of all bursts combined
+        chi2_all_bursts += chi2_total
+
         # degrees of freedom = number of data points minus number of parameters
-        # total number of CBs * NSB - 1 (ref SB) - 2 (params)
-        dof = nCB * NSB - 3
+        # dofs array currently holds number of data points in each CB
+        # total number of datapoints at each grid point
+        dof_total = np.zeros((numY, numX))
+        for value in dofs.values():
+            dof_total += value
+
+        # add to dof of all bursts combined and subtract one for reference SB
+        dof_all_bursts += dof_total - 1
+        # subtract number of parameters (2) and one for reference SB
+        dof_total -= 3
+
+        # convert the DoF array of each CB to actual DoF instead of nr of data points
+        for cb, dof_cb in dofs.items():
+            if cb == burst_config['reference_cb']:
+                # this CB contains reference SB, so subtract one
+                dofs[cb] -= 1
+            # subtract two for the parameters
+            dofs[cb] -= 2
+
+        # convert chi2 to confidence intervals
+        conf_ints = {}
+        for cb in burst_config['beams']:
+            this_chi2 = chi2[cb]
+            this_dchi2 = this_chi2 - this_chi2.min()
+            dof = dofs[cb]
+            conf_ints[cb] = stats.chi2.cdf(this_dchi2, dof)
+            # where dof <= 0, conf_int is nan. These locations are "perfect", so set conf_int to 0
+            conf_ints[cb][np.isnan(conf_ints[cb])] = 0
+            # save the map
+            np.save(f'{output_prefix}_{burst}_{CB}_conf_int', conf_ints[cb])
+        # repeat for total
+        dchi2_total = chi2_total - chi2_total.min()
+        conf_int_total = stats.chi2.cdf(dchi2_total, dof_total)
+        conf_int_total[np.isnan(conf_int_total)] = 0
+        np.save(f'{output_prefix}_{burst}_total_conf_int', conf_int_total)
 
         # find size of localisation area within given confidence level
-        max_dchi2 = stats.chi2.ppf(args.conf_int, dof)
-        dchi2_total = chi2_total - chi2_total.min()
-        npix_below_max = (dchi2_total < max_dchi2).sum()
+        npix_below_max = (conf_int_total < args.conf_int).sum()
         pix_area = ((config['resolution'] * u.arcsec) ** 2)
         total_area = pix_area * npix_below_max
-        print("Found {} pixels below within {}% confidence region".format(npix_below_max, args.conf_int * 100))
-        print(f"Area of one pixel is {pix_area} ")
-        print("Localisation area is {:.2f} = {:.2f}".format(total_area, total_area.to(u.arcmin ** 2)))
+        logger.info("Found {} pixels below within {}% confidence region".format(npix_below_max, args.conf_int * 100))
+        logger.info(f"Area of one pixel is {pix_area} ")
+        logger.info("Localisation area is {:.2f} = {:.2f}".format(total_area, total_area.to(u.arcmin ** 2)))
 
-        # find best position
-        ind = np.unravel_index(np.argmin(chi2_total), chi2_total.shape)
+        # find best position, which is at the point of the lowest confidence interval
+        ind = np.unravel_index(np.argmin(conf_int_total), conf_int_total.shape)
         coord_best = SkyCoord(RA[ind], DEC[ind])
+        logger.info("Best position: {}".format(coord_best.to_string('hmsdms')))
 
-        print("Best position: {}".format(coord_best.to_string('hmsdms')))
         if config['source_coord'] is not None:
             coord_src = SkyCoord(*config['source_coord'])
-            print("Source position: {}".format(coord_src.to_string('hmsdms')))
-            print("Separation: {}".format(coord_src.separation(coord_best).to(u.arcsec)))
+            logger.info("Source position: {}".format(coord_src.to_string('hmsdms')))
+            logger.info("Separation: {}".format(coord_src.separation(coord_best).to(u.arcsec)))
 
             # find closest ra,dec to source
             dist = ((RA - coord_src.ra) * np.cos(DEC)) ** 2 + (DEC - coord_src.dec) ** 2
             ind = np.unravel_index(np.argmin(dist), RA.shape)
-            chi2_best = chi2_total.min()
-            chi2_at_source = chi2_total[ind]
-            # print info to stderr
-            hdr = "ra_src, dec_src, ra_best dec_best chi2_best chi2_at_src dof numsb_det"
-            summary = "{} {} {:.2f} {:.2f} {} {}".format(coord_src.to_string('hmsdms'), coord_best.to_string('hmsdms'),
-                                                         chi2_best, chi2_at_source, dof, numsb_det)
-            # store or print summary
-            if args.outfile:
-                if os.path.isfile(args.outfile):
-                    mode = 'a'
-                else:
-                    mode = 'w'
-                with open(args.outfile, mode) as f:
-                    if mode == 'w':
-                        f.write(hdr + '\n')
-                    f.write(summary + '\n')
-            else:
-                print(hdr)
-                print(summary)
+            conf_int_at_source = conf_int_total[ind]
+            logger.info(f"Confidence interval at source (lower is better): {conf_int_at_source:.5f}")
 
         # plot
-        central_freq = int(np.round(config['fmin_data'] + config['bandwidth'] / 2)) * u.MHz
-        if not args.noplot:
-            # per CB
+        if args.show_plots or args.save_plots:
+            # per CB, if there is more than one
             for CB in burst_config['beams']:
-                if burst == burst_config['reference_cb']:
-                    # one SB is not a free parameter; 2 params
-                    dof = NSB - 1 - 2
-                else:
-                    # all SBs; 2 params
-                    dof = NSB - 2
-                title = fr"$\Delta \chi^2$ {CB}"
-                fig = make_plot(chi2[CB], RA, DEC, dof, title, args.conf_int, t_arr=tarr,
-                                cb_pos=pointings[CB], freq=central_freq)
-                if args.saveplot:
+                title = f"{CB}"
+                fig = make_plot(conf_ints[CB], RA, DEC, title, args.conf_int, t_arr=tarr,
+                                cb_pos=pointings[CB], freq=central_freq,
+                                src_pos=config['source_coord'])
+                if args.save_plots:
                     fig.savefig(f'{output_prefix}_{burst}_{CB}.pdf')
 
-            # total
-            title = r"$\Delta \chi^2$ Total"
-            fig = make_plot(chi2_total, RA, DEC, dof, title, args.conf_int, loc='lower right',
-                            cb_pos=list(pointings.values()), freq=central_freq)
+            # total, if there is more than one CB
+            if len(burst_config['beams']) > 1:
+                fig = make_plot(conf_int_total, RA, DEC, burst, args.conf_int, loc='lower right',
+                                cb_pos=list(pointings.values()), freq=central_freq,
+                                src_pos=config['source_coord'])
+                if args.save_plots:
+                    fig.savefig(f'{output_prefix}_{burst}_total.pdf')
 
-            if args.saveplot:
-                fig.savefig(f'{output_prefix}_{burst}_total.pdf')
-            else:
-                plt.show()
+    # result of all bursts combined
+    # first correct DoF for number of parameters
+    dof_all_bursts -= 2
+
+    # calculate combined confidence interval
+    dchi2_all_bursts = chi2_all_bursts - chi2_all_bursts.min()
+    conf_int_all_bursts = stats.chi2.cdf(dchi2_all_bursts, dof_all_bursts)
+    # where dof <= 0, conf_int is nan. These locations are "perfect", so set conf_int to 0
+    conf_int_all_bursts[np.isnan(conf_int_all_bursts)] = 0
+
+    # save final localisation region
+    np.save(f'{output_prefix}_localisation', [RA, DEC, conf_int_all_bursts])
+
+    if args.show_plots or args.save_plots:
+        # plot of all bursts combined, if there are multiple bursts
+        if len(config['bursts']) > 1:
+            fig = make_plot(conf_int_all_bursts, RA, DEC, 'Combined', args.conf_int, loc='lower right',
+                            cb_pos=list(nested_dict_values(pointings_all)), freq=central_freq,
+                            src_pos=config['source_coord'])
+            if args.save_plots:
+                fig.savefig(f'{output_prefix}_combined_bursts.pdf')
+    if args.show_plots:
+        plt.show()
 
 
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ global:
     # minimum and maximum frequency to use, in MHz
     # if set to values outside of the frequency range of the data, the full
     # band will be used
+    # these settings can be overwritten per burst as well
     fmin: 1300
     #fmax:
 
@@ -23,21 +24,14 @@ snr:
     # Note: These settings can be set on the command line when running the S/N calculation as well.
     # Those would overwrite the values in this config file
 
-    # CB/SB of main detection, used to determine where in the file the burst is located
-    main_cb: 0
-    main_sb: 35
     # Window size (seconds) when loading raw data, should be at least twice the DM delay across the band
     window_load: 2.0
     # Window size (seconds) when zooming in on pulse
     window_zoom: 0.5
-    # path to filterbank snippets. Use {cb} and {tab} in place of CB and TAB index
-    filterbank: 'data/CB{cb}_10.0sec_dm0_t03610_sb-1_tab{tab}.fil'
-    # list of CBs to calculate S/N for.
-    cbs: [0]
-    # If neighbours = True, also calculate S/N for CBs surrounding those in the CB list
-    neighbours: False
     # dispersion measure in pc/cm^3
     dm: 350
+    # maximum matched filter width in S/N determination (in bins)
+    width_max: 100
 
 localisation:
     # Note: These settings can be set on the command line when running the localisation as well.
@@ -55,10 +49,24 @@ localisation:
     # localisation resolution, in arcseconds
     resolution: 10.0
     # CB model type, one of gauss, airy, real
-    cb_model: "gauss"
+    cb_model: 'gauss'
 
 # example burst, name can be anything
 burst00:
+    # CB/SB of main detection, used to determine where in the file the burst is located
+    main_cb: 0
+    main_sb: 35
+
+    # overwrite global fmin/fmax
+    fmin: 1350
+
+    # path to filterbank snippets. Use {cb} and {tab} in place of CB and TAB index
+    filterbank: 'data/CB{cb}_10.0sec_dm0_t03610_sb-1_tab{tab}.fil'
+    # list of CBs to calculate S/N for.
+    cbs: [0]
+    # If neighbours = True, also calculate S/N for CBs surrounding those in the CB list
+    neighbours: False
+
     # arrival time, can either be specified as tarr, or as tstart + toa
     # tarr takes precedence and should be UTC, in ISOT format
     # tstart uses the same format. ToA must be in seconds
@@ -76,7 +84,7 @@ burst00:
     # reference CB, should the subsection name of one of the CBs
     # used for localisation.
     # the S/N in other CBs is scaled to this CB
-    reference_cb: "CB00"
+    reference_cb: 'CB00'
 
     # subsection per CB. The subsection must be named CBXX
     CB00:

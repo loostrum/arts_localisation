@@ -7,7 +7,6 @@ import numpy as np
 import astropy.units as u
 
 from arts_localisation.beam_models.compound_beam import CompoundBeam
-from arts_localisation.constants import THETAMAX_CB, PHIMAX_CB, NTHETA_CB, NPHI_CB
 
 
 if __name__ == '__main__':
@@ -34,12 +33,15 @@ if __name__ == '__main__':
         dra *= 60
         ddec *= 60
         cb_pos[cb] = np.array([dra, ddec])
-
     cb_pos *= u.arcmin
 
     # generate grid of full CB pattern
-    theta = np.linspace(-THETAMAX_CB, THETAMAX_CB, NTHETA_CB) * u.arcmin
-    phi = np.linspace(-PHIMAX_CB, PHIMAX_CB, NPHI_CB) * u.arcmin
+    thetamax = 130
+    phimax = 100
+    ntheta = 2601
+    nphi = 2001
+    theta = np.linspace(-thetamax, thetamax, ntheta) * u.arcmin
+    phi = np.linspace(-phimax, phimax, nphi) * u.arcmin
 
     cb_sens = np.zeros((ncb, len(phi), len(theta)))
 

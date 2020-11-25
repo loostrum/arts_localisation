@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import logging
 import argparse
@@ -16,20 +16,25 @@ from arts_localisation.constants import NSB
 logger = logging.getLogger(__name__)
 
 
-def get_burst_window(**config):
+def get_burst_window(burst, **config):
     """
-    Load a single SB and determine the arrival time of a burst within window_load / window_zoom of the centre
+    Load a single SB and determine the arrival time of a burst within window_load and window_zoom of the centre
 
-    :param ARTSFilterbankReader fil_reader: Filterbank reader
+    :param str burst: Name of the burst key in the config
     :param config: S/N configuration
     :return: startbin_wide, chunksize_wide, startbin_small, chunksize_small (all int)
     """
     # initialise the filterbank reader
-    fil_reader = ARTSFilterbankReader(config['filterbank'], config['main_cb'])
+    fil_reader = ARTSFilterbankReader(config[burst]['filterbank'], config[burst]['main_cb'])
     # load the file
     chunksize_wide = int(config['window_load'] / fil_reader.tsamp)
-    startbin_wide = int(.5 * (fil_reader.nsamp - chunksize_wide))
-    sb = fil_reader.load_single_sb(config['main_sb'], startbin_wide, chunksize_wide)
+    try:
+        samp_arr = config[burst]['toa_filterbank'] / fil_reader.tsamp
+    except KeyError:
+        logger.debug('Could not read toa_filterbank from config, assuming burst occurs in centre of filterbank data')
+        samp_arr = .5 * fil_reader.nsamp
+    startbin_wide = int(samp_arr - .5 * chunksize_wide)
+    sb = fil_reader.load_single_sb(config[burst]['main_sb'], startbin_wide, chunksize_wide)
     # dedisperse and create timeseries
     sb.dedisperse(config['dm'])
     ts = sb.data.sum(axis=0)
@@ -40,7 +45,7 @@ def get_burst_window(**config):
     startbin_wide -= int(ind_max - .5 * chunksize_wide)
     # calculate the required parameters for the zoomed window
     chunksize_small = int(config['window_zoom'] / fil_reader.tsamp)
-    # startbin_small is relative to startbin_wide
+    # startbin_small is relative to chunksize_small
     startbin_small = int(.5 * (chunksize_wide - chunksize_small))
     return startbin_wide, chunksize_wide, startbin_small, chunksize_small
 
@@ -49,29 +54,24 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', required=True, help='Input yaml config')
     parser.add_argument('--output_folder', help='Output folder '
-                                                '(Default: current directory)')
-    parser.add_argument('--plot', action='store_true', help='Create plots of S/N vs SB')
+                                                '(Default: <yaml file folder>/snr)')
+    parser.add_argument('--show_plots', action='store_true', help='Show plots')
+    parser.add_argument('--save_plots', action='store_true', help='Save plots')
     parser.add_argument('--verbose', action='store_true', help="Enable verbose logging")
 
-    group_overwrites = parser.add_argument_group('Config overwrites', 'Settings to overwrite from yaml config')
+    group_overwrites = parser.add_argument_group('config overwrites', 'These arguments overwrite the values set '
+                                                                      'in the .yaml config file')
     # global config:
     group_overwrites.add_argument('--snrmin', type=float, help='S/N threshold')
-    group_overwrites.add_argument('--fmin', type=float, help='Ignore frequency below this value in MHz')
-    group_overwrites.add_argument('--fmax', type=float, help='Ignore frequency below this value in MHz')
     group_overwrites.add_argument('--fmin_data', type=float, help='Lowest frequency of data')
     group_overwrites.add_argument('--bandwidth', type=float, help='Bandwidth of data')
+    group_overwrites.add_argument('--width_max', type=int, help='Maximum width of matched filter in bins')
     # S/N config:
-    group_overwrites.add_argument('--main_cb', type=int, help='CB of main detection')
-    group_overwrites.add_argument('--main_sb', type=int, help='SB of main detection')
     group_overwrites.add_argument('--window_load', type=float, help='Window size (seconds) to use when loading data, '
                                                                     'should be at least twice the DM delay '
                                                                     'across the band')
     group_overwrites.add_argument('--window_zoom', type=float, help='Window size (seconds) to use when zooming in '
                                                                     'on pulse after dedispersion')
-    group_overwrites.add_argument('--filterbank', help='Path to filterbank files, including {cb} and {tab}')
-    group_overwrites.add_argument('--cbs', help='Comma-separated list of CBs to calculate S/N for')
-    group_overwrites.add_argument('--neighbours', action='store_true', help='Whether or not to include the neightbours'
-                                                                            'of the given CBs as well')
     group_overwrites.add_argument('--dm', type=float, help='Dispersion measure (pc/cc)')
 
     args = parser.parse_args()
@@ -79,93 +79,103 @@ def main():
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
-    # set the CBs argument as a proper list
-    args.cbs = [int(val) for val in args.cbs.split(',')]
+
+    # get output prefix from yaml file name and output folder
+    if args.output_folder is None:
+        # default output folder is same folder as .yaml file plus "snr"
+        args.output_folder = os.path.join(os.path.dirname(os.path.abspath(args.config)), 'snr')
+    tools.makedirs(args.output_folder)
+    # output prefix also contains the yaml filename without extension
+    output_prefix = os.path.join(args.output_folder, os.path.basename(args.config).replace('.yaml', ''))
 
     # load config for S/N determination
     config = load_config(args, for_snr=True)
 
-    # get output prefix from yaml file name and output folder
-    if args.output_folder is None:
-        args.output_folder = os.getcwd()
-    tools.makedirs(args.output_folder)
-    output_prefix = os.path.join(args.output_folder, os.path.basename(args.config).replace('.yaml', ''))
+    # loop over bursts
+    for burst in config['bursts']:
+        logger.info(f'Processing burst {burst}')
 
-    # find the burst window
-    logger.info('Finding burst window in file')
-    startbin_wide, chunksize_wide, startbin_small, chunksize_small = get_burst_window(**config)
+        # find the burst window
+        logger.info('Finding burst window in file')
+        startbin_wide, chunksize_wide, startbin_small, chunksize_small = get_burst_window(burst, **config)
 
-    # initialise plot
-    if args.plot:
-        ncb = len(config['cbs'])
-        nrow = int(np.ceil(np.sqrt(ncb)))
-        ncol = int(np.ceil(ncb / nrow))
-        nplot_empty = nrow * ncol - ncb
-        fig, axes = plt.subplots(nrows=nrow, ncols=ncol, figsize=(16, 16 * int(np.round(ncol / nrow))),
-                                 sharex=True, sharey=True, squeeze=False)
-        axes = axes.flatten()
+        # initialise SB vs S/N plot. One plot per burst, one panel per CB
+        if args.show_plots or args.save_plots:
+            ncb = len(config[burst]['cbs'])
+            nrow = int(np.ceil(np.sqrt(ncb)))
+            ncol = int(np.ceil(ncb / nrow))
+            nplot_empty = nrow * ncol - ncb
+            if ncb > 1:
+                size = 16
+            else:
+                size = 8
+            fig, axes = plt.subplots(nrows=nrow, ncols=ncol, figsize=(size, size * int(np.round(ncol / nrow))),
+                                     sharex=True, sharey=True, squeeze=False)
+            axes = axes.flatten()
 
-    # Run S/N determination loop for each CB
-    logger.info('Calculating S/N in each SB of given CBs')
-    for i, cb in enumerate(tqdm(config['cbs'], desc='CB')):
-        # initialise the filterbank reader
-        fil_reader = ARTSFilterbankReader(config['filterbank'], cb)
-        # load all TABs around the burst
-        fil_reader.read_tabs(startbin_wide, chunksize_wide)
-        # get the S/N of each SB
-        snr_all = np.zeros(NSB)
-        for sb in tqdm(range(NSB), desc='SB'):
-            # get the SB data
-            spec = fil_reader.get_sb(sb)
-            # dedisperse
-            spec.dedisperse(config['dm'], padval='rotate')
-            # zoom in
-            spec.data = spec.data[:, startbin_small:startbin_small + chunksize_small]
-            bad_low = spec.freqs < config['fmin']
-            bad_high = spec.freqs > config['fmax']
-            bad_zero = spec.data.mean(axis=1) == 0
-            bad_data = np.logical_or(np.logical_or(bad_low, bad_high), bad_zero)
-            spec.data[bad_data, :] = 0
+        # Run S/N determination loop for each CB
+        logger.info('Calculating S/N in each SB of given CBs')
+        for i, cb in enumerate(tqdm(config[burst]['cbs'], desc='CB')):
+            output_file = f'{output_prefix}_{burst}_CB{cb:02d}_SNR.txt'
+            if os.path.isfile(output_file):
+                logger.warning(f"Skipping {burst} CB{cb:02d} because output file already exists: {output_file}")
+                continue
+            # initialise the filterbank reader
+            fil_reader = ARTSFilterbankReader(config[burst]['filterbank'], cb)
+            # load all TABs around the burst
+            fil_reader.read_tabs(startbin_wide, chunksize_wide)
+            # get the S/N of each SB
+            snr_all = np.zeros(NSB)
+            for sb in tqdm(range(NSB), desc='SB'):
+                # get the SB data
+                spec = fil_reader.get_sb(sb)
+                # dedisperse
+                spec.dedisperse(config['dm'], padval='rotate')
+                # zoom in
+                spec.data = spec.data[:, startbin_small:startbin_small + chunksize_small]
+                # set data outside of requested frequency range to zero
+                remove_low = spec.freqs < config[burst]['fmin']
+                remove_high = spec.freqs > config[burst]['fmax']
+                remove_mask = np.logical_or(remove_low, remove_high)
+                spec.data[remove_mask, :] = 0
 
-            # create timeseries
-            ts = spec.data.sum(axis=0)
-            # get S/N
-            # TODO: turn width range into parameter
-            snr, width = calc_snr_matched_filter(ts, widths=range(1, 101))
-            snr_all[sb] = snr
+                # create timeseries
+                ts = spec.data.sum(axis=0)
+                # get S/N
+                snr, width = calc_snr_matched_filter(ts, widths=range(1, config['width_max'] + 1))
+                snr_all[sb] = snr
 
-        if np.all(snr_all < config['snrmin']):
-            logger.warning(f'No S/N above threshold found for CB{cb:02d}, not creating output file')
-            continue
+            with open(output_file, 'w') as f:
+                f.write('#sb snr\n')
+                # format each line as sb, snr
+                for sb, snr in enumerate(snr_all):
+                    f.write(f'{sb:02d} {snr:.2f}\n')
 
-        # store S/N file
-        output_file = f'{output_prefix}_SNR_CB{cb:02d}.txt'
-        with open(output_file, 'w') as f:
-            f.write('#sb snr\n')
-            # format each line, keep only values above S/N threshold
-            for sb, snr in enumerate(snr_all):
-                if snr < config['snrmin']:
-                    continue
-                f.write(f'{sb:02d} {snr:.2f}\n')
+            # SB vs S/N plot
+            if args.show_plots or args.save_plots:
+                logger.info(f'Adding {burst} S/N to plot')
+                ax = axes[i]
+                ax.plot(range(NSB), snr_all, c='k', marker='o')
+                # Add line S/N threshold if the value is available
+                if 'snrmin' in config.keys():
+                    ax.axhline(config['snrmin'], label='threshold')
+                ax.set_xlim(0, NSB)
+                ax.set_xlabel('SB index')
+                ax.set_ylabel('S/N')
+                ax.label_outer()
+                ax.set_title(f'CB{cb:02d}')
+                # only add legend to the first plot
+                if i == 0:
+                    ax.legend()
 
-        if args.plot:
-            # plot
-            ax = axes[i]
-            ax.plot(range(NSB), snr_all, c='k', marker='o')
-            # label only the first plot
-            ax.axhline(config['snrmin'], label='threshold')
-            ax.set_xlim(0, NSB)
-            ax.set_xlabel('SB index')
-            ax.set_ylabel('S/N')
-            ax.label_outer()
-            ax.set_title(f'CB{cb:02d}')
-            # only add legend to the first plot
-            if i == 0:
-                ax.legend()
+        # finalise the plot for this burst
+        if args.show_plots or args.save_plots:
+            fig.suptitle(burst)
+            if args.save_plots:
+                plt.savefig(f'{output_prefix}_{burst}_SNR.pdf', bbox_inches='tight')
 
-    # finalise the plot
-    if args.plot:
-        # fig.suptitle(burst/name/here)
+    # show plot all the way at the end
+    if args.show_plots:
         plt.show()
 
     logger.info("Done")

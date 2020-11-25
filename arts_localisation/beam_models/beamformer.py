@@ -97,7 +97,6 @@ class BeamFormer:
 
         dha = grid_ha - ha0
         dra = -dha
-        ddec = grid_dec - dec0
 
         # calculate uww of baselines
         # shape is (ndish, nfreq, 3)
@@ -106,12 +105,16 @@ class BeamFormer:
         # init geometric phases per dish
         dphi_shape = (self.ndish, self.freqs.shape[0], grid_ha.shape[0], grid_ha.shape[1])
         self.dphi_g = np.zeros(dphi_shape)
+
+        # get l,m coordinates
+        ll = np.sin(dra) * np.cos(grid_dec)
+        mm = np.cos(dec0) * np.sin(grid_dec) - np.sin(dec0) * np.cos(grid_dec) * np.cos(dra)
         # loop over baselines
         for i, baseline in enumerate(uvw):
             uu, vv, ww = baseline.T
             # u,v,w have shape (nfreq)
             # store phase offset with respect to phase center
-            self.dphi_g[i] = (uu[:, None, None] * np.sin(dra) * np.cos(grid_dec) + vv[:, None, None] * np.sin(ddec)).to(1).value
+            self.dphi_g[i] = (uu[:, None, None] * ll + vv[:, None, None] * mm).to(1).value
 
     @staticmethod
     @nb.njit('float64[:, :, :](float64[:, :, :, :])', parallel=True)
@@ -203,13 +206,13 @@ if __name__ == '__main__':
     ALT, AZ = tools.hadec_to_altaz(HA, DEC)
 
     fig, ax = plt.subplots(figsize=(9, 9))
-    ax.pcolormesh(HA.to(u.deg), DEC.to(u.deg), power)
+    ax.pcolormesh(HA.to(u.deg).value, DEC.to(u.deg).value, power)
     ax.set_xlabel('HA (deg)')
     ax.set_ylabel('DEC (deg)')
     ax.format_coord = formatter
 
     fig, ax = plt.subplots(figsize=(9, 9))
-    ax.pcolormesh(AZ.to(u.deg), ALT.to(u.deg), power)
+    ax.pcolormesh(AZ.to(u.deg).value, ALT.to(u.deg).value, power)
     ax.set_xlabel('AZ (deg)')
     ax.set_ylabel('ALT (deg)')
     ax.format_coord = formatter

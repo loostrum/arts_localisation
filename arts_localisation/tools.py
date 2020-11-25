@@ -9,7 +9,7 @@ import errno
 
 import numpy as np
 import astropy.units as u
-from astropy.coordinates import SkyCoord, FK5
+from astropy.coordinates import SkyCoord, SphericalRepresentation
 from astropy.time import Time
 
 from arts_localisation.constants import WSRT_LON, WSRT_LAT, NCB, CB_OFFSETS
@@ -43,27 +43,22 @@ def radec_to_hadec(ra, dec, t, lon=WSRT_LON):
     :param dec: declination with unit
     :param t: UT time (string or astropy.time.Time)
     :param lon: Longitude with unit (default: WSRT)
-    :return: SkyCoord object of apparent HA, Dec coordinates
+    :return: HA, Dec with unit
     """
 
     # Convert time to Time object if given as string
     if isinstance(t, str):
         t = Time(t)
 
-    # Apparent LST at WSRT at this time
-    lst = t.sidereal_time('apparent', WSRT_LON)
-    # Equinox of date (because hour angle uses apparent coordinates)
-    coord_system = FK5(equinox=f'J{t.decimalyear}')
-    # convert coordinates to apparent
-    coord_apparent = SkyCoord(ra, dec, frame='icrs').transform_to(coord_system)
-    # HA = LST - apparent RA
-    ha = lst - coord_apparent.ra
-    dec = coord_apparent.dec
-    # return SkyCoord of (Ha, Dec)
-    return SkyCoord(ha, dec, frame=coord_system)
+    coord = SkyCoord(ra, dec, frame='icrs', obstime=t)
+    ha = lon - coord.itrs.spherical.lon
+    ha.wrap_at(12 * u.hourangle, inplace=True)
+    dec = coord.itrs.spherical.lat
+
+    return ha, dec
 
 
-def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
+def hadec_to_radec(ha, dec, t, lon=WSRT_LON):
     """
     Convert apparent HA, Dec to J2000 RA, Dec
 
@@ -71,7 +66,6 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
     :param dec: declination with unit
     :param t: UT time (string or astropy.time.Time)
     :param lon: Longitude with unit (default: WSRT)
-    :param apparent: Whether or not HA, Dec are apparent coordinates (default: True)
     :return: SkyCoord object of J2000 coordinates
     """
 
@@ -79,18 +73,12 @@ def hadec_to_radec(ha, dec, t, lon=WSRT_LON, apparent=True):
     if isinstance(t, str):
         t = Time(t)
 
-    # Apparent LST at WSRT at this time
-    lst = t.sidereal_time('apparent', lon)
-    if apparent:
-        # Equinox of date
-        coord_system = FK5(equinox=f'J{t.decimalyear}')
-    else:
-        # J2000
-        coord_system = FK5(equinox='J2000')
-    # apparent RA = LST - HA
-    ra_apparent = lst - ha
-    coord_apparent = SkyCoord(ra_apparent, dec, frame=coord_system)
-    return coord_apparent.transform_to('icrs')
+    # create spherical representation of ITRS coordinates of given ha, dec
+    itrs_spherical = SphericalRepresentation(lon - ha, dec, 1.)
+    # create ITRS object, which requires cartesian input
+    coord = SkyCoord(itrs_spherical.to_cartesian(), frame='itrs', obstime=t)
+    # convert to J2000
+    return coord.icrs
 
 
 def hadec_to_par(ha, dec, lat=WSRT_LAT):
@@ -110,8 +98,7 @@ def hadec_to_par(ha, dec, lat=WSRT_LAT):
 
 def hadec_to_proj(ha, dec, lat=WSRT_LAT):
     """
-    Convert HA, Dec to projection angle
-    This is the E-W baseline projection angle
+    Convert HA, Dec to E-W baseline projection angle
 
     :param ha: hour angle with unit
     :param dec: declination with unit
@@ -245,7 +232,9 @@ def coord_to_offset(ra0, dec0, ra1, dec1):
     :param ra1: Target RA or Az
     :param dec1: Target Dec or Alt
     :return: (theta, phi) offset
+
               theta is offset in RA or Az
+
               phi is offset in Dec or Alt
     """
     # convert target radec into offset
@@ -352,6 +341,7 @@ def get_neighbours(cbs):
     :return: flattened list of neighbours
     """
     # list of neighbours for all CBs, ordered per CB row
+    # nth element of the list contants a list of neighbours of CB n
     # TODO: double check this list
     all_neighbours = [[17, 18, 23, 24],
                       [2, 8], [1, 3, 8, 9], [2, 4, 9, 10], [3, 5, 10, 11], [4, 6, 11, 12], [5, 7, 12, 13], [6, 13, 14],

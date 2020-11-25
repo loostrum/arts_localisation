@@ -177,7 +177,8 @@ def main():
 
     # set intermediates output folder and prefix
     intermediates_folder = os.path.join(os.path.dirname(os.path.abspath(args.config)), 'intermediates')
-    tools.makedirs(intermediates_folder)
+    if args.store_intermediates:
+        tools.makedirs(intermediates_folder)
     intermediates_prefix = os.path.join(intermediates_folder, os.path.basename(args.config).replace('.yaml', ''))
 
     # Define global RA, Dec localisation area
@@ -417,6 +418,7 @@ def main():
             logger.info(f"Confidence interval at source (lower is better): {conf_int_at_source:.5f}")
 
         # plot
+        logging.info("Generating plots")
         if args.show_plots or args.save_plots:
             # per CB, if there is more than one
             for CB in burst_config['beams']:

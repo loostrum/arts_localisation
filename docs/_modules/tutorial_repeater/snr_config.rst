@@ -11,12 +11,12 @@ The ``global`` section of the configuration file contains general information ab
 #. ``fmax``: highest frequency to use (MHz).
 #. ``snrmin``: S/N threshold.
 
-These data values can be read from the filterbank files, using e.g. PRESTO's `readfile`.
+The data values can be read from the filterbank files, using e.g. PRESTO's `readfile`.
 All data below/above ``fmin``/``fmax`` will be ignored.
 These values can also be set per burst. In this example we will do the latter, so the ``fmin`` and
 ``fmax`` settings are ignored.
 ``snrmin`` sets the S/N threshold to actually use in the localisation; any beams where the measured S/N is lower
-are ignored. It is a global setting, because the S/N calculation also uses it, but only for visualization.
+are ignored. It is a global setting, because the S/N calculation also uses it (but only for visualization).
 Here the S/N threshold is set to 6, which was chosen based on the output diagnostic plots of the S/N calculation.
 
 The ``snr`` section contains the global settings specific to S/N determination:

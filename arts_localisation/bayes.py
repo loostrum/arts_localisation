@@ -34,7 +34,7 @@ def log_prior(params, ha_cb, dec_cb, maxsnr):
     # # take lazy route: offset in both dec and hacosdec must be smaller than some value
     max_dist = 5 * 60  # arcmin
     # # also set max on boresight S/N
-    if abs(params[0]) > max_dist or abs(params[1]) > max_dist: # or params[2] < 0:  # or params[2] > maxsnr
+    if abs(params[0]) > max_dist or abs(params[1]) > max_dist:  # or params[2] < 0:  # or params[2] > maxsnr
         return -np.inf
     else:
         return 0
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     ax.plot(source_ra.value, source_dec.value, marker='o', ms=10, c='r', label='Source position')
     # plot radius at max distance
     if True:
-        max_dist = 33.7/60  # deg
+        max_dist = 33.7 / 60  # deg
         angles = np.linspace(0, 2 * np.pi, 100)
         dxcosy = max_dist * np.cos(angles)
         dy = max_dist * np.sin(angles)

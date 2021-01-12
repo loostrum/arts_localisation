@@ -30,7 +30,8 @@ def plot_hadec():
 
     # parallactic angle
     ax = axes[0]
-    img = ax.pcolormesh(X, Y, parang, cmap='seismic', vmin=-90, vmax=90)
+    img = ax.pcolormesh(X, Y, parang, cmap='seismic', vmin=-90, vmax=90,
+                        shading='nearest')
     ax.set_aspect('auto')
     ax.axhline(WSRT_LAT.to(u.deg).value, c='k')
     ax.axvline(0, c='k')
@@ -40,7 +41,8 @@ def plot_hadec():
 
     # projection angle
     ax = axes[1]
-    img = ax.pcolormesh(X, Y, proj, cmap='seismic', vmin=-90, vmax=90)
+    img = ax.pcolormesh(X, Y, proj, cmap='seismic', vmin=-90, vmax=90,
+                        shading='nearest')
     ax.set_aspect('auto')
     ax.axvline(0, c='k')
     fig.colorbar(img, ax=ax)
@@ -93,7 +95,7 @@ def plot_tab_pattern(tabnum):
 
     # init plot
     X, Y = np.meshgrid(theta, freqs)
-    pcm = ax.pcolormesh(X, Y, tab)
+    pcm = ax.pcolormesh(X, Y, tab, shading='nearest')
 
     # function to update plot
     def update(val):

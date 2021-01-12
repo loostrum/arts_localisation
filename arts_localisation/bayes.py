@@ -2,45 +2,56 @@
 #
 # Test bayesian method for localisation
 
+import os
 import numpy as np
 from astropy.time import Time
 import astropy.units as u
 import emcee
 import matplotlib.pyplot as plt
 from astroML.plotting import plot_mcmc
+from multiprocessing import Pool
 
 from arts_localisation import tools
 from arts_localisation.constants import NSB
 from arts_localisation.beam_models.simulate_sb_pattern import SBPattern
+from arts_localisation.beam_models import SBModelBayes
 
 
-def log_prior(params, ha_cb, dec_cb):
+global model
+
+
+def log_prior(params, ha_cb, dec_cb, maxsnr):
     """
     """
     # ha and dec must be within valid range
-    dec = dec_cb + params[1] * u.arcmin
-    ha = ha_cb + params[0] * u.arcmin / np.cos(dec)
+    # dec = dec_cb + params[1] * u.arcmin
+    # ha = ha_cb + params[0] * u.arcmin / np.cos(dec)
+    # if (-180 * u.deg < ha < 180 * u.deg) and (-90 * u.deg < dec < 90 * u.deg):
+    #     return 0
+    # else:
+    #     return -np.inf
 
-    if (-180 * u.deg < ha < 180 * u.deg) and (-90 * u.deg < dec < 90 * u.deg):
-        return 0
-    else:
+    # # take lazy route: offset in both dec and hacosdec must be smaller than some value
+    max_dist = 5 * 60  # arcmin
+    # # also set max on boresight S/N
+    if abs(params[0]) > max_dist or abs(params[1]) > max_dist: # or params[2] < 0:  # or params[2] > maxsnr
         return -np.inf
+    else:
+        return 0
 
 
-def log_likelihood(params, sbs, nondet_sbs, snrs, ha_cb, dec_cb):
+def log_likelihood(params, sbs, nondet_sbs, snrs):
     """
     :param list params: dhacosdec, ddec, boresight snr, S/N for each non-det SB
     :param array sbs: array of detection SBs
     :param array nondet_sbs: array of non-detection SBs
     :param array snrs: S/N in each detection SB
-    :param Quantity ha_cb: pointing HA
-    :param Quantity dec_cb: pointing Dec
     """
     # read parameters
     dhacosdec, ddec, boresight_snr = params[:3]
-    # add units and convert to array
-    dhacosdec = np.atleast_1d(dhacosdec) * u.arcmin
-    ddec = np.atleast_1d(ddec) * u.arcmin
+    # convert to radians
+    dhacosdec *= np.pi / 180 / 60.
+    ddec *= np.pi / 180 / 60.
     if len(params) > 3:
         snr_sb_nondet = params[3:]
         # construct S/N for each SB
@@ -51,22 +62,16 @@ def log_likelihood(params, sbs, nondet_sbs, snrs, ha_cb, dec_cb):
         snr_all = snrs
     assert len(snr_all) == NSB
 
-    # create SB pattern
-    fmin = 1350 * u.MHz
-    sbp = SBPattern(ha_cb, dec_cb, dhacosdec, ddec, fmin=fmin,
-                    min_freq=1220.7 * u.MHz, cb_model='gauss', cbnum=0,
-                    no_pbar=True)
-    # get pattern integrated over frequency, and keep only SB axis (one RA, Dec)
-    # TODO: spectral indices?
-    sb_model = sbp.beam_pattern_sb_int[:, 0, 0]
+    # create SB model
+    sb_model = model.get_sb_model(dhacosdec, ddec)
 
-    # construct likelihood
+    # construct likelihood: squared sum of modelled vs measured S/N over all SBs
     logL = np.sum(((sb_model * boresight_snr) - snr_all) ** 2, axis=0)
-    return logL
+    return -logL
 
 
-def log_posterior(params, sbs, nondet_sbs, snrs, ha_cb, dec_cb):
-    return log_prior(params, ha_cb, dec_cb) + log_likelihood(params, sbs, nondet_sbs, snrs, ha_cb, dec_cb)
+def log_posterior(params, sbs, nondet_sbs, snrs, ha_cb, dec_cb, maxsnr):
+    return log_prior(params, ha_cb, dec_cb, maxsnr) + log_likelihood(params, sbs, nondet_sbs, snrs)
 
 
 if __name__ == '__main__':
@@ -74,17 +79,13 @@ if __name__ == '__main__':
     source_ra = 29.50333 * u.deg
     source_dec = 65.71675 * u.deg
 
-    ra = 29.50333 * u.deg
-    dec = 65.71675 * u.deg
-
     snr_min = 8
 
     burst = {'tstart': Time('2020-05-11T07:36:22.0'),
              'toa': 3610.84 * u.s,
              'ra_cb': 29.50333 * u.deg,
              'dec_cb': 65.71675 * u.deg,
-             'snr_array': '/mnt/win/f/Leon/Desktop/python/arts_localisation'
-                          '/test_data/R3/snr/R3_20200511_3610_CB00_SNR.txt'
+             'snr_array': '/data/arts/localisation/R3/snr/R3_20200511_3610_CB00_SNR.txt'
              }
 
     # load S/N array
@@ -103,17 +104,19 @@ if __name__ == '__main__':
 
     # guess parameters, order is ha, dec, boresight snr, snr for each nondet beam
     ndim = 3 + num_sb_nondet
-    nwalkers = 20
-    nsteps = 30
-    nburn = 5
+    nwalkers = 256
+    nsteps = 2048
+    nburn = 256
 
-    # random S/N between 1 and 10 x measured S/N
-    minval = snr_det.max()
-    maxval = 10 * minval
+    # boresight S/N random between 1 and 5 x measured max S/N
+    minval = 1 * snr_det.max()
+    maxval = 5 * snr_det.max()
     guess_snr = (maxval - minval) * np.random.random(nwalkers) + minval
+    # boresight S/N is not allowed to be larger than this value (if this check is enabled in log_prior)
+    maxsnr = 10 * snr_det.max()
 
-    # random HA / Dec within 30' of initial point
-    max_offset = 30  # arcmin
+    # random HA / Dec within this many arcmin of initial point
+    max_offset = 1  # arcmin
 
     guess_ddec = 2 * max_offset * np.random.random(nwalkers) - max_offset
     guess_dhacosdec = 2 * max_offset * np.random.random(nwalkers) - max_offset
@@ -123,20 +126,26 @@ if __name__ == '__main__':
 
     # random S/N between zero and threshold for non-detection beams
     if num_sb_nondet > 0:
+        print("Setting S/N in non-detection beams")
         snr_nondet_guess = np.random.random(size=(nwalkers, num_sb_nondet)) * snr_min
         # combine guesses
         guess = np.hstack([guess, snr_nondet_guess])
 
     # run MC
-    tstart = Time.now()
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_posterior,
-                                    args=(sb_det, sb_nondet, snr_det, ha_cb, dec_cb))
-    sampler.run_mcmc(guess, nsteps)
-    tend = Time.now()
+    print(f"Running MCMC with {nwalkers} walkers, {nsteps} steps, {nburn} burn-in points")
+    model = SBModelBayes(ha_cb.to(u.rad).value, dec_cb.to(u.rad).value, fmin=1350, min_freq=1220.7,
+                         nfreq=32)
 
-    print(f"Sampler took {(tend - tstart).sec:.2f} s")
+    # import IPython; IPython.embed(); exit()
+
+    with Pool(os.cpu_count() - 1) as pool:
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_posterior,
+                                        args=(sb_det, sb_nondet, snr_det, ha_cb, dec_cb, maxsnr),
+                                        pool=pool)
+        sampler.run_mcmc(guess, nsteps, progress=True)
 
     sample = sampler.chain  # shape = (nwalkers, nsteps, ndim)
+    # remove burn-in points and combine walkers
     sample = sampler.chain[:, nburn:, :].reshape(-1, ndim)
     # extract only HA, Dec offsets
     dhacosdec_sample, ddec_sample = sample[:, :2].T
@@ -146,12 +155,32 @@ if __name__ == '__main__':
     coords = tools.hadec_to_radec(ha_sample, dec_sample, tarr)
     ra_s = coords.ra.deg
     dec_s = coords.dec.deg
-    radec = np.transpose([ra_s, dec_s])
+    radec = [ra_s, dec_s]
 
-    # plot
+    # plot result
     fig = plt.figure()
-    axes = plot_mcmc(radec.T, fig=fig, labels=['RA', 'DEC'], colors='k')
+    axes = plot_mcmc(radec, fig=fig, labels=['RA', 'DEC'], colors='c')
     ax = axes[0]
-    ax.plot(sample[:, 0], sample[:, 1], '.k', alpha=0.1, ms=4)
-    ax.plot(source_ra.value, source_dec.value, marker='o', ms=10, c='r')
+    ax.plot(ra_s, dec_s, '.k', alpha=0.1, ms=4, label='Samples')
+    ax.plot(source_ra.value, source_dec.value, marker='o', ms=10, c='r', label='Source position')
+    # plot radius at max distance
+    if True:
+        max_dist = 33.7/60  # deg
+        angles = np.linspace(0, 2 * np.pi, 100)
+        dxcosy = max_dist * np.cos(angles)
+        dy = max_dist * np.sin(angles)
+        y = source_dec.to(u.deg).value + dy
+        dx = dxcosy / np.cos(y * np.pi / 180)
+        x = source_ra.to(u.deg).value + dx
+        ax.plot(x, y, c='green', alpha=.5)
+    ax.legend()
+
+    # plot burn-in
+    fig, ax = plt.subplots()
+    for i in range(len(sampler.lnprobability)):
+        ax.plot(sampler.lnprobability[i, :], linewidth=0.3, color='k', alpha=0.4)
+    ax.set_ylabel('ln(P)')
+    ax.set_xlabel('Step number')
+    ax.axvline(nburn, linestyle='dotted')
+
     plt.show()

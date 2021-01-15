@@ -18,11 +18,12 @@ logger = logging.getLogger(__name__)
 
 def get_burst_window(burst, **config):
     """
-    Load a single SB and determine the arrival time of a burst within window_load and window_zoom of the centre
+    Load a single SB and determine the arrival time of a burst within window_load and window_zoom of the centre,
+    as well as the boxcar width corresponding to the highest S/N
 
     :param str burst: Name of the burst key in the config
     :param config: S/N configuration
-    :return: startbin_wide, chunksize_wide, startbin_small, chunksize_small (all int)
+    :return: startbin_wide, chunksize_wide, startbin_small, chunksize_small, boxcar_width (all int)
     """
     # initialise the filterbank reader
     fil_reader = ARTSFilterbankReader(config[burst]['filterbank'], config[burst]['main_cb'])
@@ -47,7 +48,9 @@ def get_burst_window(burst, **config):
     chunksize_small = int(config['window_zoom'] / fil_reader.tsamp)
     # startbin_small is relative to chunksize_small
     startbin_small = int(.5 * (chunksize_wide - chunksize_small))
-    return startbin_wide, chunksize_wide, startbin_small, chunksize_small
+    # get the optimum boxcar width
+    _, boxcar_width = calc_snr_matched_filter(ts, widths=range(1, config['width_max'] + 1))
+    return startbin_wide, chunksize_wide, startbin_small, chunksize_small, boxcar_width
 
 
 def main():
@@ -97,7 +100,7 @@ def main():
 
         # find the burst window
         logger.info('Finding burst window in file')
-        startbin_wide, chunksize_wide, startbin_small, chunksize_small = get_burst_window(burst, **config)
+        startbin_wide, chunksize_wide, startbin_small, chunksize_small, boxcar_width = get_burst_window(burst, **config)
 
         # initialise SB vs S/N plot. One plot per burst, one panel per CB
         if args.show_plots or args.save_plots:
@@ -141,8 +144,9 @@ def main():
 
                 # create timeseries
                 ts = spec.data.sum(axis=0)
-                # get S/N
-                snr, width = calc_snr_matched_filter(ts, widths=range(1, config['width_max'] + 1))
+                # get S/N using boxcar width as determined from optimum S/N in
+                # main SB (i.e. one with highest S/N in AMBER)
+                snr, _ = calc_snr_matched_filter(ts, widths=[boxcar_width])
                 snr_all[sb] = snr
 
             with open(output_file, 'w') as f:

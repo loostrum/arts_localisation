@@ -10,34 +10,27 @@ import emcee
 import matplotlib.pyplot as plt
 from astroML.plotting import plot_mcmc
 from multiprocessing import Pool
+import corner
 
 from arts_localisation import tools
 from arts_localisation.constants import NSB
-from arts_localisation.beam_models.simulate_sb_pattern import SBPattern
 from arts_localisation.beam_models import SBModelBayes
 
 
 global model
+os.environ["OMP_NUM_THREADS"] = "1"
 
 
-def log_prior(params, ha_cb, dec_cb, maxsnr):
+def log_prior(params, ha_cb, dec_cb, logmaxsnr):
     """
     """
     # ha and dec must be within valid range
-    # dec = dec_cb + params[1] * u.arcmin
-    # ha = ha_cb + params[0] * u.arcmin / np.cos(dec)
-    # if (-180 * u.deg < ha < 180 * u.deg) and (-90 * u.deg < dec < 90 * u.deg):
-    #     return 0
-    # else:
-    #     return -np.inf
-
-    # # take lazy route: offset in both dec and hacosdec must be smaller than some value
-    max_dist = 5 * 60  # arcmin
-    # # also set max on boresight S/N
-    if abs(params[0]) > max_dist or abs(params[1]) > max_dist:  # or params[2] < 0:  # or params[2] > maxsnr
-        return -np.inf
-    else:
+    dec = dec_cb + params[1] * u.arcmin
+    ha = ha_cb + params[0] * u.arcmin / np.cos(dec)
+    if (-180 * u.deg < ha < 180 * u.deg) and (-90 * u.deg < dec < 90 * u.deg) and params[2] <= logmaxsnr:
         return 0
+    else:
+        return -np.inf
 
 
 def log_likelihood(params, sbs, nondet_sbs, snrs):
@@ -48,7 +41,8 @@ def log_likelihood(params, sbs, nondet_sbs, snrs):
     :param array snrs: S/N in each detection SB
     """
     # read parameters
-    dhacosdec, ddec, boresight_snr = params[:3]
+    dhacosdec, ddec, logboresight_snr = params[:3]
+    boresight_snr = np.exp(logboresight_snr)
     # convert to radians
     dhacosdec *= np.pi / 180 / 60.
     ddec *= np.pi / 180 / 60.
@@ -70,8 +64,12 @@ def log_likelihood(params, sbs, nondet_sbs, snrs):
     return -logL
 
 
-def log_posterior(params, sbs, nondet_sbs, snrs, ha_cb, dec_cb, maxsnr):
-    return log_prior(params, ha_cb, dec_cb, maxsnr) + log_likelihood(params, sbs, nondet_sbs, snrs)
+def log_posterior(params, sbs, nondet_sbs, snrs, ha_cb, dec_cb, logmaxsnr):
+    lp = log_prior(params, ha_cb, dec_cb, logmaxsnr)
+    if not np.isfinite(lp):
+        return -np.inf
+    else:
+        return lp + log_likelihood(params, sbs, nondet_sbs, snrs)
 
 
 if __name__ == '__main__':
@@ -104,16 +102,15 @@ if __name__ == '__main__':
 
     # guess parameters, order is ha, dec, boresight snr, snr for each nondet beam
     ndim = 3 + num_sb_nondet
-    nwalkers = 256
-    nsteps = 2048
-    nburn = 256
+    nwalkers = 64
+    nsteps = 640
 
     # boresight S/N random between 1 and 5 x measured max S/N
-    minval = 1 * snr_det.max()
-    maxval = 5 * snr_det.max()
-    guess_snr = (maxval - minval) * np.random.random(nwalkers) + minval
+    minval = .5 * snr_det.max()
+    maxval = 2 * snr_det.max()
+    guess_snr = np.log((maxval - minval) * np.random.random(nwalkers) + minval)
     # boresight S/N is not allowed to be larger than this value (if this check is enabled in log_prior)
-    maxsnr = 10 * snr_det.max()
+    maxsnr = np.log(5 * snr_det.max())
 
     # random HA / Dec within this many arcmin of initial point
     max_offset = 1  # arcmin
@@ -131,22 +128,47 @@ if __name__ == '__main__':
         # combine guesses
         guess = np.hstack([guess, snr_nondet_guess])
 
-    # run MC
-    print(f"Running MCMC with {nwalkers} walkers, {nsteps} steps, {nburn} burn-in points")
+    # init model
+    print("Initializing beam model")
     model = SBModelBayes(ha_cb.to(u.rad).value, dec_cb.to(u.rad).value, fmin=1350, min_freq=1220.7,
                          nfreq=32)
 
     # import IPython; IPython.embed(); exit()
 
+    # run MCMC
+    print(f"Running MCMC with {nwalkers} walkers, {nsteps} steps")
     with Pool(os.cpu_count() - 1) as pool:
         sampler = emcee.EnsembleSampler(nwalkers, ndim, log_posterior,
                                         args=(sb_det, sb_nondet, snr_det, ha_cb, dec_cb, maxsnr),
                                         pool=pool)
         sampler.run_mcmc(guess, nsteps, progress=True)
 
-    sample = sampler.chain  # shape = (nwalkers, nsteps, ndim)
-    # remove burn-in points and combine walkers
-    sample = sampler.chain[:, nburn:, :].reshape(-1, ndim)
+    # get mean autocorrelation time
+    try:
+        t_corr = np.mean(sampler.get_autocorr_time())
+    except emcee.autocorr.AutocorrError as e:
+        print(e)
+        t_corr = .1 * nsteps
+    print(f"Mean autocorrelation time: {t_corr:.1f} steps")
+    nburn = int(3 * t_corr)
+    print(f"nburn={nburn}")
+
+    sample = sampler.get_chain(discard=nburn, flat=True)
+
+    # quote 16/50/84th percentiles
+    labels = ["dHA cos(Dec)", "dDec", "ln boresight S/N"]
+    truths = [0, 0, np.log(snr_det.max())]
+    for i in range(ndim):
+        perc = np.percentile(sample[:, i], [16, 50, 84])
+        val = perc[1]
+        err_lo, err_hi = np.diff(perc)
+        print(f"{labels[i]} = {val:.2f} +{err_hi:.2f} -{err_lo:.2f} (truth = {truths[i]}:.2f)")
+
+    # create corner plot
+    fig = corner.corner(sample, labels=labels, truths=truths)
+    # plt.show()
+    # exit()
+
     # extract only HA, Dec offsets
     dhacosdec_sample, ddec_sample = sample[:, :2].T
     # convert to RA, Dec

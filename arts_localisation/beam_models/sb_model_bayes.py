@@ -103,4 +103,6 @@ class SBModelBayes:
                 elif chan_start < self.chan_mask_last:
                     chan_start = self.chan_mask_last
                 sbs[sb] += pbeam[tab][chan_start:chan_end].sum(axis=0)
+        # scale by number of used channels
+        sbs /= (self.nfreq - self.chan_mask_last)
         return sbs

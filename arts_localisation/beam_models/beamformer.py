@@ -9,6 +9,8 @@ import astropy.constants as const
 
 from arts_localisation.constants import NTAB, WSRT_LON
 
+nb.config.THREADING_LAYER = 'safe'
+
 
 class BeamFormer:
 

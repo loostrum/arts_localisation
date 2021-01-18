@@ -33,5 +33,6 @@ setup(name='arts_localisation',
                                 'mpi4py']},
       include_package_data=True,
       entry_points={'console_scripts': ['arts_calc_snr=arts_localisation.calc_snr:main',
-                                        'arts_run_localisation=arts_localisation.run_localisation:main']},
+                                        'arts_run_localisation=arts_localisation.run_localisation:main',
+                                        'arts_run_localisation_mcmc=arts_localisation.run_localisation_mcmc:main']},
       )

@@ -2,6 +2,8 @@
 
 import os
 import sys
+import logging
+import argparse
 import numpy as np
 from astropy.time import Time
 import astropy.units as u
@@ -20,6 +22,27 @@ from arts_localisation.beam_models import SBPatternSingle
 global models
 # avoid using parallelization other than the MPI processes used in this script
 os.environ["OMP_NUM_THREADS"] = "1"
+logger = logging.getLogger(__name__)
+plt.rcParams['axes.formatter.useoffset'] = False
+
+
+class ArgumentParserExecption(Exception):
+    pass
+
+
+class ArgumentParser(argparse.ArgumentParser):
+    """
+    ArgumentParser with adapted error method so it raise an exception instead of exiting on an error
+    """
+    def error(self, message):
+        """error(message: string)
+        Prints a usage message incorporating the message to stderr and
+        exits.
+        If you override this in a subclass, it should not return -- it
+        should either exit or raise an exception.
+        """
+        self.print_usage(sys.stderr)
+        raise ArgumentParserExecption(f'{self.prog}: error: {message}')
 
 
 class TestData:
@@ -56,3 +79,56 @@ def set_guess_value(ndim, minval, maxval):
     :param float maxval: maximum value
     """
     return (maxval - minval) * np.random.random(ndim) + minval
+
+
+def main():
+    # get MPI rank
+    mpi_comm = MPI.COMM_WORLD
+    mpi_rank = mpi_comm.Get_rank()
+    mpi_size = mpi_comm.Get_size()
+
+    # parse arguments
+    args = None
+    if mpi_rank == 0:
+        parser = ArgumentParser()
+        parser.add_argument('--load', help='Path to .h5 file from previous run. Will load this file instead of'
+                                           'executing another MCMC run')
+        parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose logging')
+        try:
+            args = parser.parse_args()
+            # print help if no arguments are given, and make the programme exit
+            if len(sys.argv) == 1:
+                parser.print_help()
+                args = None
+        except ArgumentParserExecption as e:
+            # args will remain none, which makes the program exit. No need to further process exception here
+            print(e)
+
+    # broadcast arguments, exit if parsing failed (args=None)
+    args = mpi_comm.bcast(args, root=0)
+    if args is None:
+        sys.exit()
+
+    # set up logger
+    if args.verbose:
+        loglevel = logging.DEBUG
+    else:
+        loglevel = logging.INFO
+    logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel, stream=sys.stderr)
+
+    # if loading a previous run, there is no need for extra MPI processes
+    if args.load is not None:
+        if mpi_rank == 0 and mpi_size > 1:
+            logging.warning("No need for MPI when loading run; disabling extra processes")
+        else:
+            sys.exit()
+
+    # if doing a run, we need more than one process for the MPI pool to work
+    elif args.load is None and mpi_size == 1:
+        logging.error(f"Need more than one process to be able to execute MCMC run. Run this "
+                      f"script with mpirun -np <nproc> {os.path.basename(__file__)}")
+        sys.exit()
+
+
+if __name__ == '__main__':
+    main()

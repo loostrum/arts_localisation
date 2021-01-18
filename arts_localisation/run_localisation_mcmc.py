@@ -20,10 +20,10 @@ from arts_localisation.beam_models import SBPatternSingle
 from arts_localisation.config_parser import load_config
 
 
-# each process needs to access these models, make global instead of passing them around to save time
-global models
 # avoid using parallelization other than the MPI processes used in this script
 os.environ["OMP_NUM_THREADS"] = "1"
+# silence the matplotlib logger
+logging.getLogger('matplotlib').setLevel(logging.ERROR)
 plt.rcParams['axes.formatter.useoffset'] = False
 
 
@@ -46,29 +46,110 @@ class ArgumentParser(argparse.ArgumentParser):
         raise ArgumentParserExecption(f'{self.prog}: error: {message}')
 
 
-class TestData:
-    def __init__(self, snrmin):
-        self.source_ra = 29.50333 * u.deg
-        self.source_dec = 65.71675 * u.deg
-        self.src = "R3_20200511_3610"
-        self.burst = {'tstart': Time('2020-05-11T07:36:22.0'),
-                      'toa': 3610.84 * u.s,
-                      'ra_cb': 29.50333 * u.deg,
-                      'dec_cb': 65.71675 * u.deg,
-                      # 'snr_array': '/home/oostrum/localisation/mcmc/snr_R3/{self.src}_CB00_SNR.txt'
-                      'snr_array': f'/data/arts/localisation/R3/snr/{self.src}_CB00_SNR.txt'
-                      }
-        # load S/N array
-        data = np.loadtxt(self.burst['snr_array'], ndmin=2)
-        sbs, snrs = data.T
-        ind_det = snrs >= snrmin
-        self.sb_det = sbs[ind_det].astype(int)
-        self.sb_nondet = sbs[~ind_det].astype(int)
-        self.snr_det = snrs[ind_det]
+def log_prior(params, numcb_per_burst):
+    ra = params[0]
+    dec = params[1]
+    # ra and dec must be in valid range
+    if not ((0 < ra < 2 * np.pi) and (-np.pi / 2 < dec < np.pi / 2)):
+        return -np.inf
 
-        # calculate ha, dec at burst ToA
-        self.tarr = self.burst['tstart'] + self.burst['toa']
-        self.ha_cb, self.dec_cb = tools.radec_to_hadec(self.burst['ra_cb'], self.burst['dec_cb'], self.tarr)
+    # boresight S/N (per burst) must be positive
+    nburst = len(numcb_per_burst)
+    boresight_snr = params[2:2 + nburst]
+    # if not np.all(boresight_snr > 0):
+    if not np.all(0 < boresight_snr < 200):
+        return -np.inf
+
+    # primary beam widths must be positive (per CB per burst)
+    # index of first burst-specific value
+    offset = 2 + nburst
+    burst_offset = 0
+    ref_beam_width_rad = 33.7 / 60. * np.pi / 180.
+    for burst_ind, ncb in enumerate(numcb_per_burst):
+        start = offset + burst_offset
+        pbeam_width_ra = params[start:start + ncb]
+        pbeam_width_dec = params[start + ncb:start + 2 * ncb]
+        snr_offset = params[start + 2 * ncb:start + 3 * ncb]
+        burst_offset += 3 * ncb
+
+        if (pbeam_width_ra < 0) or (pbeam_width_dec < 0):
+            return -np.inf
+
+        if not (0 < snr_offset < 10):
+            return -np.inf
+
+        if not (.9 * ref_beam_width_rad < pbeam_width_ra < 1.1 * ref_beam_width_rad):
+            return -np.inf
+
+        if not (.9 * ref_beam_width_rad < pbeam_width_dec < 1.1 * ref_beam_width_rad):
+            return -np.inf
+
+    # everything passed
+    return 0
+
+
+def log_likelihood(params, snr_data, numcb_per_burst, tarr_per_burst):
+    ra = params[0]
+    dec = params[1]
+    nburst = len(numcb_per_burst)
+    boresight_snr = params[2:2 + nburst]
+
+    # init likelihood
+    logL = 0
+
+    # loop over bursts
+    offset = 2 + nburst
+    burst_offset = 0
+    for burst_ind, ncb in enumerate(numcb_per_burst):
+        # get HA,Dec
+        tarr = tarr_per_burst[burst_ind]
+        ha, dec = tools.radec_to_hadec(ra * u.rad, dec * u.rad, tarr)
+        # convert to radians
+        ha = ha.to(u.rad).value
+        dec = dec.to(u.rad).value
+        # get boresight S/N for this burst
+        boresight_snr_burst = boresight_snr[burst_ind]
+
+        start = offset + burst_offset
+        # loop over beams
+        for cb_ind in range(ncb):
+            pbeam_width_ra = params[start + cb_ind]
+            pbeam_width_dec = params[start + ncb + cb_ind]
+            snr_offset = params[start + 2 * ncb + cb_ind]
+
+            # get the model of this CB
+            model = models[burst_ind][cb_ind]
+
+            # get ha, dec offset from CB centre
+            dhacosdec = (ha - model.ha0) * np.cos(dec)
+            ddec = dec - model.dec0
+
+            # generate SBs
+            # TODO: add primary beam widths
+            sb_model = model.get_sb_model(dhacosdec, ddec)
+
+            # get S/N array of this CB
+            snrs = snr_data[burst_ind][cb_ind]
+
+            # calculate likelihood
+            logL += np.sum(((sb_model * (boresight_snr_burst - snr_offset) + snr_offset) - snrs) ** 2, axis=0)
+
+            # check if logL is no longer finite, in which case we can just return here
+            if not np.isfinite(logL):
+                return -np.inf
+
+        # bookkeeping
+        burst_offset += 3 * ncb
+
+    return logL
+
+
+def log_posterior(params, snr_data, numcb_per_burst, tarr_per_burst):
+    lp = log_prior(params, numcb_per_burst)
+    if not np.isfinite(lp):
+        return -np.inf
+    else:
+        return lp + log_likelihood(params, snr_data, numcb_per_burst, tarr_per_burst)
 
 
 def initialize_parameters(config, ndim, snr_data):
@@ -248,11 +329,20 @@ def main():
     # create initial parameter vector
     # get max S/N of each burst
     max_snr_per_burst = np.array([burst.max() for burst in snr_data])
-    initial_guess = initialize_parameters(config, args.nwalker, max_snr_per_burst)
+    initial_guess = None
+    if mpi_rank == 0:
+        initial_guess = initialize_parameters(config, args.nwalker, max_snr_per_burst)
+    initial_guess = mpi_comm.bcast(initial_guess, root=0)
+    ndim = initial_guess.shape[1]
 
     # Initialize SB model for each CB of each burst
+    # also store arrival times
+    # each process needs to access these models, make global instead of passing them around to save time
+    global models
     models = []
+    tarr_per_burst = []
     for burst in config['bursts']:
+        tarr_per_burst.append(config[burst]['tarr'])
         burst_models = []
         for beam in config[burst]['beams']:
             # get pointing of CB in HA/Dec
@@ -269,7 +359,60 @@ def main():
             burst_models.append(model)
         models.append(burst_models)
 
-    import IPython; IPython.embed()
+    if args.load is not None:
+        if mpi_rank == 0:
+            raise NotImplementedError("Loading of previous run not yet implemented")
+
+    # setup the output file
+    mcmc_file = output_prefix + f'_mcmc_{args.nwalker}walker_{args.nstep}step.h5'
+    backend = emcee.backends.HDFBackend(mcmc_file)
+    if mpi_rank == 0:
+        try:
+            os.remove(mcmc_file)
+        except FileNotFoundError:
+            pass
+        backend.reset(args.nwalker, ndim)
+
+    # ensure all processes have initialized models etc. before starting the pool
+    mpi_comm.Barrier()
+    # run the worker pool
+    with MPIPool() as pool:
+        # workers exit after pool is done
+        if not pool.is_master():
+            pool.wait()
+            sys.exit()
+
+        # initialize MCMC sampler
+        sampler = emcee.EnsembleSampler(args.nwalker, ndim, log_posterior,
+                                        args=(snr_data, numcb_per_burst, tarr_per_burst),
+                                        pool=pool, backend=backend)
+        # run!
+        sampler.run_mcmc(initial_guess, args.nstep, progress=True)
+
+    # extract sample
+    nburn = int(.5 * args.nstep)
+    sample = sampler.get_chain(discard=nburn, flat=True)
+    # convert RA/Dec to deg
+    sample[:, 0] *= 180 / np.pi
+    sample[:, 1] *= 180 / np.pi
+
+    # create corner plot
+    truths = [config['source_ra'], config['source_dec']]
+    labels = ['RA', 'Dec']
+    for burst_ind, burst in enumerate(config['bursts']):
+        labels.append(f'Boresight S/N burst {burst}')
+        truths.append(np.amax(snr_data[burst_ind]))
+    for burst in config['bursts']:
+        for beam in config[burst]['beams']:
+            labels.append(f'CB width RA {burst} {beam}')
+            labels.append(f'CB width Dec {burst} {beam}')
+            labels.append(f'S/N offset {burst} {beam}')
+            truths.append(33.7 / 60 * np.pi / 180.)
+            truths.append(33.7 / 60 * np.pi / 180.)
+            truths.append(3.5)
+
+    fig = corner.corner(sample, labels=labels, truths=truths)
+    plt.show()
 
 
 if __name__ == '__main__':

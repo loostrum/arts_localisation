@@ -97,7 +97,6 @@ def initialize_parameters(config, ndim, snr_data):
 
     # parameters per burst: boresight S/N
     nburst = len(config['bursts'])
-    # TODO: need access to measured S/N here
     minval, maxval = np.array(config['guess_boresight_snr_range'])
     guess_boresight_snr = get_guess_values((ndim, nburst), minval, maxval) * snr_data[None, :]
 
@@ -250,6 +249,27 @@ def main():
     # get max S/N of each burst
     max_snr_per_burst = np.array([burst.max() for burst in snr_data])
     initial_guess = initialize_parameters(config, args.nwalker, max_snr_per_burst)
+
+    # Initialize SB model for each CB of each burst
+    models = []
+    for burst in config['bursts']:
+        burst_models = []
+        for beam in config[burst]['beams']:
+            # get pointing of CB in HA/Dec
+            radec = config[burst][beam]['pointing']
+            ha_cb, dec_cb = tools.radec_to_hadec(*radec, config[burst]['tarr'])
+            # create model
+            model = SBPatternSingle(ha_cb.to(u.rad).value, dec_cb.to(u.rad).value,
+                                    fmin=config[burst]['fmin'],
+                                    fmax=config[burst]['fmax'],
+                                    min_freq=config['fmin_data'],
+                                    nfreq=32,
+                                    cb_model=config['cb_model'],
+                                    cbnum=int(beam[-2:]))
+            burst_models.append(model)
+        models.append(burst_models)
+
+    import IPython; IPython.embed()
 
 
 if __name__ == '__main__':

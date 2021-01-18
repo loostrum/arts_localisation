@@ -52,15 +52,30 @@ def hadec_to_uvw(ha, dec, freqs, dish_pos):
 
 
 class SBPatternSingle:
-    def __init__(self, ha0, dec0, fmin, min_freq, nfreq):
+    def __init__(self, ha0, dec0, fmin, min_freq, nfreq, **kwargs):
+        """
+        Generate an SB model for given coordinates
+
+        :param float ha0: HA of phase centre (rad)
+        :param float dec0: Dec of phase centre (rad)
+        :param float fmin: Lowest frequency to use (MHz)
+        :param float min_freq: Lowest frequency of data (MHz)
+        :param int nfreq: Number of frequency channels in simulation
+        """
+        # TODO: implement other kwargs: fmax, cb_model, cbnum
         # fixed values
         self.nfreq = nfreq
         self.dec0 = dec0
         self.ha0 = ha0
 
-        freqs = np.arange(self.nfreq) * arts_const.BANDWIDTH.to(u.MHz).value / self.nfreq + min_freq
+        chan_width = arts_const.BANDWIDTH.to(u.MHz).value / self.nfreq
+        freqs = np.arange(self.nfreq) * chan_width + min_freq + chan_width / 2.
         # get last channel that should be masked
-        self.chan_mask_last = np.where(freqs < fmin)[0][-1]
+        try:
+            self.chan_mask_last = np.where(freqs < fmin)[0][-1]
+        except IndexError:
+            # nothing to mask
+            self.chan_mask_last = 0
 
         dish_pos = itrf_to_xyz(arts_const.DISH_ITRF['a8'].to(u.m).value, arts_const.WSRT_LON.to(u.rad).value,
                                arts_const.ARRAY_ITRF.to(u.m).value)
@@ -72,6 +87,12 @@ class SBPatternSingle:
         self.dphi_tab = np.arange(self.ndish)[None, :] * np.arange(arts_const.NTAB)[:, None] / arts_const.NTAB
 
     def get_sb_model(self, dhacosdec, ddec):
+        """
+        Generate SB model towards given coordinates
+
+        :param float dhacosdec: HA offset from phase centre, _not_ scaled by cos(dec) (rad)
+        :param float ddec: Dec offset from phase centre (rad)
+        """
         dec = self.dec0 + ddec
         dha = dhacosdec / np.cos(dec)
 

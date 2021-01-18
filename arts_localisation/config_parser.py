@@ -9,6 +9,7 @@ import astropy.units as u
 from astropy.time import Time, TimeDelta
 
 from arts_localisation.tools import cb_index_to_pointing, get_neighbours, hadec_to_radec
+from arts_localisation.constants import NCB
 
 
 logger = logging.getLogger(__name__)
@@ -18,14 +19,16 @@ REQUIRED_KEYS_GLOBAL = ('snrmin', 'fmin_data', 'bandwidth')
 REQUIRED_KEYS_SNR = ('dm', 'window_load', 'window_zoom', 'width_max')
 REQUIRED_KEYS_SNR_BURST = ('main_sb', 'main_cb', 'filterbank', 'cbs', 'neighbours')
 REQUIRED_KEYS_LOC = ('dec', 'size', 'resolution', 'cb_model')
+REQUIRED_KEYS_LOC_MCMC = ('dec', 'cb_model')
 
 
-def parse_yaml(fname, for_snr=False):
+def parse_yaml(fname, for_snr=False, mcmc=False):
     """
     Parse a yaml file with settings for burst localisation
 
     :param str fname: Path to yaml config file
     :param bool for_snr: Load settings for S/N determination, else load localisation settings
+    :param bool mcmc: Load MCMC settings when loading localisation settings
 
     :return: config (dict)
     """
@@ -60,12 +63,18 @@ def parse_yaml(fname, for_snr=False):
         # add the S/N settings to the global settings
         config.update(conf_snr)
     else:
-        logger.debug('Loading localisation config')
+        # localisation settings
+        if mcmc:
+            logger.debug('Loading localisation config for MCMC')
+            required_keys = REQUIRED_KEYS_LOC_MCMC
+        else:
+            logger.debug('Loading localisation config')
+            required_keys = REQUIRED_KEYS_LOC
         # localisation mode
         assert 'localisation' in raw_config.keys(), 'Localisation config missing'
         conf_loc = raw_config['localisation']
         # check if required keys are present
-        for key in REQUIRED_KEYS_LOC:
+        for key in required_keys:
             assert key in conf_loc.keys(), f'Localisation section key missing: {key}'
         # check if ha or ra is present
         assert 'ha' in conf_loc.keys() or 'ra' in conf_loc.keys(), f'Localisation key missing: ra or ha'
@@ -149,6 +158,14 @@ def parse_yaml(fname, for_snr=False):
 
         else:
             # localisation mode
+            # load parameterset if MCMC
+            if mcmc:
+                # verify parset key is present
+                assert 'parset' in conf_burst.keys(), f'Localisation section key missing: parset'
+                # assume path to parset is relative to .yaml file if not absolute
+                if not os.path.isfile(conf_burst['parset']):
+                    conf_burst['parset'] = os.path.join(yaml_dir, conf_burst['parset'])
+                parset = load_parset(conf_burst['parset'])
             # parameters of the burst
             # try to read arrival time, either directly or as start time plus ToA
             try:
@@ -165,29 +182,43 @@ def parse_yaml(fname, for_snr=False):
             conf_burst['tarr'] = tarr
 
             # check for excluded dishes
-            try:
-                # convert to integers, RT2 = dish 0
-                conf_burst['excluded_dishes'] = [value - 2 for value in conf_burst['excluded_dishes']]
-            except KeyError:
-                logger.debug("No list of excluded dishes found")
+            if mcmc:
+                # get dishes from parset
+                dishes = [2, 3, 4, 5, 6, 7, 8, 9]
+                conf_burst['excluded_dishes'] = [dish - 2 for dish in dishes if dish not in parset['dishes']]
+            else:
+                try:
+                    # convert to integers, RT2 = dish 0
+                    conf_burst['excluded_dishes'] = [value - 2 for value in conf_burst['excluded_dishes']]
+                except KeyError:
+                    logger.debug("No list of excluded dishes found")
 
             # check for telescope pointing
-            pointing_coord = None
-            try:
-                pointing_dec = conf_burst['pointing_dec']
-                try:
-                    pointing_ra = conf_burst['pointing_ra']
-                    pointing_coord = (pointing_ra * u.deg, pointing_dec * u.deg)
-                except KeyError:
-                    # Assume hour angle was given instead of right ascension
-                    pointing_ha = conf_burst['pointing_ha']
-                    # convert to RADEC
-                    pointing = hadec_to_radec(pointing_ha * u.deg, pointing_dec * u.deg, tarr)
+            if mcmc:
+                # read pointing from parset
+                pointing_coord = parset['pointing']
+                # convert to RADEC if given as HADEC
+                if parset['reference_frame'] == 'HADEC':
+                    pointing = hadec_to_radec(*parset['pointing'], tarr)
                     pointing_coord = (pointing.ra, pointing.dec)
 
-                logger.info("Telescope pointing found. Only use this option if ref_beam == 0.")
-            except KeyError:
-                logging.debug("No telescope pointing found")
+            else:
+                pointing_coord = None
+                try:
+                    pointing_dec = conf_burst['pointing_dec']
+                    try:
+                        pointing_ra = conf_burst['pointing_ra']
+                        pointing_coord = (pointing_ra * u.deg, pointing_dec * u.deg)
+                    except KeyError:
+                        # Assume hour angle was given instead of right ascension
+                        pointing_ha = conf_burst['pointing_ha']
+                        # convert to RADEC
+                        pointing = hadec_to_radec(pointing_ha * u.deg, pointing_dec * u.deg, tarr)
+                        pointing_coord = (pointing.ra, pointing.dec)
+
+                    logger.info("Telescope pointing found. Only use this option if ref_beam == 0.")
+                except KeyError:
+                    logging.debug("No telescope pointing found")
 
             # now check section for each compound beam (only need for localisation mode)
             beams = [key for key in conf_burst.keys() if key.upper().startswith('CB') and key != 'cbs']
@@ -212,27 +243,37 @@ def parse_yaml(fname, for_snr=False):
                     conf_burst[beam] = {}
                     keys = []
 
-                # if ra, dec are given, use these
-                if 'dec' in keys:
-                    try:
-                        # Try RADEC
-                        cb_pointing = (conf_burst[beam]['ra'] * u.deg, conf_burst[beam]['dec'] * u.deg)
-                    except KeyError:
-                        # Try HADEC
-                        pointing = hadec_to_radec(conf_burst[beam]['ha'] * u.deg, conf_burst[beam]['dec'] * u.deg,
-                                                  t=tarr)
-                        cb_pointing = (pointing.ra, pointing.dec)
-                    # if pointing is also set, warn the user
-                    if pointing_coord is not None:
-                        logger.warning(f"CB{beam:02d} RA, Dec given, "
-                                       f"but telescope pointing is also set. Using CB RA, Dec")
-                else:
-                    # telescope pointing must be set
-                    assert pointing_coord is not None, f'No telescope pointing and no RA, Dec set for CB{beam:02d}'
-                    # calculate ra, dec from CB offsets
+                # get CB pointing
+                if mcmc:
+                    # read pointing from parset
                     cb_index = int(beam[2:])
-                    cb_pointing = cb_index_to_pointing(cb_index, *pointing_coord)
-                # store the pointing of this CB
+                    cb_pointing = parset[f'pointing_CB{cb_index:02d}']
+                    # convert to RADEC if given as HADEC
+                    if parset['reference_frame'] == 'HADEC':
+                        pointing = hadec_to_radec(*cb_pointing, tarr)
+                        cb_pointing = (pointing.ra, pointing.dec)
+                else:
+                    # if ra, dec are given, use these
+                    if 'dec' in keys:
+                        try:
+                            # Try RADEC
+                            cb_pointing = (conf_burst[beam]['ra'] * u.deg, conf_burst[beam]['dec'] * u.deg)
+                        except KeyError:
+                            # Try HADEC
+                            pointing = hadec_to_radec(conf_burst[beam]['ha'] * u.deg, conf_burst[beam]['dec'] * u.deg,
+                                                      t=tarr)
+                            cb_pointing = (pointing.ra, pointing.dec)
+                        # if pointing is also set, warn the user
+                        if pointing_coord is not None:
+                            logger.warning(f"CB{beam} RA, Dec given, "
+                                           f"but telescope pointing is also set. Using CB RA, Dec")
+                    else:
+                        # telescope pointing must be set
+                        assert pointing_coord is not None, f'No telescope pointing and no RA, Dec set for CB{beam}'
+                        # calculate ra, dec from CB offsets
+                        cb_index = int(beam[2:])
+                        cb_pointing = cb_index_to_pointing(cb_index, *pointing_coord)
+                    # store the pointing of this CB
                 conf_burst[beam]['pointing'] = cb_pointing
 
                 # SEFD is optional, but give user a warning if it is not present as it is easy to overlook
@@ -259,19 +300,22 @@ def parse_yaml(fname, for_snr=False):
     return config
 
 
-def load_config(args, for_snr=False):
+def load_config(args, for_snr=False, mcmc=False):
     """
     Load yaml config file and overwrite settings that are also given on command line
 
     :param argparse.Namespace args: Command line arguments
     :param bool for_snr: Only load settings related to S/N determination, skip everything else
+    :param bool mcmc: Load MCMC settings when loading localisation settings
     :return: config (dict)
     """
 
-    config = parse_yaml(args.config, for_snr)
+    config = parse_yaml(args.config, for_snr, mcmc)
     # overwrite parameters also given on command line
     if for_snr:
         keys = REQUIRED_KEYS_SNR + REQUIRED_KEYS_GLOBAL
+    elif mcmc:
+        keys = REQUIRED_KEYS_LOC_MCMC + REQUIRED_KEYS_GLOBAL
     else:
         keys = REQUIRED_KEYS_LOC + REQUIRED_KEYS_GLOBAL
     for key in keys:
@@ -281,10 +325,69 @@ def load_config(args, for_snr=False):
             value = None
         if value is not None:
             logger.debug(f"Overwriting {key} from settings with command line value")
-            print(f"Overwriting {key} from settings with command line value")
             config[key] = value
 
     return config
+
+
+def load_parset(fname):
+    """
+    Load parset from disk and parse specific parameters from it:
+
+    #. reference frame
+    #. Telescope pointing
+    #. CB pointing
+
+    :param str fname: Path to parset file
+    :return: parset (dict)
+    """
+    with open(fname, 'r') as f:
+        raw_parset = f.read().strip().split('\n')
+    # remove empty/whitespace-only lines and any line starting with #
+    parset = []
+    for line in raw_parset:
+        if line.strip() and not line.startswith('#'):
+            parset.append(line)
+    # Split keys/values. Separator might be "=" or " = "
+    parset = [item.replace(' = ', '=').strip().split('=') for item in parset]
+    # convert to dict
+    parset_dict = dict(parset)
+    # remove any comments
+    for key, value in parset_dict.items():
+        pos_comment_char = value.find('#')
+        if pos_comment_char > 0:  # -1 if not found, leave in place if first char
+            parset_dict[key] = value[:pos_comment_char].strip()  # remove any trailing spaces too
+
+    # settings to return
+    settings = {}
+
+    # store reference frame
+    settings['reference_frame'] = parset_dict['task.directionReferenceFrame']
+
+    # parse dish list
+    # task.telescopes = [RT2, RT3, RT4, RT5, RT6, RT7, RT8, RT9]
+    dishes = []
+    for tel in parset_dict['task.telescopes'].replace('[', '').replace(']', '').split(','):
+        # convert using hex to decimal in case any of A-D are present
+        dishes.append(int(tel[-1], 16))
+    settings['dishes'] = dishes
+
+    # parse telescope pointing
+    dish = hex(dishes[0])[2:].upper()
+    dish_pointing = parset_dict[f'task.telescope.RT{dish}.pointing'].replace('[', '').replace(']', '').replace('deg', '').split(',')
+    settings['pointing'] = (float(dish_pointing[0].strip()) * u.deg, float(dish_pointing[1].strip()) * u.deg)
+
+    # parse CB pointing
+    for cb in range(NCB):
+        key = f"task.beamSet.0.compoundBeam.{cb}.phaseCenter"
+        try:
+            cb_pointing = parset_dict[key].replace('[', '').replace(']', '').replace('deg', '').split(',')
+        except KeyError:
+            # this CB was not used
+            continue
+        settings[f'pointing_CB{cb:02d}'] = (float(dish_pointing[0].strip()) * u.deg, float(dish_pointing[1].strip()) * u.deg)
+
+    return settings
 
 
 if __name__ == '__main__':

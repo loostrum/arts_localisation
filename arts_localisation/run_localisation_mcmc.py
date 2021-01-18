@@ -16,13 +16,13 @@ from mpi4py import MPI
 from arts_localisation import tools
 from arts_localisation.constants import NSB
 from arts_localisation.beam_models import SBPatternSingle
+from arts_localisation.config_parser import load_config
 
 
 # each process needs to access these models, make global instead of passing them around to save time
 global models
 # avoid using parallelization other than the MPI processes used in this script
 os.environ["OMP_NUM_THREADS"] = "1"
-logger = logging.getLogger(__name__)
 plt.rcParams['axes.formatter.useoffset'] = False
 
 
@@ -86,14 +86,19 @@ def main():
     mpi_comm = MPI.COMM_WORLD
     mpi_rank = mpi_comm.Get_rank()
     mpi_size = mpi_comm.Get_size()
-
     # parse arguments
     args = None
     if mpi_rank == 0:
         parser = ArgumentParser()
+        parser.add_argument('--config', required=True, help='Input yaml config')
         parser.add_argument('--load', help='Path to .h5 file from previous run. Will load this file instead of'
                                            'executing another MCMC run')
+        parser.add_argument('--output_folder', help='Output folder '
+                                                    '(Default: <yaml file folder>/localisation)')
+        parser.add_argument('--show_plots', action='store_true', help='Show plots')
+        parser.add_argument('--save_plots', action='store_true', help='Save plots')
         parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose logging')
+        parser.add_argument('--store', action='store_true', help='Store output of MCMC run')
         try:
             args = parser.parse_args()
             # print help if no arguments are given, and make the programme exit
@@ -115,19 +120,24 @@ def main():
     else:
         loglevel = logging.INFO
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel, stream=sys.stderr)
-
     # if loading a previous run, there is no need for extra MPI processes
-    if args.load is not None:
-        if mpi_rank == 0 and mpi_size > 1:
+    if args.load is not None and mpi_size > 1:
+        if mpi_rank == 0:
             logging.warning("No need for MPI when loading run; disabling extra processes")
         else:
             sys.exit()
-
     # if doing a run, we need more than one process for the MPI pool to work
     elif args.load is None and mpi_size == 1:
         logging.error(f"Need more than one process to be able to execute MCMC run. Run this "
                       f"script with mpirun -np <nproc> {os.path.basename(__file__)}")
         sys.exit()
+
+    # set matplotlib backend to non-interactive if only saving plots
+    if args.save_plots and not args.show_plots:
+        plt.switch_backend('pdf')
+
+    # load config
+    config = load_config(args, mcmc=True)
 
 
 if __name__ == '__main__':

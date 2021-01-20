@@ -291,7 +291,7 @@ def main():
     # if doing a run, we need more than one process for the MPI pool to work
     elif args.load is None and mpi_size == 1:
         logging.error(f"Need more than one process to be able to execute MCMC run. Run this "
-                      f"script with mpirun -np <nproc> {os.path.basename(__file__)}")
+                      f"script with mpiexec -np <nproc> {os.path.basename(__file__)}")
         sys.exit()
     elif args.load is None and (args.nstep is None or args.nwalker is None):
         if mpi_rank == 0:
@@ -389,7 +389,7 @@ def main():
         sampler.run_mcmc(initial_guess, args.nstep, progress=True)
 
     # extract sample
-    nburn = int(.5 * args.nstep)
+    nburn = int(.2 * args.nstep)
     sample = sampler.get_chain(discard=nburn, flat=True)
     # convert RA/Dec to deg
     sample[:, 0] *= 180 / np.pi
@@ -411,6 +411,16 @@ def main():
             truths.append(3.5)
 
     fig = corner.corner(sample, labels=labels, truths=truths)
+
+    # plot burn-in (not available in saved data)
+    if not args.load:
+        fig, ax = plt.subplots()
+        for i in range(len(sampler.lnprobability)):
+            ax.plot(sampler.lnprobability[i, :], linewidth=0.3, color='k', alpha=0.4)
+        ax.set_ylabel('ln(P)')
+        ax.set_xlabel('Step number')
+        ax.axvline(nburn, linestyle='dotted')
+
     plt.show()
 
 

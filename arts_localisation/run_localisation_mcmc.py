@@ -125,8 +125,7 @@ def log_likelihood(params, snr_data, numcb_per_burst, tarr_per_burst):
             ddec = dec - model.dec0
 
             # generate SBs
-            # TODO: add primary beam widths
-            sb_model = model.get_sb_model(dhacosdec, ddec)
+            sb_model = model.get_sb_model(dhacosdec, ddec, pbeam_width_ra, pbeam_width_dec)
 
             # get S/N array of this CB
             snrs = snr_data[burst_ind][cb_ind]

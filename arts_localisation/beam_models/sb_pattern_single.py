@@ -81,17 +81,18 @@ class SBPatternSingle:
                                arts_const.ARRAY_ITRF.to(u.m).value)
         self.ndish = len(dish_pos)
 
-        self.sigmas = arts_const.CB_HPBW.to(u.rad).value * arts_const.REF_FREQ.to(u.MHz).value / freqs / \
-            (2. * np.sqrt(2 * np.log(2)))
+        self.width_to_sigma = arts_const.REF_FREQ.to(u.MHz).value / freqs / (2. * np.sqrt(2 * np.log(2)))
         self.uvw = hadec_to_uvw(ha0, dec0, freqs, dish_pos).astype(np.float32)
         self.dphi_tab = np.arange(self.ndish)[None, :] * np.arange(arts_const.NTAB)[:, None] / arts_const.NTAB
 
-    def get_sb_model(self, dhacosdec, ddec):
+    def get_sb_model(self, dhacosdec, ddec, beam_width_ha, beam_width_dec):
         """
         Generate SB model towards given coordinates
 
         :param float dhacosdec: HA offset from phase centre, _not_ scaled by cos(dec) (rad)
         :param float ddec: Dec offset from phase centre (rad)
+        :param float beam_width_ha: Beam width along HA axis (without cos(dec) scaling) (ra)
+        :param float beam_width_dec: Beam width along Dec axis
         """
         dec = self.dec0 + ddec
         dha = dhacosdec / np.cos(dec)
@@ -103,7 +104,9 @@ class SBPatternSingle:
         dphi = dphi_geom[None, ...] + self.dphi_tab[..., None]
         dphi_complex = np.exp(1j * 2 * np.pi * dphi)
         tabbeam = np.abs((dphi_complex.sum(axis=1) / self.ndish))**2
-        primarybeam = np.exp(-.5 * (dhacosdec**2 + ddec**2) / self.sigmas**2)
+        sigma_ha = beam_width_ha * self.width_to_sigma
+        sigma_dec = beam_width_dec * self.width_to_sigma
+        primarybeam = np.exp(-.5 * ((dhacosdec / sigma_ha)**2 + (ddec / sigma_dec)**2))
 
         pbeam = tabbeam * primarybeam[None, ...]
 

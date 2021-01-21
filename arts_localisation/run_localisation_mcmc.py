@@ -133,7 +133,7 @@ def encode_parameters(params, beams_per_burst, params_to_skip=None):
     :param dict beams_per_burst: list of CBs for each burst. keys/values should match bursts/CBs in config
     :param params_to_skip: list of parameters that are not included (neither in input nor output)
         parameters that can be skipped: snr_offset, beam_width
-    :return: parameter dictionary
+    :return: parameter array
     """
     if params_to_skip is None:
         params_to_skip = []
@@ -164,79 +164,62 @@ def encode_parameters(params, beams_per_burst, params_to_skip=None):
 
 
 # @profile(filename='log_prior.prof')
-def log_prior(params, numcb_per_burst):
-    ra = params[0]
-    dec = params[1]
+def log_prior(params, beams_per_burst):
+    ra, dec = params['coord']
     # ra and dec must be in valid range
     if not ((0 < ra < 2 * np.pi) and (-np.pi / 2 < dec < np.pi / 2)):
         return -np.inf
 
-    # boresight S/N (per burst) must be positive
-    nburst = len(numcb_per_burst)
-    boresight_snr = params[2:2 + nburst]
-    # if not np.all(boresight_snr > 0):
-    if not np.all(0 < boresight_snr) and np.all(boresight_snr < 200):
-        return -np.inf
-
-    # primary beam widths must be positive (per CB per burst)
-    # index of first burst-specific value
-    offset = 2 + nburst
-    burst_offset = 0
-    ref_beam_width_rad = 33.7 / 60. * np.pi / 180.
-    for burst_ind, ncb in enumerate(numcb_per_burst):
-        start = offset + burst_offset
-        pbeam_width_ra = params[start:start + ncb]
-        pbeam_width_dec = params[start + ncb:start + 2 * ncb]
-        snr_offset = params[start + 2 * ncb:start + 3 * ncb]
-        burst_offset += 3 * ncb
-
-        if (pbeam_width_ra < 0) or (pbeam_width_dec < 0):
+    # loop over bursts
+    for burst, beams in beams_per_burst.items():
+        # S/N
+        if not (0 < params[burst]['snr'] < 200):
             return -np.inf
-
-        if not (0 < snr_offset < 10):
-            return -np.inf
-
-        if not (.9 * ref_beam_width_rad < pbeam_width_ra < 1.1 * ref_beam_width_rad):
-            return -np.inf
-
-        if not (.9 * ref_beam_width_rad < pbeam_width_dec < 1.1 * ref_beam_width_rad):
-            return -np.inf
+        # S/N offset (if available)
+        try:
+            if not (0 < params[burst]['snr_offset'] < 10):
+                return -np.inf
+        except KeyError:
+            pass
+        # loop over beams
+        for beam in beams:
+            # beam widths (if available)
+            ref_beam_width_rad = 36.28307 / 60. * np.pi / 180
+            try:
+                beam_width_ra, beam_width_dec = params[burst][beam]['beam_width']
+                if not (.9 * ref_beam_width_rad < beam_width_ra < 1.1 * ref_beam_width_rad):
+                    return -np.inf
+                if not (.9 * ref_beam_width_rad < beam_width_dec < 1.1 * ref_beam_width_rad):
+                    return -np.inf
+            except KeyError:
+                pass
 
     # everything passed
     return 0
 
 
 # @profile(filename='log_likelihood.prof')
-def log_likelihood(params, snr_data, numcb_per_burst, tarr_per_burst):
-    ra0 = params[0]
-    dec0 = params[1]
-    nburst = len(numcb_per_burst)
-    boresight_snr = params[2:2 + nburst]
-
+def log_likelihood(params, snr_data, beams_per_burst, tarr_per_burst):
+    ra0, dec0 = params['coord']
     # init likelihood
     logL = 0
 
     # loop over bursts
-    offset = 2 + nburst
-    burst_offset = 0
-    for burst_ind, ncb in enumerate(numcb_per_burst):
+    for burst, beams in beams_per_burst.items():
         # get HA, Dec at the arrival time of this burst
-        ha, dec = tools.radec_to_hadec(ra0 * u.rad, dec0 * u.rad, tarr_per_burst[burst_ind])
+        ha, dec = tools.radec_to_hadec(ra0 * u.rad, dec0 * u.rad, tarr_per_burst[burst])
         ha = ha.to(u.rad).value
         dec = dec.to(u.rad).value
 
-        # get boresight S/N for this burst
-        boresight_snr_burst = boresight_snr[burst_ind]
+        boresight_snr_burst = params[burst]['snr']
+        snr_offset = params[burst]['snr_offset']
 
-        start = offset + burst_offset
         # loop over beams
-        for cb_ind in range(ncb):
-            pbeam_width_ra = params[start + cb_ind]
-            pbeam_width_dec = params[start + ncb + cb_ind]
-            snr_offset = params[start + 2 * ncb + cb_ind]
+        for beam in beams:
+            pbeam_width_ra, pbeam_width_dec = params[burst][beam]['beam_width']
 
             # get the model of this CB
-            model = models[burst_ind][cb_ind]
+            model = models[burst][beam]
 
             # get ha, dec offset from CB centre
             dhacosdec = (ha - model.ha0) * np.cos(dec)
@@ -246,7 +229,7 @@ def log_likelihood(params, snr_data, numcb_per_burst, tarr_per_burst):
             sb_model = model.get_sb_model(dhacosdec, ddec, pbeam_width_ra, pbeam_width_dec)
 
             # get S/N array of this CB
-            snrs = snr_data[burst_ind][cb_ind]
+            snrs = snr_data[burst][beam]
 
             # calculate likelihood
             logL += np.sum(((sb_model * (boresight_snr_burst - snr_offset) + snr_offset) - snrs) ** 2, axis=0)
@@ -255,20 +238,20 @@ def log_likelihood(params, snr_data, numcb_per_burst, tarr_per_burst):
             if not np.isfinite(logL):
                 return -np.inf
 
-        # bookkeeping
-        burst_offset += 3 * ncb
     return logL
 
 
-def log_posterior(params, snr_data, numcb_per_burst, tarr_per_burst):
-    lp = log_prior(params, numcb_per_burst)
+def log_posterior(params, snr_data, beams_per_burst, tarr_per_burst, params_to_skip=None):
+    # decode the input parameters
+    params_decoded = decode_parameters(params, beams_per_burst, params_to_skip)
+    lp = log_prior(params_decoded, beams_per_burst)
     if not np.isfinite(lp):
         return -np.inf
     else:
-        return lp + log_likelihood(params, snr_data, numcb_per_burst, tarr_per_burst)
+        return lp + log_likelihood(params_decoded, snr_data, beams_per_burst, tarr_per_burst)
 
 
-def initialize_parameters(config, ndim, snr_data):
+def initialize_parameters(config, ndim, beams_per_burst, max_snr_data):
     """
     Create an array of initial guesses for each parameter:
 
@@ -281,46 +264,47 @@ def initialize_parameters(config, ndim, snr_data):
 
     :param dict config: config from .yaml file
     :param int ndim: number of guesses to use for each parameter
-    :param np.array snr_data: Max S/N for each burst
+    :param dict beams_per_burst: list of CBs for each burst. keys/values should match bursts/CBs in config
+    :param np.array max_snr_data: Max S/N for each burst
     :return: guesses (array)
     """
+    guesses = []
 
-    # global parameters: RA and Dec
-    # get arrival time of reference burst
-    ra0 = (config['ra'] * u.deg).to(u.rad).value
-    dec0 = (config['dec'] * u.deg).to(u.rad).value
+    # generate guesses per walker so we can use encode_parameters on each guess set
+    for i in range(ndim):
+        params = {}
 
-    max_offset = (config['guess_pointing_max_offset'] * u.arcmin).to(u.rad).value
-    guess_dec = dec0 + get_guess_values(ndim, -max_offset, max_offset)
-    guess_ra = ra0 + get_guess_values(ndim, -max_offset, max_offset) / np.cos(guess_dec)
+        # global parameters: RA and Dec
+        ra0 = (config['ra'] * u.deg).to(u.rad).value
+        dec0 = (config['dec'] * u.deg).to(u.rad).value
 
-    # parameters per burst: boresight S/N
-    nburst = len(config['bursts'])
-    minval, maxval = np.array(config['guess_boresight_snr_range'])
-    guess_boresight_snr = get_guess_values((ndim, nburst), minval, maxval) * snr_data[None, :]
+        max_offset = (config['guess_pointing_max_offset'] * u.arcmin).to(u.rad).value
+        guess_dec = dec0 + get_guess_values(None, -max_offset, max_offset)
+        guess_ra = ra0 + get_guess_values(None, -max_offset, max_offset) / np.cos(guess_dec)
+        params['coord'] = (guess_ra, guess_dec)
 
-    # parameters per CB per burst
-    # find out how many parameters to generate
-    num_guess = 0
-    for burst in config['bursts']:
-        nbeam = len(config[burst]['beams'])
-        num_guess += nbeam
+        # loop over bursts
+        for burst, beams in beams_per_burst.items():
+            params[burst] = {}
+            # S/N
+            minval, maxval = np.array(config['guess_boresight_snr_range'])
+            params[burst]['snr'] = get_guess_values(None, minval, maxval) * max_snr_data[burst]
+            # S/N offset
+            params[burst]['snr_offset'] = get_guess_values(None, 0, config['guess_snr_offset_max_offset'])
 
-    # beam width in RA and Dec
-    central_freq = int(np.round(config['fmin_data'] + config['bandwidth'] / 2)) * u.MHz
-    beam_width0 = (CB_HPBW * REF_FREQ / central_freq).to(u.rad).value
-    max_offset = (config['guess_beamwidth_max_offset'] * u.arcmin).to(u.rad).value
-    guess_width_ra = beam_width0 + get_guess_values((ndim, num_guess), -max_offset, max_offset)
-    guess_width_dec = beam_width0 + get_guess_values((ndim, num_guess), -max_offset, max_offset)
+            # loop over beams
+            for beam in beams:
+                params[burst][beam] = {}
+                # beam width in RA and Dec
+                central_freq = int(np.round(config['fmin_data'] + config['bandwidth'] / 2)) * u.MHz
+                beam_width0 = (CB_HPBW * REF_FREQ / central_freq).to(u.rad).value
+                max_offset = (config['guess_beamwidth_max_offset'] * u.arcmin).to(u.rad).value
+                params[burst][beam]['beam_width'] = beam_width0 + get_guess_values(2, -max_offset, max_offset)
 
-    # S/N offset
-    guess_snr_offset = get_guess_values((ndim, num_guess), 0, config['guess_snr_offset_max_offset'])
+        # encode to flattened list and append to output guesses
+        guesses.append(encode_parameters(params, beams_per_burst))
 
-    # output shape must be (nwalker, nparam)
-    guesses = np.hstack([guess_ra[:, None], guess_dec[:, None], guess_boresight_snr,
-                         guess_width_ra, guess_width_dec, guess_snr_offset])
-
-    return guesses
+    return np.array(guesses)
 
 
 def get_guess_values(ndim, minval, maxval):
@@ -339,15 +323,15 @@ def load_snr_data(config):
     Load S/N arrays from disk
 
     :param dict config: config from .yaml file
-    :return: S/N array for each CB of each burst (array), number of CBs per burst (list)
+    :return: S/N array for each CB of each burst (array), CBs of each burst (dict)
     """
-    numcb_per_burst = []
-    data = []
+    beams_per_burst = {}
+    data = {}
     for burst in config['bursts']:
-        nbeam = len(config[burst]['beams'])
-        burst_data = np.zeros((nbeam, NSB), dtype=float)
-        numcb_per_burst.append(nbeam)
-        for ind, beam in enumerate(config[burst]['beams']):
+        data[burst] = {}
+
+        beams_per_burst[burst] = config[burst]['beams']
+        for beam in config[burst]['beams']:
             # load the S/N array
             fname = config[burst][beam]['snr_array']
             snr_data = np.loadtxt(fname, ndmin=2)
@@ -355,9 +339,8 @@ def load_snr_data(config):
             if len(snr_det) != NSB:
                 logging.error(f"Number of S/N values in {fname} does not equal number of SBs ({NSB}), "
                               f"please re-run arts_calc_snr to get a value in each SB")
-            burst_data[ind] = snr_det
-        data.append(burst_data)
-    return data, numcb_per_burst
+            data[burst][beam] = snr_det
+    return data, beams_per_burst
 
 
 def main():
@@ -446,16 +429,20 @@ def main():
 
     # load S/N arrays
     snr_data = None
+    beams_per_burst = None
     if mpi_rank == 0:
-        snr_data = load_snr_data(config)
-    snr_data, numcb_per_burst = mpi_comm.bcast(snr_data, root=0)
+        snr_data, beams_per_burst = load_snr_data(config)
+    snr_data = mpi_comm.bcast(snr_data, root=0)
+    beams_per_burst = mpi_comm.bcast(beams_per_burst, root=0)
 
     # create initial parameter vector
     # get max S/N of each burst
-    max_snr_per_burst = np.array([burst.max() for burst in snr_data])
+    max_snr_per_burst = {}
+    for burst in beams_per_burst.keys():
+        max_snr_per_burst[burst] = np.amax(list(snr_data[burst].values()))
     initial_guess = None
     if mpi_rank == 0:
-        initial_guess = initialize_parameters(config, args.nwalker, max_snr_per_burst)
+        initial_guess = initialize_parameters(config, args.nwalker, beams_per_burst, max_snr_per_burst)
     initial_guess = mpi_comm.bcast(initial_guess, root=0)
     ndim = initial_guess.shape[1]
 
@@ -463,11 +450,11 @@ def main():
     # also store arrival times
     # each process needs to access these models, make global instead of passing them around to save time
     global models
-    models = []
-    tarr_per_burst = []
+    models = {}
+    tarr_per_burst = {}
     for burst in config['bursts']:
-        tarr_per_burst.append(config[burst]['tarr'])
-        burst_models = []
+        tarr_per_burst[burst] = config[burst]['tarr']
+        models[burst] = {}
         for beam in config[burst]['beams']:
             # get pointing of CB in HA/Dec
             radec = config[burst][beam]['pointing']
@@ -480,8 +467,7 @@ def main():
                                     nfreq=32,
                                     cb_model=config['cb_model'],
                                     cbnum=int(beam[-2:]))
-            burst_models.append(model)
-        models.append(burst_models)
+            models[burst][beam] = model
 
     if args.load is not None:
         # extra MPI processes are not needed when loading previous run
@@ -508,7 +494,7 @@ def main():
     with pool:
         # initialize MCMC sampler
         sampler = emcee.EnsembleSampler(args.nwalker, ndim, log_posterior,
-                                        args=(snr_data, numcb_per_burst, tarr_per_burst),
+                                        args=(snr_data, beams_per_burst, tarr_per_burst),
                                         pool=pool, backend=backend)
         # run!
         sampler.run_mcmc(initial_guess, args.nstep, progress=True)
@@ -520,7 +506,8 @@ def main():
     # extract sample
     nburn = int(.5 * args.nstep)
     sample = sampler.get_chain(discard=nburn, flat=True)
-    # convert HA/Dec to deg
+    # shape is (walkers, params)
+    # convert RA/Dec to deg
     sample[:, 0] *= 180 / np.pi
     sample[:, 1] *= 180 / np.pi
 
@@ -529,17 +516,16 @@ def main():
     # labels = ['RA', 'Dec']
     truths = [config['source_ra'], config['source_dec']]
     labels = ['RA', 'Dec']
-    for burst_ind, burst in enumerate(config['bursts']):
-        labels.append(f'Boresight S/N burst {burst}')
-        truths.append(np.amax(snr_data[burst_ind]))
+
     for burst in config['bursts']:
+        labels.extend([f'Boresight S/N burst {burst}', f'S/N offset {burst}'])
+        truths.append(max_snr_per_burst[burst])
+        truths.append(3.5)
         for beam in config[burst]['beams']:
             labels.append(f'CB width RA {burst} {beam}')
+            truths.append(36.28307 / 60 * np.pi / 180.)
             labels.append(f'CB width Dec {burst} {beam}')
-            labels.append(f'S/N offset {burst} {beam}')
-            truths.append(33.7 / 60 * np.pi / 180.)
-            truths.append(33.7 / 60 * np.pi / 180.)
-            truths.append(3.5)
+            truths.append(36.28307 / 60 * np.pi / 180.)
 
     fig = corner.corner(sample, labels=labels, truths=truths)
 

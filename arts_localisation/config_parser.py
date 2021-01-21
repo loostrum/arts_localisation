@@ -20,7 +20,7 @@ REQUIRED_KEYS_SNR = ('dm', 'window_load', 'window_zoom', 'width_max')
 REQUIRED_KEYS_SNR_BURST = ('main_sb', 'main_cb', 'filterbank', 'cbs', 'neighbours')
 REQUIRED_KEYS_LOC = ('dec', 'size', 'resolution', 'cb_model')
 REQUIRED_KEYS_LOC_MCMC = ('dec', 'cb_model', 'guess_pointing_max_offset', 'guess_boresight_snr_range',
-                          'guess_beamwidth_max_offset', 'guess_snr_offset_max_offset')
+                          'guess_beamwidth_max_offset', 'guess_snr_offset_max_offset', 'reference_burst')
 
 
 def parse_yaml(fname, for_snr=False, mcmc=False):
@@ -202,7 +202,7 @@ def parse_yaml(fname, for_snr=False, mcmc=False):
                 if parset['reference_frame'] == 'HADEC':
                     pointing = hadec_to_radec(*parset['pointing'], tarr)
                     pointing_coord = (pointing.ra, pointing.dec)
-
+                conf_burst['pointing'] = pointing_coord
             else:
                 pointing_coord = None
                 try:

@@ -5,14 +5,13 @@ import sys
 import logging
 import argparse
 import numpy as np
-from astropy.time import Time
 import astropy.units as u
-from astropy.coordinates import SkyCoord
 import emcee
 import matplotlib.pyplot as plt
 import corner
-from schwimmbad import MPIPool
+import schwimmbad
 from mpi4py import MPI
+import cProfile
 
 from arts_localisation import tools
 from arts_localisation.constants import REF_FREQ, CB_HPBW, NSB
@@ -20,11 +19,30 @@ from arts_localisation.beam_models import SBPatternSingle
 from arts_localisation.config_parser import load_config
 
 
-# avoid using parallelization other than the MPI processes used in this script
+# avoid using parallelization other than the MPI/multiprocessing processes used in this script
 os.environ["OMP_NUM_THREADS"] = "1"
 # silence the matplotlib logger
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
 plt.rcParams['axes.formatter.useoffset'] = False
+
+
+def profile(filename=None, comm=MPI.COMM_WORLD):
+    def prof_decorator(f):
+        def wrap_f(*args, **kwargs):
+            pr = cProfile.Profile()
+            pr.enable()
+            result = f(*args, **kwargs)
+            pr.disable()
+
+            if filename is None:
+                pr.print_stats()
+            else:
+                filename_r = filename + ".{}".format(comm.rank)
+                pr.dump_stats(filename_r)
+
+            return result
+        return wrap_f
+    return prof_decorator
 
 
 class ArgumentParserExecption(Exception):
@@ -46,6 +64,7 @@ class ArgumentParser(argparse.ArgumentParser):
         raise ArgumentParserExecption(f'{self.prog}: error: {message}')
 
 
+# @profile(filename='log_prior.prof')
 def log_prior(params, numcb_per_burst):
     ra = params[0]
     dec = params[1]
@@ -57,7 +76,7 @@ def log_prior(params, numcb_per_burst):
     nburst = len(numcb_per_burst)
     boresight_snr = params[2:2 + nburst]
     # if not np.all(boresight_snr > 0):
-    if not np.all(0 < boresight_snr < 200):
+    if not np.all(0 < boresight_snr) and np.all(boresight_snr < 200):
         return -np.inf
 
     # primary beam widths must be positive (per CB per burst)
@@ -88,9 +107,10 @@ def log_prior(params, numcb_per_burst):
     return 0
 
 
+# @profile(filename='log_likelihood.prof')
 def log_likelihood(params, snr_data, numcb_per_burst, tarr_per_burst):
-    ra = params[0]
-    dec = params[1]
+    ra0 = params[0]
+    dec0 = params[1]
     nburst = len(numcb_per_burst)
     boresight_snr = params[2:2 + nburst]
 
@@ -101,12 +121,11 @@ def log_likelihood(params, snr_data, numcb_per_burst, tarr_per_burst):
     offset = 2 + nburst
     burst_offset = 0
     for burst_ind, ncb in enumerate(numcb_per_burst):
-        # get HA,Dec
-        tarr = tarr_per_burst[burst_ind]
-        ha, dec = tools.radec_to_hadec(ra * u.rad, dec * u.rad, tarr)
-        # convert to radians
+        # get HA, Dec at the arrival time of this burst
+        ha, dec = tools.radec_to_hadec(ra0 * u.rad, dec0 * u.rad, tarr_per_burst[burst_ind])
         ha = ha.to(u.rad).value
         dec = dec.to(u.rad).value
+
         # get boresight S/N for this burst
         boresight_snr_burst = boresight_snr[burst_ind]
 
@@ -139,7 +158,6 @@ def log_likelihood(params, snr_data, numcb_per_burst, tarr_per_burst):
 
         # bookkeeping
         burst_offset += 3 * ncb
-
     return logL
 
 
@@ -158,7 +176,7 @@ def initialize_parameters(config, ndim, snr_data):
     #. RA (rad)
     #. Dec (rad)
     #. Boresight S/N (per burst)
-    #. Primary beam width RA (rad, per CB of each burst)
+    #. Primary beam width HA (rad, per CB of each burst)
     #. Primary beam width Dec (rad, per CB of each burst)
     #. S/N offset (per CB of each burst)
 
@@ -167,7 +185,9 @@ def initialize_parameters(config, ndim, snr_data):
     :param np.array snr_data: Max S/N for each burst
     :return: guesses (array)
     """
-    # global parameters: ra and dec
+
+    # global parameters: RA and Dec
+    # get arrival time of reference burst
     ra0 = (config['ra'] * u.deg).to(u.rad).value
     dec0 = (config['dec'] * u.deg).to(u.rad).value
 
@@ -261,6 +281,11 @@ def main():
         parser.add_argument('--save_plots', action='store_true', help='Save plots')
         parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose logging')
         parser.add_argument('--store', action='store_true', help='Store output of MCMC run')
+
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument('--ncore', type=int, default=1, help='Number of processes to use. If >1,'
+                                                                'multiprocessing is used')
+        group.add_argument('--mpi', action='store_true', help='Use MPI')
         try:
             args = parser.parse_args()
             # print help if no arguments are given, and make the programme exit
@@ -282,18 +307,19 @@ def main():
     else:
         loglevel = logging.INFO
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel, stream=sys.stderr)
-    # if loading a previous run, there is no need for extra MPI processes
-    if args.load is not None and mpi_size > 1:
-        if mpi_rank == 0:
-            logging.warning("No need for MPI when loading run; disabling extra processes")
-        else:
-            sys.exit()
-    # if doing a run, we need more than one process for the MPI pool to work
-    elif args.load is None and mpi_size == 1:
-        logging.error(f"Need more than one process to be able to execute MCMC run. Run this "
-                      f"script with mpiexec -np <nproc> {os.path.basename(__file__)}")
+
+    # when MPI is enabled, there should be at least 2 processes
+    if args.mpi and mpi_size == 1:
+        logging.error(f"When using MPI, run at least two processes with e.g. "
+                      f"'mpiexec -np 2 {os.path.basename(__file__)}'")
         sys.exit()
-    elif args.load is None and (args.nstep is None or args.nwalker is None):
+    # no MPI means there should be just one process at this point
+    elif not args.mpi and mpi_size > 1:
+        if mpi_rank == 0:
+            logging.error("When using MPI, specify the --mpi flag")
+        sys.exit()
+
+    if args.load is None and (args.nstep is None or args.nwalker is None):
         if mpi_rank == 0:
             logging.error("Specify nwalker and nstep when doing an MCMC run")
             sys.exit()
@@ -359,8 +385,10 @@ def main():
         models.append(burst_models)
 
     if args.load is not None:
-        if mpi_rank == 0:
-            raise NotImplementedError("Loading of previous run not yet implemented")
+        # extra MPI processes are not needed when loading previous run
+        if mpi_rank > 0:
+            sys.exit()
+        raise NotImplementedError("Loading of previous run not yet implemented")
 
     # setup the output file
     mcmc_file = output_prefix + f'_mcmc_{args.nwalker}walker_{args.nstep}step.h5'
@@ -374,13 +402,11 @@ def main():
 
     # ensure all processes have initialized models etc. before starting the pool
     mpi_comm.Barrier()
-    # run the worker pool
-    with MPIPool() as pool:
-        # workers exit after pool is done
-        if not pool.is_master():
-            pool.wait()
-            sys.exit()
 
+    # select the pool based on user arguments: serial, multiprocessing, or mpi
+    pool = schwimmbad.choose_pool(mpi=args.mpi, processes=args.ncore)
+    # run the worker pool
+    with pool:
         # initialize MCMC sampler
         sampler = emcee.EnsembleSampler(args.nwalker, ndim, log_posterior,
                                         args=(snr_data, numcb_per_burst, tarr_per_burst),
@@ -388,14 +414,20 @@ def main():
         # run!
         sampler.run_mcmc(initial_guess, args.nstep, progress=True)
 
+    # when using MPI, multiple processes are no longer needed here
+    if mpi_rank > 0:
+        sys.exit()
+
     # extract sample
-    nburn = int(.2 * args.nstep)
+    nburn = int(.5 * args.nstep)
     sample = sampler.get_chain(discard=nburn, flat=True)
-    # convert RA/Dec to deg
+    # convert HA/Dec to deg
     sample[:, 0] *= 180 / np.pi
     sample[:, 1] *= 180 / np.pi
 
     # create corner plot
+    # truths = [config['source_ra'], config['source_dec']]
+    # labels = ['RA', 'Dec']
     truths = [config['source_ra'], config['source_dec']]
     labels = ['RA', 'Dec']
     for burst_ind, burst in enumerate(config['bursts']):

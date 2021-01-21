@@ -231,8 +231,8 @@ def log_likelihood(params, snr_data, beams_per_burst, tarr_per_burst):
             # get S/N array of this CB
             snrs = snr_data[burst][beam]
 
-            # calculate likelihood
-            logL += np.sum(((sb_model * (boresight_snr_burst - snr_offset) + snr_offset) - snrs) ** 2, axis=0)
+            # calculate likelihood (larger offset = lower likelihood)
+            logL -= np.sum(((sb_model * (boresight_snr_burst - snr_offset) + snr_offset) - snrs) ** 2, axis=0)
 
             # check if logL is no longer finite, in which case we can just return here
             if not np.isfinite(logL):

@@ -20,7 +20,7 @@ REQUIRED_KEYS_SNR = ('dm', 'window_load', 'window_zoom', 'width_max')
 REQUIRED_KEYS_SNR_BURST = ('main_sb', 'main_cb', 'filterbank', 'cbs', 'neighbours')
 REQUIRED_KEYS_LOC = ('dec', 'size', 'resolution', 'cb_model')
 REQUIRED_KEYS_LOC_MCMC = ('dec', 'cb_model', 'guess_pointing_max_offset', 'guess_boresight_snr_range',
-                          'guess_beamwidth_max_offset', 'guess_snr_offset_max_offset', 'reference_burst')
+                          'guess_beamwidth_max_offset', 'guess_snr_offset_max_offset')
 
 
 def parse_yaml(fname, for_snr=False, mcmc=False):

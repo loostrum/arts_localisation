@@ -343,6 +343,13 @@ def load_snr_data(config):
     return data, beams_per_burst
 
 
+def get_best_value(sample):
+    perc = np.percentile(sample, [16, 50, 84])
+    val = perc[1]
+    err_lo, err_hi = np.diff(perc)
+    return val, err_lo, err_hi
+
+
 def main():
     # get MPI rank
     mpi_comm = MPI.COMM_WORLD
@@ -507,26 +514,81 @@ def main():
     nburn = int(.5 * args.nstep)
     sample = sampler.get_chain(discard=nburn, flat=True)
     # shape is (walkers, params)
-    # convert RA/Dec to deg
-    sample[:, 0] *= 180 / np.pi
-    sample[:, 1] *= 180 / np.pi
 
-    # create corner plot
-    # truths = [config['source_ra'], config['source_dec']]
-    # labels = ['RA', 'Dec']
+    # create list of labels for each param and truth values
     truths = [config['source_ra'], config['source_dec']]
     labels = ['RA', 'Dec']
 
+    # convert sample to proper units
+    # start transposed so we can add per parameter
+    sample_converted = np.zeros_like(sample).T
+    ind = 0
+    # RA and Dec to decimal degrees
+    sample_converted[ind] = sample[:, ind] * 180 / np.pi
+    sample_converted[ind + 1] = sample[:, ind + 1] * 180 / np.pi
+    ind += 2
     for burst in config['bursts']:
         labels.extend([f'Boresight S/N burst {burst}', f'S/N offset {burst}'])
         truths.append(max_snr_per_burst[burst])
         truths.append(3.5)
+        # no need to convert these values
+        sample_converted[ind] = sample[:, ind]
+        sample_converted[ind + 1] = sample[:, ind + 1]
+        ind += 2
         for beam in config[burst]['beams']:
             labels.append(f'CB width RA {burst} {beam}')
-            truths.append(36.28307 / 60 * np.pi / 180.)
+            truths.append(36.28307)
             labels.append(f'CB width Dec {burst} {beam}')
-            truths.append(36.28307 / 60 * np.pi / 180.)
+            truths.append(36.28307)
+            # convert beam widths to arcmin
+            sample_converted[ind] = sample[:, ind] * 180 / np.pi * 60
+            sample_converted[ind + 1] = sample[:, ind + 1] * 180 / np.pi * 60
+            ind += 2
 
+    # transpose to (nwalker, ndim) shape
+    sample = np.transpose(sample_converted)
+
+    # get best values
+    values = np.zeros(ndim)
+    errs_lo = np.zeros(ndim)
+    errs_hi = np.zeros(ndim)
+    for i in range(ndim):
+        value, err_lo, err_hi = get_best_value(sample[:, i])
+        values[i] = value
+        errs_lo[i] = err_lo
+        errs_hi[i] = err_hi
+
+    # decode the flat arrays
+    values = decode_parameters(values, beams_per_burst)
+    errs_lo = decode_parameters(errs_lo, beams_per_burst)
+    errs_hi = decode_parameters(errs_hi, beams_per_burst)
+    # print the values
+    # first RA and Dec
+    ind = 0
+    key = 'coord'
+    print(f"{labels[ind]} = {values[key][0]:.5f} +{errs_hi[key][0]:.5f} -{errs_lo[key][0]:.5f} "
+          f"(truth = {truths[ind]:.5f})")
+    ind += 1
+    print(f"{labels[ind]} = {values[key][1]:.5f} +{errs_hi[key][1]:.5f} -{errs_lo[key][1]:.5f} "
+          f"(truth = {truths[ind]:.5f})")
+    ind += 1
+    for burst, beams in beams_per_burst.items():
+        # S/N and S/N offset
+        for key in ['snr', 'snr_offset']:
+            print(f"{labels[ind]} = {values[burst][key]:.5f} +{errs_hi[burst][key]:.5f} -{errs_lo[burst][key]:.5f} "
+                  f"(truth = {truths[ind]:.5f})")
+            ind += 1
+        for beam in beams:
+            # beam widths
+            key = 'beam_width'
+            print(f"{labels[ind]} = {values[burst][beam][key][0]:.5f} +{errs_hi[burst][beam][key][0]:.5f} "
+                  f"-{errs_lo[burst][beam][key][0]:.5f} (truth = {truths[ind]:.5f})")
+            ind += 1
+            print(f"{labels[ind]} = {values[burst][beam][key][1]:.5f} +{errs_hi[burst][beam][key][1]:.5f} "
+                  f"-{errs_lo[burst][beam][key][1]:.5f} (truth = {truths[ind]:.5f})")
+            ind += 1
+
+    # create corner plot
     fig = corner.corner(sample, labels=labels, truths=truths)
 
     # plot burn-in (not available in saved data)

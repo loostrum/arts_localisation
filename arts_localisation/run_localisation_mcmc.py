@@ -64,6 +64,105 @@ class ArgumentParser(argparse.ArgumentParser):
         raise ArgumentParserExecption(f'{self.prog}: error: {message}')
 
 
+def decode_parameters(params, beams_per_burst, params_to_skip=None):
+    """
+    Convert a flat array of parameters into a dict where each parameter
+    can be accessed more easily. Output is organized as follows (parameters can be skipped):
+
+    coord: tuple of ra and dec
+    <burst>:
+        snr: boresight S/N
+        snr_offset: noise level
+        <cb>:
+            beam_width: tuple of beam width in ra and dec
+
+    :param np.array params: flat parameter array
+    :param dict beams_per_burst: list of CBs for each burst. keys/values should match bursts/CBs in config
+    :param params_to_skip: list of parameters that are not included (neither in input nor output)
+        parameters that can be skipped: snr_offset, beam_width, sefd
+    :return: parameter dictionary
+    """
+    # change params_to_skip here because having mutable arguments in def is bad
+    if params_to_skip is None:
+        params_to_skip = []
+
+    # RA and Dec are always present
+    output = {'coord': params[:2]}
+
+    # skip RA and Dec when starting to read burst parameters
+    offset = 2
+    # loop over bursts
+    for burst, beams in beams_per_burst.items():
+        output[burst] = {'snr': params[offset]}
+        offset += 1
+        if 'snr_offset' not in params_to_skip:
+            output[burst]['snr_offset'] = params[offset]
+            offset += 1
+        # now get parameters of each beam, unless all need to be skipped
+        for key in ['beam_width']:
+            if key not in params_to_skip:
+                break
+        else:
+            # no break, so no CB params, so skip to next burst
+            continue
+
+        # loop over beams
+        for beam in beams:
+            output[burst][beam] = {}
+            if 'beam_width' not in params_to_skip:
+                output[burst][beam]['beam_width'] = (params[offset], params[offset + 1])
+                offset += 2
+
+    return output
+
+
+def encode_parameters(params, beams_per_burst, params_to_skip=None):
+    """
+    Reverse of decode_parameters
+
+    Output is a flattened version of the following (parameters can be skipped).
+
+    coord: tuple of ra and dec
+    <burst>:
+        snr: boresight S/N
+        snr_offset: noise level
+        <cb>:
+            beam_width: tuple of beam width in ra and dec
+
+    :param dict params: Input parameters
+    :param dict beams_per_burst: list of CBs for each burst. keys/values should match bursts/CBs in config
+    :param params_to_skip: list of parameters that are not included (neither in input nor output)
+        parameters that can be skipped: snr_offset, beam_width
+    :return: parameter dictionary
+    """
+    if params_to_skip is None:
+        params_to_skip = []
+
+    # start with RA, Dec
+    output = list(params['coord'])
+
+    # loop over bursts
+    for burst, beams in beams_per_burst.items():
+        output.append(params[burst]['snr'])
+        if 'snr_offset' not in params_to_skip:
+            output.append(params[burst]['snr_offset'])
+        # now get parameters of each beam, unless all need to be skipped
+        for key in ['beam_width']:
+            if key not in params_to_skip:
+                break
+        else:
+            # no break, so no CB params, so skip to next burst
+            continue
+
+        # loop over beams
+        for beam in beams:
+            if 'beam_width' not in params_to_skip:
+                # careful here: beam_width is a tuple so used extend to add to output list
+                output.extend(params[burst][beam]['beam_width'])
+
+    return np.array(output)
+
+
 # @profile(filename='log_prior.prof')
 def log_prior(params, numcb_per_burst):
     ra = params[0]

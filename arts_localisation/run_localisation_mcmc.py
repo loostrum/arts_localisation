@@ -588,8 +588,10 @@ def main():
                   f"-{errs_lo[burst][beam][key][1]:.5f} (truth = {truths[ind]:.5f})")
             ind += 1
 
-    # create corner plot
-    fig = corner.corner(sample, labels=labels, truths=truths)
+    # create corner plot of all parameters
+    fig_all = corner.corner(sample, labels=labels, truths=truths)
+    # corner plot of only RA/Dec
+    fig_coord = corner.corner(sample[:, :2], labels=labels[:2], truths=truths[:2])
 
     # plot burn-in (not available in saved data)
     if not args.load:

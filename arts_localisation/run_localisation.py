@@ -69,7 +69,7 @@ def make_plot(conf_ints, X, Y, title, conf_int, mode='radec', sigma_max=3,
     fig, ax = plt.subplots()
 
     # plot confidence interval
-    img = ax.pcolormesh(X, Y, conf_ints, vmin=0, vmax=1)
+    img = ax.pcolormesh(X, Y, conf_ints, vmin=0, vmax=1, shading='nearest')
     cbar = fig.colorbar(img, ax=ax)
     cbar.set_label('Confidence interval', rotation=270, labelpad=15)
 

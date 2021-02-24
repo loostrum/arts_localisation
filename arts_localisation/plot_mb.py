@@ -46,7 +46,8 @@ def do_plot(ax, RA, DEC, dchi2, dof, cb_ra, cb_dec,
     dchi2_value_max = stats.chi2.ppf(conf_int_max, dof)
 
     # plot data with colorbar
-    img = ax.pcolormesh(RA, DEC, dchi2, vmax=min(dchi2.max(), dchi2_value_max))
+    img = ax.pcolormesh(RA, DEC, dchi2, vmax=min(dchi2.max(), dchi2_value_max),
+                        shading='nearest')
     divider = make_axes_locatable(ax)
     cax = divider.append_axes('right', size='5%', pad=0.05)
     fig.colorbar(img, cax)

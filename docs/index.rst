@@ -20,10 +20,3 @@ Contents
    _modules/install
    _modules/tutorial
    _modules/api
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

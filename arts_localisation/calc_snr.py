@@ -18,11 +18,12 @@ logger = logging.getLogger(__name__)
 
 def get_burst_window(burst, **config):
     """
-    Load a single SB and determine the arrival time of a burst within window_load and window_zoom of the centre
+    Load a single SB and determine the arrival time of a burst within window_load and window_zoom of the centre,
+    as well as the boxcar width corresponding to the highest S/N
 
     :param str burst: Name of the burst key in the config
     :param config: S/N configuration
-    :return: startbin_wide, chunksize_wide, startbin_small, chunksize_small (all int)
+    :return: startbin_wide, chunksize_wide, startbin_small, chunksize_small, boxcar_width (all int)
     """
     # initialise the filterbank reader
     fil_reader = ARTSFilterbankReader(config[burst]['filterbank'], config[burst]['main_cb'])
@@ -47,7 +48,9 @@ def get_burst_window(burst, **config):
     chunksize_small = int(config['window_zoom'] / fil_reader.tsamp)
     # startbin_small is relative to chunksize_small
     startbin_small = int(.5 * (chunksize_wide - chunksize_small))
-    return startbin_wide, chunksize_wide, startbin_small, chunksize_small
+    # get the optimum boxcar width
+    _, boxcar_width = calc_snr_matched_filter(ts, widths=range(1, config['width_max'] + 1))
+    return startbin_wide, chunksize_wide, startbin_small, chunksize_small, boxcar_width
 
 
 def main():
@@ -97,7 +100,7 @@ def main():
 
         # find the burst window
         logger.info('Finding burst window in file')
-        startbin_wide, chunksize_wide, startbin_small, chunksize_small = get_burst_window(burst, **config)
+        startbin_wide, chunksize_wide, startbin_small, chunksize_small, boxcar_width = get_burst_window(burst, **config)
 
         # initialise SB vs S/N plot. One plot per burst, one panel per CB
         if args.show_plots or args.save_plots:
@@ -116,40 +119,50 @@ def main():
         # Run S/N determination loop for each CB
         logger.info('Calculating S/N in each SB of given CBs')
         for i, cb in enumerate(tqdm(config[burst]['cbs'], desc='CB')):
+            skip_processing = False
             output_file = f'{output_prefix}_{burst}_CB{cb:02d}_SNR.txt'
             if os.path.isfile(output_file):
-                logger.warning(f"Skipping {burst} CB{cb:02d} because output file already exists: {output_file}")
-                continue
-            # initialise the filterbank reader
-            fil_reader = ARTSFilterbankReader(config[burst]['filterbank'], cb)
-            # load all TABs around the burst
-            fil_reader.read_tabs(startbin_wide, chunksize_wide)
-            # get the S/N of each SB
-            snr_all = np.zeros(NSB)
-            for sb in tqdm(range(NSB), desc='SB'):
-                # get the SB data
-                spec = fil_reader.get_sb(sb)
-                # dedisperse
-                spec.dedisperse(config['dm'], padval='rotate')
-                # zoom in
-                spec.data = spec.data[:, startbin_small:startbin_small + chunksize_small]
-                # set data outside of requested frequency range to zero
-                remove_low = spec.freqs < config[burst]['fmin']
-                remove_high = spec.freqs > config[burst]['fmax']
-                remove_mask = np.logical_or(remove_low, remove_high)
-                spec.data[remove_mask, :] = 0
+                logger.warning(f"Checking existing results for {burst} CB{cb:02d} because output file already exists: {output_file}")
+                sb_all, snr_all = np.loadtxt(output_file, unpack=True)
+                if not len(sb_all) == NSB:
+                    logger.warning(f"Number of sbs in {output_file} ({len(sb_all)}) does not match total number of SBs ({NSB}), "
+                                   f"recreating output")
+                else:
+                    logger.info("Output file ok, loading existing results")
+                    skip_processing = True
 
-                # create timeseries
-                ts = spec.data.sum(axis=0)
-                # get S/N
-                snr, width = calc_snr_matched_filter(ts, widths=range(1, config['width_max'] + 1))
-                snr_all[sb] = snr
+            if not skip_processing:
+                # initialise the filterbank reader
+                fil_reader = ARTSFilterbankReader(config[burst]['filterbank'], cb)
+                # load all TABs around the burst
+                fil_reader.read_tabs(startbin_wide, chunksize_wide)
+                # get the S/N of each SB
+                snr_all = np.zeros(NSB)
+                for sb in tqdm(range(NSB), desc='SB'):
+                    # get the SB data
+                    spec = fil_reader.get_sb(sb)
+                    # dedisperse
+                    spec.dedisperse(config['dm'], padval='rotate')
+                    # zoom in
+                    spec.data = spec.data[:, startbin_small:startbin_small + chunksize_small]
+                    # set data outside of requested frequency range to zero
+                    remove_low = spec.freqs < config[burst]['fmin']
+                    remove_high = spec.freqs > config[burst]['fmax']
+                    remove_mask = np.logical_or(remove_low, remove_high)
+                    spec.data[remove_mask, :] = 0
 
-            with open(output_file, 'w') as f:
-                f.write('#sb snr\n')
-                # format each line as sb, snr
-                for sb, snr in enumerate(snr_all):
-                    f.write(f'{sb:02d} {snr:.2f}\n')
+                    # create timeseries
+                    ts = spec.data.sum(axis=0)
+                    # get S/N using boxcar width as determined from optimum S/N in
+                    # main SB (i.e. one with highest S/N in AMBER)
+                    snr, _ = calc_snr_matched_filter(ts, widths=[boxcar_width])
+                    snr_all[sb] = snr
+
+                with open(output_file, 'w') as f:
+                    f.write('#sb snr\n')
+                    # format each line as sb, snr
+                    for sb, snr in enumerate(snr_all):
+                        f.write(f'{sb:02d} {snr:.2f}\n')
 
             # SB vs S/N plot
             if args.show_plots or args.save_plots:
@@ -163,7 +176,11 @@ def main():
                 ax.set_xlabel('SB index')
                 ax.set_ylabel('S/N')
                 ax.label_outer()
-                ax.set_title(f'CB{cb:02d}')
+                title = f'CB{cb:02d}'
+                if skip_processing:
+                    # existing results loaded, mention in title
+                    title = title + ' (loaded from disk)'
+                ax.set_title(title)
                 # only add legend to the first plot
                 if i == 0:
                     ax.legend()

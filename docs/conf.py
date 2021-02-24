@@ -29,7 +29,7 @@ autosectionlabel_prefix_document = True
 # -- Project information -----------------------------------------------------
 
 project = 'ARTS Localisation'
-copyright = '2020, Leon Oostrum'
+copyright = '2021, Leon Oostrum'
 author = 'Leon Oostrum'
 
 # The full version, including alpha/beta/rc tags

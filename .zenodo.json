@@ -1,0 +1,24 @@
+{
+    "creators": [
+        {
+            "affiliation": "ASTRON / University of Amsterdam / Netherlands eScience Center",
+            "name": "Oostrum, Leon",
+            "orcid": "0000-0001-8724-8372"
+        }
+    ],
+    "description": "This project contains all necessary tools to localise transient bursts discovered with the Apertif Radio Transient System (ARTS). The localisation uses a chi squared method, comparing the S/N of a detected burst across beams to a model of the telescope response. The beam model includes a simulation of the ARTS tied-array beamformer and the generation of synthesised beams (SBs).",
+    "keywords": [
+        "python3",
+        "astronomy",
+        "fast radio burst",
+        "FRB",
+        "localisation",
+        "Apertif",
+        "ARTS",
+        "ALERT"
+    ],
+    "license": {
+        "id": "Apache-2.0"
+    },
+    "title": "ARTS Localisation"
+}

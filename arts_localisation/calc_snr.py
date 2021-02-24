@@ -158,7 +158,6 @@ def main():
                     snr, _ = calc_snr_matched_filter(ts, widths=[boxcar_width])
                     snr_all[sb] = snr
 
-
                 with open(output_file, 'w') as f:
                     f.write('#sb snr\n')
                     # format each line as sb, snr

@@ -4,6 +4,10 @@ import os
 from setuptools import setup, find_packages
 
 
+with open('README.md') as f:
+    readme = f.read()
+
+
 with open(os.path.join('arts_localisation', '__version__.py')) as version_file:
     version = {}
     exec(version_file.read(), version)
@@ -13,6 +17,8 @@ with open(os.path.join('arts_localisation', '__version__.py')) as version_file:
 setup(name='arts_localisation',
       version=project_version,
       description='Localisation of ARTS transients',
+      long_description=readme,
+      long_description_content_type="text/markdown",
       url='http://github.com/loostrum/arts_localisation',
       author='Leon Oostrum',
       author_email='l.oostrum@esciencecenter.nl',
@@ -30,4 +36,8 @@ setup(name='arts_localisation',
       include_package_data=True,
       entry_points={'console_scripts': ['arts_calc_snr=arts_localisation.calc_snr:main',
                                         'arts_run_localisation=arts_localisation.run_localisation:main']},
+      classifiers=['License :: OSI Approved :: Apache Software License',
+                   'Programming Language :: Python :: 3',
+                   'Operating System :: OS Independent'],
+      python_requires='>=3.6'
       )

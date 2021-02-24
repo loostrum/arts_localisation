@@ -13,6 +13,7 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
 
   
   
@@ -172,7 +173,7 @@
 <span id="filterbank-reader"></span><h2>Filterbank Reader<a class="headerlink" href="#module-arts_localisation.data_tools.filterbank_reader" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader">
-<em class="property">class </em><code class="sig-prename descclassname">arts_localisation.data_tools.filterbank_reader.</code><code class="sig-name descname">ARTSFilterbankReader</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fname</span></em>, <em class="sig-param"><span class="n">cb</span></em>, <em class="sig-param"><span class="n">ntab</span><span class="o">=</span><span class="default_value">12</span></em>, <em class="sig-param"><span class="n">median_filter</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">arts_localisation.data_tools.filterbank_reader.</span></code><code class="sig-name descname"><span class="pre">ARTSFilterbankReader</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntab</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">median_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Filterbank reader for ARTS data, one file per TAB</p>
 <dl class="field-list simple">
@@ -187,7 +188,7 @@
 </dl>
 <dl class="py method">
 <dt id="arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.get_fil_params">
-<code class="sig-name descname">get_fil_params</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tab</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.get_fil_params" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">get_fil_params</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.get_fil_params" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read filterbank parameters</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -201,7 +202,7 @@
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.get_sb">
-<code class="sig-name descname">get_sb</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sb</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.get_sb" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">get_sb</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sb</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.get_sb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct an SB. TAB data must be read before calling this method</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -215,7 +216,7 @@
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.load_single_sb">
-<code class="sig-name descname">load_single_sb</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sb</span></em>, <em class="sig-param"><span class="n">startbin</span></em>, <em class="sig-param"><span class="n">chunksize</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.load_single_sb" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">load_single_sb</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startbin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunksize</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.load_single_sb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience tool to read only a single SB and its associated TABs.
 <em>Note</em>: Any internal TAB data is cleared after calling this method</p>
 <dl class="field-list simple">
@@ -234,7 +235,7 @@
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.read_filterbank">
-<code class="sig-name descname">read_filterbank</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tab</span></em>, <em class="sig-param"><span class="n">startbin</span></em>, <em class="sig-param"><span class="n">chunksize</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.read_filterbank" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">read_filterbank</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startbin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunksize</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.read_filterbank" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a chunk of filterbank data</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -252,7 +253,7 @@
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.read_tabs">
-<code class="sig-name descname">read_tabs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">startbin</span></em>, <em class="sig-param"><span class="n">chunksize</span></em>, <em class="sig-param"><span class="n">tabs</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.read_tabs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">read_tabs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">startbin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunksize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tabs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReader.read_tabs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read TAB data</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -269,7 +270,7 @@
 
 <dl class="py exception">
 <dt id="arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReaderError">
-<em class="property">exception </em><code class="sig-prename descclassname">arts_localisation.data_tools.filterbank_reader.</code><code class="sig-name descname">ARTSFilterbankReaderError</code><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReaderError" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">exception</span> </em><code class="sig-prename descclassname"><span class="pre">arts_localisation.data_tools.filterbank_reader.</span></code><code class="sig-name descname"><span class="pre">ARTSFilterbankReaderError</span></code><a class="headerlink" href="#arts_localisation.data_tools.filterbank_reader.ARTSFilterbankReaderError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 </dd></dl>
 
@@ -278,7 +279,7 @@
 <span id="s-n-calculation"></span><h2>S/N calculation<a class="headerlink" href="#module-arts_localisation.data_tools.snr_tools" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="arts_localisation.data_tools.snr_tools.calc_snr_amber">
-<code class="sig-prename descclassname">arts_localisation.data_tools.snr_tools.</code><code class="sig-name descname">calc_snr_amber</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">thresh</span><span class="o">=</span><span class="default_value">3</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.snr_tools.calc_snr_amber" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">arts_localisation.data_tools.snr_tools.</span></code><code class="sig-name descname"><span class="pre">calc_snr_amber</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.snr_tools.calc_snr_amber" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate peak S/N using the same method as AMBER:
 Outliers are removed four times before calculating the S/N as peak - median / sigma
 The result is scaled by 1.048 to account for the removed values</p>
@@ -297,7 +298,7 @@ The result is scaled by 1.048 to account for the removed values</p>
 
 <dl class="py function">
 <dt id="arts_localisation.data_tools.snr_tools.calc_snr_matched_filter">
-<code class="sig-prename descclassname">arts_localisation.data_tools.snr_tools.</code><code class="sig-name descname">calc_snr_matched_filter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">widths</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.snr_tools.calc_snr_matched_filter" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">arts_localisation.data_tools.snr_tools.</span></code><code class="sig-name descname"><span class="pre">calc_snr_matched_filter</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.snr_tools.calc_snr_matched_filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate S/N using several matched filter widths, then pick the highest S/N</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -318,7 +319,7 @@ The result is scaled by 1.048 to account for the removed values</p>
 <span id="spectra"></span><h2>Spectra<a class="headerlink" href="#module-arts_localisation.data_tools.spectra" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="arts_localisation.data_tools.spectra.Spectra">
-<em class="property">class </em><code class="sig-prename descclassname">arts_localisation.data_tools.spectra.</code><code class="sig-name descname">Spectra</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">freqs</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">starttime</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">dm</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">arts_localisation.data_tools.spectra.</span></code><code class="sig-name descname"><span class="pre">Spectra</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">starttime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class to store spectra. This is mainly to provide
 reusable functionality.</p>
@@ -343,7 +344,7 @@ with respect to the start of the observation.
 </dl>
 <dl class="py method">
 <dt id="arts_localisation.data_tools.spectra.Spectra.dedisperse">
-<code class="sig-name descname">dedisperse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dm</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">padval</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.dedisperse" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">dedisperse</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.dedisperse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shift channels according to the delays predicted by
 the given DM.
 <strong>* Dedispersion happens in place *</strong></p>
@@ -361,7 +362,7 @@ of Spectra.shift_channels. (Default: 0)</p></li>
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.spectra.Spectra.downsample">
-<code class="sig-name descname">downsample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">factor</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">trim</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.downsample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">downsample</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.downsample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downsample the spectra by co-adding
 ‘factor’ adjacent bins.
 <strong>* Downsampling is done in place *</strong></p>
@@ -379,17 +380,17 @@ spectra if ‘trim’ is False.</p></li>
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.spectra.Spectra.get_chan">
-<code class="sig-name descname">get_chan</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channum</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.get_chan" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">get_chan</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.get_chan" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.spectra.Spectra.get_spectrum">
-<code class="sig-name descname">get_spectrum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">specnum</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.get_spectrum" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">get_spectrum</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">specnum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.get_spectrum" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.spectra.Spectra.masked">
-<code class="sig-name descname">masked</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mask</span></em>, <em class="sig-param"><span class="n">maskval</span><span class="o">=</span><span class="default_value">'median-mid80'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.masked" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">masked</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maskval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'median-mid80'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.masked" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replace masked data with ‘maskval’. Returns
 a masked copy of the Spectra object.</p>
 <dl class="field-list simple">
@@ -415,7 +416,7 @@ refers to the median of the channel after the top and bottom
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.spectra.Spectra.scaled">
-<code class="sig-name descname">scaled</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indep</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.scaled" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">scaled</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.scaled" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a scaled version of the Spectra object.
 When scaling subtract the median from each channel,
 and divide by global std deviation (if indep==False), or
@@ -434,7 +435,7 @@ Spectra object.</p>
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.spectra.Spectra.scaled2">
-<code class="sig-name descname">scaled2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indep</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.scaled2" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">scaled2</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.scaled2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a scaled version of the Spectra object.
 When scaling subtract the min from each channel,
 and divide by global max (if indep==False), or
@@ -453,7 +454,7 @@ Spectra object.</p>
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.spectra.Spectra.shift_channels">
-<code class="sig-name descname">shift_channels</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bins</span></em>, <em class="sig-param"><span class="n">padval</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.shift_channels" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">shift_channels</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.shift_channels" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shift each channel to the left by the corresponding
 value in bins, an array.
 <strong>* Shifting happens in-place *</strong></p>
@@ -477,7 +478,7 @@ channel and shifts them to the other.</p>
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.spectra.Spectra.smooth">
-<code class="sig-name descname">smooth</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">width</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">padval</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.smooth" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">smooth</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.smooth" title="Permalink to this definition">¶</a></dt>
 <dd><p>Smooth each channel by convolving with a top hat
 of given width. The height of the top had is
 chosen shuch that RMS=1 after smoothing.
@@ -499,7 +500,7 @@ float-value, ‘mean’, ‘median’, ‘wrap’.
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.spectra.Spectra.subband">
-<code class="sig-name descname">subband</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nsub</span></em>, <em class="sig-param"><span class="n">subdm</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">padval</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.subband" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">subband</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nsub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subdm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.subband" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reduce the number of channels to ‘nsub’ by subbanding.
 The channels within a subband are combined using the
 DM ‘subdm’. ‘padval’ is passed to the call to
@@ -523,7 +524,7 @@ of Spectra.shift_channels. (Default: 0)</p></li>
 
 <dl class="py method">
 <dt id="arts_localisation.data_tools.spectra.Spectra.trim">
-<code class="sig-name descname">trim</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bins</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.trim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">trim</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.Spectra.trim" title="Permalink to this definition">¶</a></dt>
 <dd><p>Trim the end of the data by ‘bins’ spectra.
 <strong>* Trimming is done in place *</strong></p>
 <dl class="field-list simple">
@@ -539,7 +540,7 @@ observation.</p>
 
 <dl class="py function">
 <dt id="arts_localisation.data_tools.spectra.delay_from_DM">
-<code class="sig-prename descclassname">arts_localisation.data_tools.spectra.</code><code class="sig-name descname">delay_from_DM</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">DM</span></em>, <em class="sig-param"><span class="n">freq_emitted</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.delay_from_DM" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">arts_localisation.data_tools.spectra.</span></code><code class="sig-name descname"><span class="pre">delay_from_DM</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">DM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_emitted</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.delay_from_DM" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the delay in seconds caused by dispersion, given
 a Dispersion Measure in cm-3 pc, and the emitted
 frequency of the pulsar in MHz.</p>
@@ -555,7 +556,7 @@ frequency of the pulsar in MHz.</p>
 
 <dl class="py function">
 <dt id="arts_localisation.data_tools.spectra.rotate">
-<code class="sig-prename descclassname">arts_localisation.data_tools.spectra.</code><code class="sig-name descname">rotate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arr</span></em>, <em class="sig-param"><span class="n">bins</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.rotate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">arts_localisation.data_tools.spectra.</span></code><code class="sig-name descname"><span class="pre">rotate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.data_tools.spectra.rotate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an array rotated by ‘bins’ places to the left</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

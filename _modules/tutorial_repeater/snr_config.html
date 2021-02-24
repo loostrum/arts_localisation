@@ -13,6 +13,7 @@
   
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
 
   
   
@@ -181,12 +182,12 @@ S/N determination.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">fmax</span></code>: highest frequency to use (MHz).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">snrmin</span></code>: S/N threshold.</p></li>
 </ol>
-<p>These data values can be read from the filterbank files, using e.g. PRESTO’s <cite>readfile</cite>.
+<p>The data values can be read from the filterbank files, using e.g. PRESTO’s <cite>readfile</cite>.
 All data below/above <code class="docutils literal notranslate"><span class="pre">fmin</span></code>/<code class="docutils literal notranslate"><span class="pre">fmax</span></code> will be ignored.
 These values can also be set per burst. In this example we will do the latter, so the <code class="docutils literal notranslate"><span class="pre">fmin</span></code> and
 <code class="docutils literal notranslate"><span class="pre">fmax</span></code> settings are ignored.
 <code class="docutils literal notranslate"><span class="pre">snrmin</span></code> sets the S/N threshold to actually use in the localisation; any beams where the measured S/N is lower
-are ignored. It is a global setting, because the S/N calculation also uses it, but only for visualization.
+are ignored. It is a global setting, because the S/N calculation also uses it (but only for visualization).
 Here the S/N threshold is set to 6, which was chosen based on the output diagnostic plots of the S/N calculation.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">snr</span></code> section contains the global settings specific to S/N determination:</p>
 <ol class="arabic simple">

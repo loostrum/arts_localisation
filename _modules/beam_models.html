@@ -85,7 +85,7 @@
 <span id="beamformer"></span><h2>Beamformer<a class="headerlink" href="#module-arts_localisation.beam_models.beamformer" title="Permalink to this headline"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="arts_localisation.beam_models.beamformer.BeamFormer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">arts_localisation.beam_models.beamformer.</span></span><span class="sig-name descname"><span class="pre">BeamFormer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">dish_pos</span></em>, <em class="sig-param"><span class="pre">freqs</span></em>, <em class="sig-param"><span class="pre">ntab=12</span></em>, <em class="sig-param"><span class="pre">lon=&lt;Longitude</span> <span class="pre">6.60894465</span> <span class="pre">deg&gt;</span></em>, <em class="sig-param"><span class="pre">ref_pos=None</span></em>, <em class="sig-param"><span class="pre">itrf=True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.beamformer.BeamFormer" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">arts_localisation.beam_models.beamformer.</span></span><span class="sig-name descname"><span class="pre">BeamFormer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dish_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntab=12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon=&lt;Longitude</span> <span class="pre">6.60894465</span> <span class="pre">deg&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_pos=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itrf=True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.beamformer.BeamFormer" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>ARTS tied-array beamformer simulation</p>
 <dl class="field-list simple">
@@ -119,7 +119,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="arts_localisation.beam_models.beamformer.BeamFormer._itrf_to_xyz">
-<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">_itrf_to_xyz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dish_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.beamformer.BeamFormer._itrf_to_xyz" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_itrf_to_xyz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dish_pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.beamformer.BeamFormer._itrf_to_xyz" title="Permalink to this definition"></a></dt>
 <dd><p>Convert ITRF to local XYZ coordinates</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -137,7 +137,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="arts_localisation.beam_models.beamformer.BeamFormer._phase_to_pbeam">
-<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">_phase_to_pbeam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phases</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.beamformer.BeamFormer._phase_to_pbeam" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_phase_to_pbeam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phases</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.beamformer.BeamFormer._phase_to_pbeam" title="Permalink to this definition"></a></dt>
 <dd><p>Convert an array of phase offsets to a power beam</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -186,7 +186,7 @@
 <span id="compound-beam"></span><h2>Compound Beam<a class="headerlink" href="#module-arts_localisation.beam_models.compound_beam" title="Permalink to this headline"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="arts_localisation.beam_models.compound_beam.CompoundBeam">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">arts_localisation.beam_models.compound_beam.</span></span><span class="sig-name descname"><span class="pre">CompoundBeam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">freqs</span></em>, <em class="sig-param"><span class="pre">theta=&lt;Quantity</span> <span class="pre">0.</span> <span class="pre">deg&gt;</span></em>, <em class="sig-param"><span class="pre">phi=&lt;Quantity</span> <span class="pre">0.</span> <span class="pre">deg&gt;</span></em>, <em class="sig-param"><span class="pre">rot=&lt;Quantity</span> <span class="pre">0.</span> <span class="pre">deg&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.compound_beam.CompoundBeam" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">arts_localisation.beam_models.compound_beam.</span></span><span class="sig-name descname"><span class="pre">CompoundBeam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta=&lt;Quantity</span> <span class="pre">0.</span> <span class="pre">deg&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi=&lt;Quantity</span> <span class="pre">0.</span> <span class="pre">deg&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rot=&lt;Quantity</span> <span class="pre">0.</span> <span class="pre">deg&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.compound_beam.CompoundBeam" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Generate a compound beam pattern
 :param freqs: observing frequencies
@@ -278,7 +278,7 @@
 <span id="synthesised-beam-generator"></span><h2>Synthesised Beam Generator<a class="headerlink" href="#module-arts_localisation.beam_models.sb_generator" title="Permalink to this headline"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="arts_localisation.beam_models.sb_generator.SBGenerator">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">arts_localisation.beam_models.sb_generator.</span></span><span class="sig-name descname"><span class="pre">SBGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">science_case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.sb_generator.SBGenerator" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">arts_localisation.beam_models.sb_generator.</span></span><span class="sig-name descname"><span class="pre">SBGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">science_case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.sb_generator.SBGenerator" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Synthesised beam layout and generator</p>
 <dl class="field-list simple">
@@ -297,7 +297,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="arts_localisation.beam_models.sb_generator.SBGenerator.from_science_case">
-<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">from_science_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">science_case</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.sb_generator.SBGenerator.from_science_case" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_science_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">science_case</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.sb_generator.SBGenerator.from_science_case" title="Permalink to this definition"></a></dt>
 <dd><p>Initalize default table for given science cases</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -311,7 +311,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="arts_localisation.beam_models.sb_generator.SBGenerator.from_table">
-<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">from_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.sb_generator.SBGenerator.from_table" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.beam_models.sb_generator.SBGenerator.from_table" title="Permalink to this definition"></a></dt>
 <dd><p>Initalize with provided SB table</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -339,7 +339,7 @@
 
 <dl class="py property">
 <dt class="sig sig-object py" id="arts_localisation.beam_models.sb_generator.SBGenerator.reversed">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">reversed</span></span><a class="headerlink" href="#arts_localisation.beam_models.sb_generator.SBGenerator.reversed" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reversed</span></span><a class="headerlink" href="#arts_localisation.beam_models.sb_generator.SBGenerator.reversed" title="Permalink to this definition"></a></dt>
 <dd><p>Whether or not the SB table is reversed for use on filterbank data</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -369,7 +369,7 @@
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="arts_localisation.beam_models.sb_generator.SBGeneratorException">
-<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">arts_localisation.beam_models.sb_generator.</span></span><span class="sig-name descname"><span class="pre">SBGeneratorException</span></span><a class="headerlink" href="#arts_localisation.beam_models.sb_generator.SBGeneratorException" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">arts_localisation.beam_models.sb_generator.</span></span><span class="sig-name descname"><span class="pre">SBGeneratorException</span></span><a class="headerlink" href="#arts_localisation.beam_models.sb_generator.SBGeneratorException" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 </dd></dl>
 

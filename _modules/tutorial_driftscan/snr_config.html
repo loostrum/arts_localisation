@@ -87,24 +87,24 @@ S/N determination. This process is identical to the <a class="reference internal
 FRB 190709 was detected in SB36 of CB10 at a DM of 663.1 pc/cc. After a first run with a S/N threshold of 6, the
 threshold was lowered to 5 based on the output figure (see next step)</p>
 <p>The configuration file looks like this:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global</span><span class="p">:</span>
-    <span class="nt">fmin_data</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1219.70092773</span>
-    <span class="nt">bandwidth</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">300</span>
-    <span class="nt">snrmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">fmin_data</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1219.70092773</span><span class="w"></span>
+<span class="w">    </span><span class="nt">bandwidth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span><span class="w"></span>
+<span class="w">    </span><span class="nt">snrmin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w"></span>
 
-<span class="nt">snr</span><span class="p">:</span>
-    <span class="nt">window_load</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.0</span>
-    <span class="nt">window_zoom</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.5</span>
-    <span class="nt">dm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">663.1</span>
-    <span class="nt">width_max</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="nt">snr</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">window_load</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span><span class="w"></span>
+<span class="w">    </span><span class="nt">window_zoom</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span><span class="w"></span>
+<span class="w">    </span><span class="nt">dm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">663.1</span><span class="w"></span>
+<span class="w">    </span><span class="nt">width_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span><span class="w"></span>
 
-<span class="nt">burst00</span><span class="p">:</span>
-    <span class="nt">fmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1300</span>
-    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t0657_sb-1_tab{tab}.fil&#39;</span>
-    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">10</span><span class="p p-Indicator">]</span>
-    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
-    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
-    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">36</span>
+<span class="nt">burst00</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">fmin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1300</span><span class="w"></span>
+<span class="w">    </span><span class="nt">filterbank</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;data/CB{cb}_10.0sec_dm0_t0657_sb-1_tab{tab}.fil&#39;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">cbs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">10</span><span class="p p-Indicator">]</span><span class="w"></span>
+<span class="w">    </span><span class="nt">neighbours</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w"></span>
+<span class="w">    </span><span class="nt">main_cb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span><span class="w"></span>
+<span class="w">    </span><span class="nt">main_sb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">36</span><span class="w"></span>
 </pre></div>
 </div>
 </section>

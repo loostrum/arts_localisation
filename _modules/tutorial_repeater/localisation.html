@@ -140,19 +140,19 @@ and handle these issues.</p>
 <p>We can now re-run the localisation at a higher resolution. The grid size is reduced to 10 arcminutes (from 35), which
 allows us to increase the resolution to ~2 arcsec without a significant change in memory/computing load.
 The localisation section of the config file now looks like this:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">localisation</span><span class="p">:</span>
-    <span class="nt">source_ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
-    <span class="nt">source_dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">localisation</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">source_ra</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29.50333</span><span class="w"></span>
+<span class="w">    </span><span class="nt">source_dec</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65.71675</span><span class="w"></span>
 
-    <span class="nt">ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
-    <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
+<span class="w">    </span><span class="nt">ra</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29.50333</span><span class="w"></span>
+<span class="w">    </span><span class="nt">dec</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65.71675</span><span class="w"></span>
 
-    <span class="c1">#size: 35</span>
-    <span class="c1">#resolution: 10</span>
-    <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
-    <span class="nt">resolution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="c1">#size: 35</span><span class="w"></span>
+<span class="w">    </span><span class="c1">#resolution: 10</span><span class="w"></span>
+<span class="w">    </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span><span class="w"></span>
+<span class="w">    </span><span class="nt">resolution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w"></span>
 
-    <span class="nt">cb_model</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gauss</span>
+<span class="w">    </span><span class="nt">cb_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gauss</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Now the localisation can be executed again. The files are saved to a different folder, so the original, low-resolution output is not lost:</p>

@@ -147,81 +147,81 @@ entire CB (i.e. no frequency dependence). Typically this value is extracted from
 so they can easily be linked to the correct burst/CB within the configuration file. The SEFDs were taken from the drift scans taken closest
 in time to the burst detections.</p>
 <p>After adding these sections, the complete configuration file looks like this:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global</span><span class="p">:</span>
-    <span class="nt">fmin_data</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1219.70092773</span>
-    <span class="nt">bandwidth</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">300</span>
-    <span class="nt">snrmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">6</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">global</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">fmin_data</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1219.70092773</span><span class="w"></span>
+<span class="w">    </span><span class="nt">bandwidth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span><span class="w"></span>
+<span class="w">    </span><span class="nt">snrmin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span><span class="w"></span>
 
-<span class="nt">snr</span><span class="p">:</span>
-    <span class="nt">window_load</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.0</span>
-    <span class="nt">window_zoom</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.5</span>
-    <span class="nt">dm</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">349.2</span>
-    <span class="nt">width_max</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="nt">snr</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">window_load</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span><span class="w"></span>
+<span class="w">    </span><span class="nt">window_zoom</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span><span class="w"></span>
+<span class="w">    </span><span class="nt">dm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">349.2</span><span class="w"></span>
+<span class="w">    </span><span class="nt">width_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span><span class="w"></span>
 
-<span class="nt">localisation</span><span class="p">:</span>
-    <span class="nt">source_ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
-    <span class="nt">source_dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
+<span class="nt">localisation</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">source_ra</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29.50333</span><span class="w"></span>
+<span class="w">    </span><span class="nt">source_dec</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65.71675</span><span class="w"></span>
 
-    <span class="nt">ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
-    <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
+<span class="w">    </span><span class="nt">ra</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29.50333</span><span class="w"></span>
+<span class="w">    </span><span class="nt">dec</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65.71675</span><span class="w"></span>
 
-    <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
-    <span class="nt">resolution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
-    <span class="nt">cb_model</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gauss</span>
+<span class="w">    </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">35</span><span class="w"></span>
+<span class="w">    </span><span class="nt">resolution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span><span class="w"></span>
+<span class="w">    </span><span class="nt">cb_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gauss</span><span class="w"></span>
 
-<span class="s">&#39;20200511_3610&#39;</span><span class="p p-Indicator">:</span>
-    <span class="nt">fmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1350</span>
-    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t03610_sb-1_tab{tab}.fil&#39;</span>
-    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span>
-    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
-    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
-    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
+<span class="s">&#39;20200511_3610&#39;</span><span class="p p-Indicator">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">fmin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1350</span><span class="w"></span>
+<span class="w">    </span><span class="nt">filterbank</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;data/CB{cb}_10.0sec_dm0_t03610_sb-1_tab{tab}.fil&#39;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">cbs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span><span class="w"></span>
+<span class="w">    </span><span class="nt">neighbours</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w"></span>
+<span class="w">    </span><span class="nt">main_cb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
+<span class="w">    </span><span class="nt">main_sb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">35</span><span class="w"></span>
 
-    <span class="nt">tstart</span><span class="p">:</span> <span class="s">&quot;2020-05-11T07:36:22.0&quot;</span>
-    <span class="nt">toa</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3610.84</span>
-    <span class="nt">reference_cb</span><span class="p">:</span> <span class="s">&#39;CB00&#39;</span>
+<span class="w">    </span><span class="nt">tstart</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2020-05-11T07:36:22.0&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">toa</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3610.84</span><span class="w"></span>
+<span class="w">    </span><span class="nt">reference_cb</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;CB00&#39;</span><span class="w"></span>
 
-    <span class="nt">CB00</span><span class="p">:</span>
-        <span class="nt">ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
-        <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
-        <span class="nt">snr_array</span><span class="p">:</span> <span class="s">&#39;snr/R3_20200511_3610_CB00_SNR.txt&#39;</span>
-        <span class="nt">sefd</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">    </span><span class="nt">CB00</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">ra</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29.50333</span><span class="w"></span>
+<span class="w">        </span><span class="nt">dec</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65.71675</span><span class="w"></span>
+<span class="w">        </span><span class="nt">snr_array</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;snr/R3_20200511_3610_CB00_SNR.txt&#39;</span><span class="w"></span>
+<span class="w">        </span><span class="nt">sefd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
 
-<span class="s">&#39;20200528_2063&#39;</span><span class="p p-Indicator">:</span>
-    <span class="nt">fmin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1350</span>
-    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t02063_sb-1_tab{tab}.fil&#39;</span>
-    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span>
-    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
-    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
-    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
+<span class="s">&#39;20200528_2063&#39;</span><span class="p p-Indicator">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">fmin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1350</span><span class="w"></span>
+<span class="w">    </span><span class="nt">filterbank</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;data/CB{cb}_10.0sec_dm0_t02063_sb-1_tab{tab}.fil&#39;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">cbs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span><span class="w"></span>
+<span class="w">    </span><span class="nt">neighbours</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w"></span>
+<span class="w">    </span><span class="nt">main_cb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
+<span class="w">    </span><span class="nt">main_sb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">35</span><span class="w"></span>
 
-    <span class="nt">tstart</span><span class="p">:</span> <span class="s">&quot;2020-05-28T05:13:48&quot;</span>
-    <span class="nt">toa</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2063.73</span>
-    <span class="nt">reference_cb</span><span class="p">:</span> <span class="s">&#39;CB00&#39;</span>
+<span class="w">    </span><span class="nt">tstart</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2020-05-28T05:13:48&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">toa</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2063.73</span><span class="w"></span>
+<span class="w">    </span><span class="nt">reference_cb</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;CB00&#39;</span><span class="w"></span>
 
-    <span class="nt">CB00</span><span class="p">:</span>
-        <span class="nt">ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
-        <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
-        <span class="nt">snr_array</span><span class="p">:</span> <span class="s">&#39;snr/R3_20200528_2063_CB00_SNR.txt&#39;</span>
-        <span class="nt">sefd</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">    </span><span class="nt">CB00</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">ra</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29.50333</span><span class="w"></span>
+<span class="w">        </span><span class="nt">dec</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65.71675</span><span class="w"></span>
+<span class="w">        </span><span class="nt">snr_array</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;snr/R3_20200528_2063_CB00_SNR.txt&#39;</span><span class="w"></span>
+<span class="w">        </span><span class="nt">sefd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
 
-<span class="s">&#39;20200527_3437&#39;</span><span class="p p-Indicator">:</span>
-    <span class="nt">fmax</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1450</span>
-    <span class="nt">filterbank</span><span class="p">:</span> <span class="s">&#39;data/CB{cb}_10.0sec_dm0_t03437_sb-1_tab{tab}.fil&#39;</span>
-    <span class="nt">cbs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span>
-    <span class="nt">neighbours</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
-    <span class="nt">main_cb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
-    <span class="nt">main_sb</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">35</span>
+<span class="s">&#39;20200527_3437&#39;</span><span class="p p-Indicator">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">fmax</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1450</span><span class="w"></span>
+<span class="w">    </span><span class="nt">filterbank</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;data/CB{cb}_10.0sec_dm0_t03437_sb-1_tab{tab}.fil&#39;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">cbs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">]</span><span class="w"></span>
+<span class="w">    </span><span class="nt">neighbours</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w"></span>
+<span class="w">    </span><span class="nt">main_cb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
+<span class="w">    </span><span class="nt">main_sb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">35</span><span class="w"></span>
 
-    <span class="nt">tstart</span><span class="p">:</span> <span class="s">&quot;2020-05-27T13:37:55&quot;</span>
-    <span class="nt">toa</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3437.12</span>
-    <span class="nt">reference_cb</span><span class="p">:</span> <span class="s">&#39;CB00&#39;</span>
+<span class="w">    </span><span class="nt">tstart</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2020-05-27T13:37:55&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">toa</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3437.12</span><span class="w"></span>
+<span class="w">    </span><span class="nt">reference_cb</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;CB00&#39;</span><span class="w"></span>
 
-    <span class="nt">CB00</span><span class="p">:</span>
-        <span class="nt">ra</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">29.50333</span>
-        <span class="nt">dec</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65.71675</span>
-        <span class="nt">snr_array</span><span class="p">:</span> <span class="s">&#39;snr/R3_20200527_3437_CB00_SNR.txt&#39;</span>
-        <span class="nt">sefd</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">    </span><span class="nt">CB00</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">ra</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29.50333</span><span class="w"></span>
+<span class="w">        </span><span class="nt">dec</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65.71675</span><span class="w"></span>
+<span class="w">        </span><span class="nt">snr_array</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;snr/R3_20200527_3437_CB00_SNR.txt&#39;</span><span class="w"></span>
+<span class="w">        </span><span class="nt">sefd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
 </pre></div>
 </div>
 </section>

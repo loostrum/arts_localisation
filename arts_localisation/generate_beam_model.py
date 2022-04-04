@@ -178,8 +178,18 @@ def main():
                   extent=extent, norm=LogNorm())
 
         # Add CB
-        patch = SphericalCircle((beam_config['ra'] * u.deg, beam_config['dec'] * u.deg),
-                                cb_radius, ec='w', fc='none', ls='-', alpha=.5)
+        if 'ra' in beam_config:
+            # directly use given ra and dec
+            ra = beam_config['ra'] * u.deg
+            dec = beam_config['dec'] * u.deg
+        else:
+            # assume hadec mode
+            logger.debug('HADEC mode')
+            radec = tools.hadec_to_radec(beam_config['ha'] * u.deg, beam_config['dec'] * u.deg, burst_config['tarr'])
+            ra = radec.ra.deg * u.deg
+            dec = radec.dec.deg * u.deg
+
+        patch = SphericalCircle((ra, dec), cb_radius, ec='w', fc='none', ls='-', alpha=.5)
         ax.add_patch(patch)
 
         # limit fig to localisation region

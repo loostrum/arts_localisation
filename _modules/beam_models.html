@@ -17,6 +17,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -45,9 +46,20 @@
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="core_modules.html">Core modules</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Beam model modules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.beam_models.beamformer">Beamformer</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.beam_models.compound_beam">Compound Beam</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.beam_models.sb_generator">Synthesised Beam Generator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.beam_models.beamformer">Beamformer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.beam_models.beamformer.BeamFormer"><code class="docutils literal notranslate"><span class="pre">BeamFormer</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.beam_models.compound_beam">Compound Beam</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.beam_models.compound_beam.CompoundBeam"><code class="docutils literal notranslate"><span class="pre">CompoundBeam</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.beam_models.compound_beam.gauss_2d"><code class="docutils literal notranslate"><span class="pre">gauss_2d()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.beam_models.sb_generator">Synthesised Beam Generator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.beam_models.sb_generator.SBGenerator"><code class="docutils literal notranslate"><span class="pre">SBGenerator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.beam_models.sb_generator.SBGeneratorException"><code class="docutils literal notranslate"><span class="pre">SBGeneratorException</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="data_tools.html">Data tool modules</a></li>
@@ -68,9 +80,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="api.html">API reference</a> &raquo;</li>
-      <li>Beam model modules</li>
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="api.html">API reference</a></li>
+      <li class="breadcrumb-item active">Beam model modules</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/_modules/beam_models.rst.txt" rel="nofollow"> View page source</a>
       </li>

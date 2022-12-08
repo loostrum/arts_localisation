@@ -17,6 +17,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -44,11 +45,52 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorials</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Core modules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.run_localisation">Localisation runner</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.calc_snr">S/N determination</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.config_parser">Config parser</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.tools">Tools</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.constants">Constants</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.run_localisation">Localisation runner</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.run_localisation.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.run_localisation.make_plot"><code class="docutils literal notranslate"><span class="pre">make_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.run_localisation.nested_dict_values"><code class="docutils literal notranslate"><span class="pre">nested_dict_values()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.calc_snr">S/N determination</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.calc_snr.get_burst_window"><code class="docutils literal notranslate"><span class="pre">get_burst_window()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.calc_snr.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.config_parser">Config parser</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.config_parser.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.config_parser.parse_yaml"><code class="docutils literal notranslate"><span class="pre">parse_yaml()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.tools">Tools</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.altaz_to_hadec"><code class="docutils literal notranslate"><span class="pre">altaz_to_hadec()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.cb_index_to_pointing"><code class="docutils literal notranslate"><span class="pre">cb_index_to_pointing()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.coord_to_offset"><code class="docutils literal notranslate"><span class="pre">coord_to_offset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.get_neighbours"><code class="docutils literal notranslate"><span class="pre">get_neighbours()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.hadec_to_altaz"><code class="docutils literal notranslate"><span class="pre">hadec_to_altaz()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.hadec_to_par"><code class="docutils literal notranslate"><span class="pre">hadec_to_par()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.hadec_to_proj"><code class="docutils literal notranslate"><span class="pre">hadec_to_proj()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.hadec_to_radec"><code class="docutils literal notranslate"><span class="pre">hadec_to_radec()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.limit"><code class="docutils literal notranslate"><span class="pre">limit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.makedirs"><code class="docutils literal notranslate"><span class="pre">makedirs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.offset_to_coord"><code class="docutils literal notranslate"><span class="pre">offset_to_coord()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.radec_to_hadec"><code class="docutils literal notranslate"><span class="pre">radec_to_hadec()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.tools.rotate_coordinate_grid"><code class="docutils literal notranslate"><span class="pre">rotate_coordinate_grid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-arts_localisation.constants">Constants</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.constants.ARRAY_ITRF"><code class="docutils literal notranslate"><span class="pre">ARRAY_ITRF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.constants.BANDWIDTH"><code class="docutils literal notranslate"><span class="pre">BANDWIDTH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.constants.CB_HPBW"><code class="docutils literal notranslate"><span class="pre">CB_HPBW</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.constants.CB_MODEL_FILE"><code class="docutils literal notranslate"><span class="pre">CB_MODEL_FILE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.constants.CB_OFFSETS"><code class="docutils literal notranslate"><span class="pre">CB_OFFSETS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.constants.DISH_POS_ITRF"><code class="docutils literal notranslate"><span class="pre">DISH_POS_ITRF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.constants.DISH_SIZE"><code class="docutils literal notranslate"><span class="pre">DISH_SIZE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.constants.NCB"><code class="docutils literal notranslate"><span class="pre">NCB</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.constants.NSB"><code class="docutils literal notranslate"><span class="pre">NSB</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.constants.NTAB"><code class="docutils literal notranslate"><span class="pre">NTAB</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arts_localisation.constants.REF_FREQ"><code class="docutils literal notranslate"><span class="pre">REF_FREQ</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="beam_models.html">Beam model modules</a></li>
@@ -70,9 +112,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="api.html">API reference</a> &raquo;</li>
-      <li>Core modules</li>
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="api.html">API reference</a></li>
+      <li class="breadcrumb-item active">Core modules</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/_modules/core_modules.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -347,7 +389,7 @@ from reference (ra0, dec0)</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="arts_localisation.tools.limit">
-<span class="sig-prename descclassname"><span class="pre">arts_localisation.tools.</span></span><span class="sig-name descname"><span class="pre">limit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.limit" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">arts_localisation.tools.</span></span><span class="sig-name descname"><span class="pre">limit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#arts_localisation.tools.limit" title="Permalink to this definition"></a></dt>
 <dd><p>Where val &gt; maxval, replace by maxval</p>
 <p>Where val &lt; minval, replace by minval</p>
 <dl class="field-list simple">

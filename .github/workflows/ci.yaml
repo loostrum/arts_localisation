@@ -53,7 +53,7 @@ jobs:
           make -C docs/ html
           touch docs/_build/html/.nojekyll
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3.9.3
+        uses: peaceiris/actions-gh-pages@v4.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/_build/html
